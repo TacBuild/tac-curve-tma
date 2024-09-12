@@ -1,0 +1,27 @@
+:root {
+  // Project variables
+  --safe-area-inset-bottom: env(safe-area-inset-bottom);
+
+  // Colors
+  --c-white: #fff;
+  --c-body-bg: #f2f2f7;
+  --c-primary-text: #081d34;
+  --c-secondary-text: #727577;
+  --c-disabled: #B5B5C5;
+  --c-primary: #1763fd;
+  --c-primary-dark: #153C8A;
+
+  // Grid
+  --header-h: 64px;
+  --menu-h: calc(64px + var(--ios-tg-safe-inset-bottom));
+  --container-w: 720px;
+  --container-form-w: 720px;
+  --container-padding: 0 16px;
+  --container-padding-condensed: 0 8px;
+  --container-padding-side: 16px;
+
+  // Transitions
+  --trs-default: 0.25s ease-in-out;
+  --trs-slow: 0.35s ease-in-out;
+  --trs-fast: 0.2s ease-in-out;
+}

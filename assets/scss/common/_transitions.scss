@@ -1,0 +1,35 @@
+.swap-move,
+.swap-enter-active,
+.swap-leave-active {
+  filter: invert(0.1);
+  transition: transform 0.3s steps(8, end);
+}
+
+.swap-enter-from,
+.swap-leave-to {
+  transform: scaleY(0.01) translate(0, 0);
+}
+
+.swap-leave-active {
+  position: absolute;
+}
+
+.modal-enter-active,
+.modal-leave-active {
+  filter: invert(0.2);
+  transform-origin: bottom left;
+  transition: transform 0.2s steps(15, end);
+
+  @include respond-to(mobile) {
+    transform-origin: bottom;
+  }
+}
+
+.modal-enter-from,
+.modal-leave-active {
+  transform: scale(0.3);
+
+  @include respond-to(mobile) {
+    transform: translateY(100%);
+  }
+}

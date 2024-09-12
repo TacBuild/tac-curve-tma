@@ -1,0 +1,18 @@
+<script setup lang="ts">
+
+</script>
+
+<template>
+  <section class="page-wrapper">
+    <div class="container">
+      <h1 class="h1 mb-12">
+        Swap
+      </h1>
+
+      <SwapForm />
+    </div>
+  </section>
+</template>
+
+<style module lang='scss'>
+</style>

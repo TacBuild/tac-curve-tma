@@ -1,0 +1,28 @@
+{
+  "name": "nuxt-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@gvade/nuxt3-svg-sprite": "^1.0.3",
+    "@tonconnect/ui": "^2.0.9",
+    "@vueuse/core": "^11.0.3",
+    "gsap": "^3.12.5",
+    "modern-normalize": "^3.0.1",
+    "nuxt": "^3.13.0",
+    "vue": "latest",
+    "vue-router": "latest"
+  },
+  "devDependencies": {
+    "@nuxtjs/eslint-config-typescript": "^12.1.0",
+    "@nuxtjs/eslint-module": "^4.1.0",
+    "eslint": "^8.57.0",
+    "sass": "^1.78.0"
+  }
+}
