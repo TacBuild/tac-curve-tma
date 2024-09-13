@@ -1,8 +1,167 @@
-include:
-  - project: 'bemolabs/cicd'
-    ref: main
-    file: '.front_ssh_cicd.yml'
+stages:
+  - deploy to registry
+  - proxy check
+  - deploy
+  - grafana check
+  - redirect
+  - cleanup
+  
+
+docker_deploy_to_registry:
+  stage: deploy to registry
+  image: docker:latest
+  tags:
+    - docker
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - build_env=$(env |grep "ENV_" |awk -F "ENV_" '{print "--build-arg ",$2}' | xargs)
+    - docker build --pull -t "$CI_REGISTRY_IMAGE:$TAG" . $build_env 
+    - docker push "$CI_REGISTRY_IMAGE:$TAG"
+  after_script:
+    - docker logout $CI_REGISTRY  
+  environment:
+    name: $ENVIRONMENT
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "push"
+      variables:
+        TAG: "latest"
+        ENVIRONMENT: "production"
+    - if: $CI_COMMIT_BRANCH == "development" && $CI_PIPELINE_SOURCE == "push"
+      variables:
+        TAG: "development"
+        ENVIRONMENT: "development"
 
 
-    
-    
+proxy_check:
+  stage: proxy check
+  image: ubuntu
+  before_script:
+  - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client git -y )'
+  - eval $(ssh-agent -s)
+  - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+  - mkdir -p ~/.ssh
+  - chmod 700 ~/.ssh
+  - ssh-keyscan $SERVICE_IP >> ~/.ssh/known_hosts
+  - chmod 644 ~/.ssh/known_hosts
+  script:
+    - scp -r ./gitlab/proxy_check.sh cicd@$SERVICE_IP:./proxy_check.sh
+    - ssh -o StrictHostKeyChecking=no cicd@$SERVICE_IP "sudo DOMAIN='$DOMAIN' bash /home/cicd/proxy_check.sh"
+  environment:
+    name: $ENVIRONMENT
+    url: $SERVICE_URL
+  tags:
+    - docker
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "push"
+      variables:
+        ENVIRONMENT: "production"
+    - if: $CI_COMMIT_BRANCH == "development" && $CI_PIPELINE_SOURCE == "push"
+      variables:
+        ENVIRONMENT: "development"  
+  needs:
+    - job: docker_deploy_to_registry
+
+
+proxy_stop:
+  stage: proxy check
+  image: ubuntu
+  before_script:
+  - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client git -y )'
+  - eval $(ssh-agent -s)
+  - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+  - mkdir -p ~/.ssh
+  - chmod 700 ~/.ssh
+  - ssh-keyscan $SERVICE_IP >> ~/.ssh/known_hosts
+  - chmod 644 ~/.ssh/known_hosts
+  script:
+    - scp -r ./gitlab/proxy_stop.sh cicd@$SERVICE_IP:./proxy_stop.sh
+    - ssh -o StrictHostKeyChecking=no cicd@$SERVICE_IP "sudo bash /home/cicd/proxy_stop.sh"
+  environment:
+    name: $ENVIRONMENT
+    url: $SERVICE_URL
+  tags:
+    - docker
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "push"
+      when: manual
+      variables:
+        ENVIRONMENT: "production"
+    - if: $CI_COMMIT_BRANCH == "development" && $CI_PIPELINE_SOURCE == "push"
+      when: manual
+      variables:
+        ENVIRONMENT: "development"
+  needs:
+    - job: docker_deploy_to_registry
+
+
+deploy:
+  stage: deploy
+  image: ubuntu
+  before_script:
+  - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client git -y )'
+  - eval $(ssh-agent -s)
+  - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+  - mkdir -p ~/.ssh
+  - chmod 700 ~/.ssh
+  - ssh-keyscan $SERVICE_IP >> ~/.ssh/known_hosts
+  - chmod 644 ~/.ssh/known_hosts
+  script:
+    - env |grep "ENV_" | awk -F "ENV_" '{print $2}' >> ./env.list
+    - scp ./env.list cicd@$SERVICE_IP:./
+    - ssh -o StrictHostKeyChecking=no cicd@$SERVICE_IP "sudo docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY"
+    - ssh -o StrictHostKeyChecking=no cicd@$SERVICE_IP "sudo docker pull $CI_REGISTRY_IMAGE:$TAG"
+    - ssh -o StrictHostKeyChecking=no cicd@$SERVICE_IP "sudo docker stop $CI_PROJECT_NAME || true"
+    - ssh -o StrictHostKeyChecking=no cicd@$SERVICE_IP "sudo docker rm $CI_PROJECT_NAME || true"
+    - ssh -o StrictHostKeyChecking=no cicd@$SERVICE_IP "sudo docker run
+      --env-file /home/cicd/env.list
+      --env VIRTUAL_HOST=$DOMAIN
+      --env VIRTUAL_PORT=$SERVER_PORT
+      --env LETSENCRYPT_HOST=$DOMAIN
+      --env LETSENCRYPT_EMAIL=$SSL_DEFAULT_EMAIL
+      --restart=always
+      --log-driver json-file
+      --log-opt max-size=100m
+      --log-opt max-file=3
+      --network=nginx-proxy
+      --name $CI_PROJECT_NAME
+      -d -p $SERVER_PORT:$APP_PORT $CI_REGISTRY_IMAGE:$TAG"
+    - ssh -o StrictHostKeyChecking=no cicd@$SERVICE_IP "sudo docker image prune --filter=dangling=true -f"
+    - ssh -o StrictHostKeyChecking=no cicd@$SERVICE_IP "sudo docker network connect bridge $CI_PROJECT_NAME"
+    - ssh -o StrictHostKeyChecking=no cicd@$SERVICE_IP "sudo docker exec nginx-proxy nginx -s reload"
+    - ssh -o StrictHostKeyChecking=no cicd@$SERVICE_IP "sudo docker logout $CI_REGISTRY"
+    - ssh -o StrictHostKeyChecking=no cicd@$SERVICE_IP "sudo rm /home/cicd/env.list"
+  environment:
+    name: $ENVIRONMENT
+    url: $SERVICE_URL
+  tags:
+    - docker  
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "push"
+      variables:
+        TAG: "latest"
+        ENVIRONMENT: "production"
+    - if: $CI_COMMIT_BRANCH == "development" && $CI_PIPELINE_SOURCE == "push"
+      variables:
+        TAG: "development"
+        ENVIRONMENT: "development" 
+  needs:
+    - job: proxy_check
+
+
+docker_prune:
+  stage: cleanup
+  tags:
+    - docker
+  script:
+    - docker system prune -af --volumes
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "push"
+    - if: $CI_COMMIT_BRANCH == "development" && $CI_PIPELINE_SOURCE == "push"
+  needs:
+    - job: deploy
+      optional: true
+    - job: docker_deploy_to_registry
+      optional: true
