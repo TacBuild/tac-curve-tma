@@ -1,0 +1,8 @@
+include:
+  - project: 'bemolabs/cicd'
+    ref: main
+    file: '.front_ssh_cicd.yml'
+
+
+    
+    
