@@ -80,8 +80,11 @@ const onSubmit = async () => {
     await swap(getTonConnectUI(), address.value, pair[0].token.tokenAddress, pair[0].token.jsonArguments, pair[0].inputValue);
     modal.open(BaseModal, {
       props: {
-        title: 'Pending',
-        text: 'Your transaction is in pending status. Please wait for its confirmation'
+        title: 'Confirmed',
+        text: 'Congratulations! Your swap transaction has been confirmed. Check out your updated balance in your wallet'
+      },
+      onClose: () => {
+        loadBalances();
       }
     });
   } catch (e) {
@@ -171,7 +174,7 @@ watch(isConnected, (val) => {
       <UiButton
         type="submit"
         :loading="isSwapping || isLoading"
-        :disabled="isSwapping || isLoading || !pair[0].inputValue"
+        :disabled="isSwapping || isLoading || !pair[0].inputValue || Number(pair[0].inputValue) > pair[0].balance"
         wide
       >
         {{ !isConnected ? 'Connect wallet' : isSwapping ? `Check ${walletName}` : 'Swap' }}
