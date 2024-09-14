@@ -133,7 +133,9 @@ export default defineNuxtConfig({
     public: {
       telegramManifestUrl: process.env.TELEGRAM_MANIFEST_URL || '',
       tonconnectManifestUrl: process.env.TONCONNECT_MANIFEST_URL || '',
-      telegramMiniAppBotUrl: process.env.TELEGRAM_MINI_APP_BOT_URL || ''
+      telegramMiniAppBotUrl: process.env.TELEGRAM_MINI_APP_BOT_URL || '',
+      ethersProviderUrl: process.env.ETHERS_PROVIDER_URL || '',
+      ethersPoolAddress: process.env.ETHERS_POOL_ADDRESS || ''
     }
   },
 

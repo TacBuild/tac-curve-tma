@@ -3,12 +3,14 @@ import { type Token, tokens } from '~/entities/token';
 import { useTonConnect } from '~/composables/useTonConnect';
 import { useModal } from '~/components/ui/composables/useModal';
 import { BaseModal } from '#components';
-import { swap } from '~/utils/ton-utils';
+import { getSwapRates, swap } from '~/utils/ton-utils';
 
+const { $config } = useNuxtApp();
 const modal = useModal();
 const { isLoaded, isConnected, address, walletName, getTonConnectUI, disconnect } = useTonConnect();
-const pair: { id: number, token: Token, inputValue: string, balance: number }[] = reactive([
+const pair: { main?: boolean, id: number, token: Token, inputValue: string, balance: number }[] = reactive([
   {
+    main: true,
     id: 1,
     token: tokens.stton,
     inputValue: '1',
@@ -21,10 +23,23 @@ const pair: { id: number, token: Token, inputValue: string, balance: number }[] 
     balance: 0
   }
 ]);
+const rate = ref(0);
 const isLoading = ref(false);
+const isLoadingRates = ref(false);
 const isSwapping = ref(false);
 
-const load = async () => {
+const loadRates = async () => {
+  try {
+    isLoadingRates.value = true;
+    rate.value = Number(await getSwapRates(String(10 ** 9), $config.public.ethersPoolAddress, $config.public.ethersProviderUrl)) / (10 ** 9);
+    calcRate(0, pair[0].main);
+  } catch (e) {
+    console.warn(e);
+  } finally {
+    isLoadingRates.value = false;
+  }
+};
+const loadBalances = async () => {
   try {
     isLoading.value = true;
     pair[0].balance = await getJettonBalance(address.value, pair[0].token.tokenAddress);
@@ -39,6 +54,17 @@ const load = async () => {
 const swapPair = () => {
   pair.reverse();
 };
+const calcRate = (inputIndex: number, isMain?: boolean) => {
+  const value = Number(pair[inputIndex].inputValue || 0);
+  const safeRate = rate.value || 0;
+  const result = (isMain ? safeRate * value : value / safeRate);
+
+  if (inputIndex === 0) {
+    pair[1].inputValue = !value ? '' : String(result);
+  } else {
+    pair[0].inputValue = !value ? '' : String(result);
+  }
+};
 const onSubmit = async () => {
   if (!pair[0].inputValue) {
     return;
@@ -51,7 +77,7 @@ const onSubmit = async () => {
 
   try {
     isSwapping.value = true;
-    await swap(getTonConnectUI().connector, address.value, pair[0].token.tokenAddress, pair[0].token.jsonArguments, pair[0].inputValue);
+    await swap(getTonConnectUI(), address.value, pair[0].token.tokenAddress, pair[0].token.jsonArguments, pair[0].inputValue);
     modal.open(BaseModal, {
       props: {
         title: 'Pending',
@@ -71,8 +97,12 @@ const onSubmit = async () => {
   }
 };
 
+loadRates();
+
 watch(isConnected, (val) => {
-  if (val) { load(); }
+  if (val) {
+    loadBalances();
+  }
 }, { immediate: true });
 </script>
 
@@ -86,6 +116,8 @@ watch(isConnected, (val) => {
           maxlength="12"
           inputmode="numeric"
           only-number
+          :disabled="isSwapping || isLoadingRates"
+          @input="calcRate(0, pair[0].main)"
         >
           <template #label>
             {{ isConnected ? `Avail. ${isLoading ? 'loading...' : pair[0].balance}` : 'You send' }}
@@ -103,6 +135,8 @@ watch(isConnected, (val) => {
           maxlength="12"
           inputmode="numeric"
           only-number
+          :disabled="isSwapping || isLoadingRates"
+          @input="calcRate(1, pair[1].main)"
         >
           <template #label>
             {{ isConnected ? `Avail. ${isLoading ? 'loading...' : pair[1].balance}` : 'You receive' }}
@@ -136,8 +170,8 @@ watch(isConnected, (val) => {
 
       <UiButton
         type="submit"
-        :loading="isSwapping"
-        :disabled="isSwapping || isLoading"
+        :loading="isSwapping || isLoading"
+        :disabled="isSwapping || isLoading || !pair[0].inputValue"
         wide
       >
         {{ !isConnected ? 'Connect wallet' : isSwapping ? `Check ${walletName}` : 'Swap' }}

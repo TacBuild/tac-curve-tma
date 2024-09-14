@@ -58,12 +58,15 @@ const onBlur = (e: Event) => {
   isFocused.value = false;
   emits('blur', e);
 };
-
-watch(model, (val, oldVal) => {
-  if (props.onlyNumber) {
-    model.value = isNaN(Number(val)) && Boolean(val) ? oldVal : val;
+const onInput = (e: Event) => {
+  const value = (e.target as HTMLInputElement).value;
+  if (props.onlyNumber && isNaN(Number(value)) && Boolean(value)) {
+    (e.target as HTMLInputElement).value = String(model.value);
+  } else {
+    model.value = value;
   }
-});
+  emits('input', e);
+};
 </script>
 
 <template>
@@ -92,7 +95,7 @@ watch(model, (val, oldVal) => {
             :disabled="disabled"
             @blur="onBlur"
             @focus="onFocus"
-            @input="model = ($event.target as HTMLInputElement).value; emits('input', $event)"
+            @input="onInput"
             @change="emits('change', $event)"
             @keydown.enter="$emit('enter', $event)"
           >
@@ -120,10 +123,6 @@ watch(model, (val, oldVal) => {
 
     #{$block}__wrap {
       cursor: not-allowed;
-
-      @include hover() {
-        box-shadow: none;
-      }
     }
 
     #{$block}__native {

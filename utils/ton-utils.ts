@@ -1,6 +1,7 @@
 import { Address, beginCell, fromNano, toNano, TonClient } from '@ton/ton';
-import type { ITonConnect } from '@tonconnect/ui';
+import type { SendTransactionRequest, TonConnectUI } from '@tonconnect/ui';
 import { Base64 } from '@tonconnect/protocol';
+import { ethers } from 'ethers';
 import { randomInt } from '~/utils/number-utils';
 
 const TONCENTER_URL_ENDPOINT = '/jsonRPC';
@@ -50,9 +51,9 @@ const getSwapPayload = (amount: string, fromAddress: string, jsonArguments: stri
   return Base64.encode(payload.toBoc());
 };
 
-export const swap = async (connector: ITonConnect, fromAddress: string, tokenAddress: string, jsonArguments: string, amount: string, commission = '0.35') => {
+export const swap = async (tonConnect: TonConnectUI, fromAddress: string, tokenAddress: string, jsonArguments: string, amount: string, commission = '0.35') => {
   const jettonAddress = await getUserJettonWalletAddress(fromAddress, tokenAddress);
-  const transaction = {
+  const transaction: SendTransactionRequest = {
     validUntil: +new Date() + 15 * 60 * 1000,
     messages: [
       {
@@ -63,7 +64,7 @@ export const swap = async (connector: ITonConnect, fromAddress: string, tokenAdd
     ]
   };
 
-  return await connector.sendTransaction(transaction);
+  return await tonConnect.sendTransaction(transaction);
 };
 
 export const getJettonBalance = async (address: string, tokenAddress: string) => {
@@ -74,4 +75,59 @@ export const getJettonBalance = async (address: string, tokenAddress: string) =>
 
   const result = await client.runMethod(Address.parse(jettonAddress), 'get_wallet_data');
   return Number(fromNano(result.stack.readNumber()));
+};
+
+export const getImplementationContract = (poolAddress: string, providerAddress: string) => {
+  const implementationAbi = [{
+    stateMutability: 'view',
+    type: 'function',
+    name: 'get_dy',
+    inputs: [
+      {
+        name: 'i',
+        type: 'uint256'
+      },
+      {
+        name: 'j',
+        type: 'uint256'
+      },
+      {
+        name: 'dx',
+        type: 'uint256'
+      }
+    ],
+    outputs: [
+      {
+        name: '',
+        type: 'uint256'
+      }
+    ]
+  },
+  {
+    stateMutability: 'view',
+    type: 'function',
+    name: 'coins',
+    inputs: [
+      {
+        name: 'arg0',
+        type: 'uint256'
+      }
+    ],
+    outputs: [
+      {
+        name: '',
+        type: 'address'
+      }
+    ]
+  }
+  ];
+
+  const provider = ethers.getDefaultProvider(providerAddress);
+  return new ethers.Contract(poolAddress, implementationAbi, provider);
+};
+
+export const getSwapRates = async (amount: string, poolAddress: string, providerAddress: string) => {
+  const implementation = await getImplementationContract(poolAddress, providerAddress);
+
+  return implementation.get_dy(0, 1, amount);
 };
