@@ -47,7 +47,7 @@ proxy_check:
   - ssh-keyscan $SERVICE_IP >> ~/.ssh/known_hosts
   - chmod 644 ~/.ssh/known_hosts
   script:
-    - scp ./.gitlab/proxy_check.sh $SERVICE_USER@$SERVICE_IP:./
+    - scp -r ./.gitlab/proxy_check.sh ubuntu@$SERVICE_IP:./proxy_check.sh
     - ssh -o StrictHostKeyChecking=no ubuntu@$SERVICE_IP "sudo DOMAIN='$DOMAIN' bash /home/ubuntu/proxy_check.sh"
   environment:
     name: $ENVIRONMENT
@@ -77,7 +77,7 @@ proxy_stop:
   - ssh-keyscan $SERVICE_IP >> ~/.ssh/known_hosts
   - chmod 644 ~/.ssh/known_hosts
   script:
-    - scp ./.gitlab/proxy_stop.sh $SERVICE_USER@$SERVICE_IP:./
+    - scp -r ./.gitlab/proxy_stop.sh ubuntu@$SERVICE_IP:./proxy_stop.sh
     - ssh -o StrictHostKeyChecking=no ubuntu@$SERVICE_IP "sudo bash /home/ubuntu/proxy_stop.sh"
   environment:
     name: $ENVIRONMENT
