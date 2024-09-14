@@ -7,7 +7,7 @@ export const useTonConnect = () => {
   const account: Account = reactive({} as Account);
 
   const tonConnectUI = new TonConnectUI({
-    manifestUrl: ($isTelegram ? $config.public.telegramManifestUrl : $config.public.tonconnectManifestUrl) as string
+    manifestUrl: $config.public.tonconnectManifestUrl as string
   });
   Object.assign(account, tonConnectUI.account);
   tonConnectUI.uiOptions = {
