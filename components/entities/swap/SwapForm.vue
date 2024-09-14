@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { UserRejectsError } from '@tonconnect/ui';
 import { type Token, tokens } from '~/entities/token';
 import { useTonConnect } from '~/composables/useTonConnect';
 import { useModal } from '~/components/ui/composables/useModal';
@@ -78,6 +79,7 @@ const onSubmit = async () => {
     pair[0].inputValue = String(Math.trunc((Number(pair[0].inputValue)) * 10 ** 9) / 10 ** 9);
     isSwapping.value = true;
     await swap(getTonConnectUI(), address.value, pair[0].token.tokenAddress, pair[0].token.jsonArguments, pair[0].inputValue);
+    console.log('*****Swapped');
     modal.open(BaseModal, {
       props: {
         title: 'Confirmed',
@@ -88,11 +90,14 @@ const onSubmit = async () => {
       }
     });
   } catch (e) {
-    console.warn(e);
     modal.open(BaseModal, {
       props: {
         title: 'Failed',
-        text: 'Something went wrong. Make sure you have enough token balance and try again'
+        text: (e as Error).message.includes('Transaction was not sent')
+          ? 'Transaction was not sent'
+          : e instanceof UserRejectsError
+            ? 'You rejected the transaction'
+            : 'Something went wrong. Make sure you have enough token balance and try again'
       }
     });
   } finally {

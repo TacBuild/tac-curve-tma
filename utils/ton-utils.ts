@@ -13,7 +13,6 @@ export const getUserJettonWalletAddress = async (userAddress: string, tokenAddre
 
   const address = Address.parse(userAddress);
   const cell = beginCell().storeAddress(address).endCell();
-  console.log(address, cell);
   const result = await client.runMethod(Address.parse(tokenAddress), 'get_wallet_address', [{
     type: 'slice',
     cell
@@ -39,6 +38,7 @@ const getSwapPayload = (amount: string, fromAddress: string, jsonArguments: stri
     }],
     unlock: []
   });
+  console.log('*****Parsed JSON for swap payload: ', JSON.parse(json));
   const l2Data = beginCell().storeStringTail(json).endCell();
   const forwardAmount = '0.2';
 
@@ -48,11 +48,23 @@ const getSwapPayload = (amount: string, fromAddress: string, jsonArguments: stri
     .storeCoins(toNano(amount))
     .storeAddress(Address.parse(toAddress))
     .storeAddress(Address.parse(fromAddress)).storeBit(false).storeCoins(toNano(forwardAmount)).storeMaybeRef(l2Data).endCell();
+  console.log('*****Cell payload: ', payload);
+  console.log('*****Encoded payload: ', Base64.encode(payload.toBoc()));
   return Base64.encode(payload.toBoc());
 };
 
 export const swap = async (tonConnect: TonConnectUI, fromAddress: string, tokenAddress: string, jsonArguments: string, amount: string, commission = '0.35') => {
+  console.log('*****Swapping*****');
+  console.table({
+    fromAddress,
+    tokenAddress,
+    jsonArguments,
+    amount,
+    commission
+  });
+
   const jettonAddress = await getUserJettonWalletAddress(fromAddress, tokenAddress);
+  console.log('*****Received user\'s jetton address: ', jettonAddress);
   const transaction: SendTransactionRequest = {
     validUntil: +new Date() + 15 * 60 * 1000,
     messages: [
@@ -64,6 +76,7 @@ export const swap = async (tonConnect: TonConnectUI, fromAddress: string, tokenA
     ]
   };
 
+  console.log('*****Sending transaction: ', transaction);
   return await tonConnect.sendTransaction(transaction);
 };
 
