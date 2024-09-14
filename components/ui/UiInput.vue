@@ -76,8 +76,10 @@ watch(model, (val, oldVal) => {
       @click="inputRef.focus()"
     >
       <div class="v-input__content">
-        <div v-if="label" class="v-input__label">
-          {{ label }}
+        <div v-if="label || $slots.label" class="v-input__label">
+          <slot name="label">
+            {{ label }}
+          </slot>
         </div>
         <div class="v-input__input">
           <input

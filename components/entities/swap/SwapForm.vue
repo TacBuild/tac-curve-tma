@@ -1,30 +1,44 @@
 <script setup lang="ts">
-import type { Token } from '~/entities/token';
+import { type Token, tokens } from '~/entities/token';
 import { useTonConnect } from '~/composables/useTonConnect';
 import { useModal } from '~/components/ui/composables/useModal';
 import { BaseModal } from '#components';
-import { swapToTAC } from '#imports';
+import { swap } from '~/utils/ton-utils';
 
 const modal = useModal();
 const { isLoaded, isConnected, address, walletName, getTonConnectUI, disconnect } = useTonConnect();
-const pair: { id: number, token: Token, inputValue: string }[] = reactive([
+const pair: { id: number, token: Token, inputValue: string, balance: number }[] = reactive([
   {
     id: 1,
-    token: { ticker: 'stTON', iconUrl: '/tokens/stton.png' },
-    inputValue: '1'
+    token: tokens.stton,
+    inputValue: '1',
+    balance: 0
   },
   {
     id: 2,
-    token: { ticker: 'TAC', iconUrl: '/tokens/tac.webp' },
-    inputValue: ''
+    token: tokens.tac,
+    inputValue: '',
+    balance: 0
   }
 ]);
+const isLoading = ref(false);
 const isSwapping = ref(false);
 
+const load = async () => {
+  try {
+    isLoading.value = true;
+    pair[0].balance = await getJettonBalance(address.value, pair[0].token.tokenAddress);
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    pair[1].balance = await getJettonBalance(address.value, pair[1].token.tokenAddress);
+  } catch (e) {
+    console.warn(e);
+  } finally {
+    isLoading.value = false;
+  }
+};
 const swapPair = () => {
   pair.reverse();
 };
-
 const onSubmit = async () => {
   if (!pair[0].inputValue) {
     return;
@@ -35,29 +49,31 @@ const onSubmit = async () => {
     return;
   }
 
-  if (pair[1].token.ticker === 'TAC') {
-    try {
-      isSwapping.value = true;
-      await swapToTAC(getTonConnectUI().connector, address.value, pair[0].inputValue);
-      modal.open(BaseModal, {
-        props: {
-          title: 'Pending',
-          text: 'Your transaction is in pending status. Please wait for its confirmation'
-        }
-      });
-    } catch (e) {
-      console.warn(e);
-      modal.open(BaseModal, {
-        props: {
-          title: 'Failed',
-          text: 'Something went wrong. Make sure you have enough token balance and try again'
-        }
-      });
-    } finally {
-      isSwapping.value = false;
-    }
+  try {
+    isSwapping.value = true;
+    await swap(getTonConnectUI().connector, address.value, pair[0].token.tokenAddress, pair[0].token.jsonArguments, pair[0].inputValue);
+    modal.open(BaseModal, {
+      props: {
+        title: 'Pending',
+        text: 'Your transaction is in pending status. Please wait for its confirmation'
+      }
+    });
+  } catch (e) {
+    console.warn(e);
+    modal.open(BaseModal, {
+      props: {
+        title: 'Failed',
+        text: 'Something went wrong. Make sure you have enough token balance and try again'
+      }
+    });
+  } finally {
+    isSwapping.value = false;
   }
 };
+
+watch(isConnected, (val) => {
+  if (val) { load(); }
+}, { immediate: true });
 </script>
 
 <template>
@@ -67,11 +83,13 @@ const onSubmit = async () => {
         <UiInput
           :key="pair[0].id"
           v-model="pair[0].inputValue"
-          label="You send"
           maxlength="12"
           inputmode="numeric"
           only-number
         >
+          <template #label>
+            {{ isConnected ? `Avail. ${isLoading ? 'loading...' : pair[0].balance}` : 'You send' }}
+          </template>
           <template #append>
             <TokenButton :token="pair[0].token" />
           </template>
@@ -82,11 +100,13 @@ const onSubmit = async () => {
         <UiInput
           :key="pair[1].id"
           v-model="pair[1].inputValue"
-          label="You receive"
           maxlength="12"
           inputmode="numeric"
           only-number
         >
+          <template #label>
+            {{ isConnected ? `Avail. ${isLoading ? 'loading...' : pair[1].balance}` : 'You receive' }}
+          </template>
           <template #append>
             <TokenButton :token="pair[1].token" />
           </template>
@@ -114,7 +134,12 @@ const onSubmit = async () => {
         Disconnect wallet
       </button>
 
-      <UiButton type="submit" :loading="isSwapping" :disabled="isSwapping" wide>
+      <UiButton
+        type="submit"
+        :loading="isSwapping"
+        :disabled="isSwapping || isLoading"
+        wide
+      >
         {{ !isConnected ? 'Connect wallet' : isSwapping ? `Check ${walletName}` : 'Swap' }}
       </UiButton>
     </template>
