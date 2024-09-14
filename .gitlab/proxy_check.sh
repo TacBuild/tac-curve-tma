@@ -23,9 +23,9 @@
         if [ "$( docker container inspect -f '{{.State.Status}}' nginx-proxy )" == "running" ]; then
           echo "nginx-proxy is running"
         else
-          mkdir -p /home/cicd/proxy\
-          rm -rf /home/cicd/proxy/my_proxy.conf
-          echo 'underscores_in_headers on;' > /home/cicd/proxy/my_proxy.conf
+          mkdir -p /home/ubuntu/proxy\
+          rm -rf /home/ubuntu/proxy/my_proxy.conf
+          echo 'underscores_in_headers on;' > /home/ubuntu/proxy/my_proxy.conf
           docker stop nginx-proxy || true
           docker rm nginx-proxy || true
           docker run --detach \
@@ -35,7 +35,7 @@
             --publish 443:443 \
             --volume certs:/etc/nginx/certs \
             --volume vhost:/etc/nginx/vhost.d \
-            -v /home/cicd/proxy/my_proxy.conf:/etc/nginx/conf.d/my_proxy.conf:ro \
+            -v /home/ubuntu/proxy/my_proxy.conf:/etc/nginx/conf.d/my_proxy.conf:ro \
             --volume html:/usr/share/nginx/html \
             --volume /var/run/docker.sock:/tmp/docker.sock:ro \
             --network=nginx-proxy \
