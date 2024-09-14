@@ -1,5 +1,6 @@
 import { Address, beginCell, toNano, TonClient } from '@ton/ton';
 import type { ITonConnect } from '@tonconnect/ui';
+import { Base64 } from '@tonconnect/protocol';
 import { randomInt } from '~/utils/number-utils';
 
 const TONCENTER_URL_ENDPOINT = '/jsonRPC';
@@ -40,12 +41,13 @@ const getSwapToTACPayload = (amount: string, fromAddress: string, fromJettonAddr
   const l2Data = beginCell().storeStringTail(json).endCell();
   const forwardAmount = '0.2';
 
-  return beginCell()
+  const payload = beginCell()
     .storeUint(0xF8A7EA5, 32)
     .storeUint(timestamp + randAppend, 64)
     .storeCoins(toNano(amount))
     .storeAddress(Address.parse(toAddress))
     .storeAddress(Address.parse(fromAddress)).storeBit(false).storeCoins(toNano(forwardAmount)).storeMaybeRef(l2Data).endCell();
+  return Base64.encode(payload.toBoc());
 };
 
 export const swapToTAC = async (connector: ITonConnect, fromAddress: string, amount: string, commission = '0.35') => {
