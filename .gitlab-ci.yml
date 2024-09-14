@@ -48,7 +48,7 @@ proxy_check:
   - chmod 644 ~/.ssh/known_hosts
   script:
     - scp ./.gitlab/proxy_check.sh $SERVICE_USER@$SERVICE_IP:./
-    - ssh -o StrictHostKeyChecking=no cicd@$SERVICE_IP "sudo DOMAIN='$DOMAIN' bash /home/cicd/proxy_check.sh"
+    - ssh -o StrictHostKeyChecking=no ubuntu@$SERVICE_IP "sudo DOMAIN='$DOMAIN' bash /home/ubuntu/proxy_check.sh"
   environment:
     name: $ENVIRONMENT
     url: $SERVICE_URL
@@ -78,7 +78,7 @@ proxy_stop:
   - chmod 644 ~/.ssh/known_hosts
   script:
     - scp ./.gitlab/proxy_stop.sh $SERVICE_USER@$SERVICE_IP:./
-    - ssh -o StrictHostKeyChecking=no cicd@$SERVICE_IP "sudo bash /home/cicd/proxy_stop.sh"
+    - ssh -o StrictHostKeyChecking=no ubuntu@$SERVICE_IP "sudo bash /home/ubuntu/proxy_stop.sh"
   environment:
     name: $ENVIRONMENT
     url: $SERVICE_URL
@@ -110,13 +110,13 @@ deploy:
   - chmod 644 ~/.ssh/known_hosts
   script:
     - env |grep "ENV_" | awk -F "ENV_" '{print $2}' >> ./env.list
-    - scp ./env.list cicd@$SERVICE_IP:./
-    - ssh -o StrictHostKeyChecking=no cicd@$SERVICE_IP "sudo docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY"
-    - ssh -o StrictHostKeyChecking=no cicd@$SERVICE_IP "sudo docker pull $CI_REGISTRY_IMAGE:$TAG"
-    - ssh -o StrictHostKeyChecking=no cicd@$SERVICE_IP "sudo docker stop $CI_PROJECT_NAME || true"
-    - ssh -o StrictHostKeyChecking=no cicd@$SERVICE_IP "sudo docker rm $CI_PROJECT_NAME || true"
-    - ssh -o StrictHostKeyChecking=no cicd@$SERVICE_IP "sudo docker run
-      --env-file /home/cicd/env.list
+    - scp ./env.list ubuntu@$SERVICE_IP:./
+    - ssh -o StrictHostKeyChecking=no ubuntu@$SERVICE_IP "sudo docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY"
+    - ssh -o StrictHostKeyChecking=no ubuntu@$SERVICE_IP "sudo docker pull $CI_REGISTRY_IMAGE:$TAG"
+    - ssh -o StrictHostKeyChecking=no ubuntu@$SERVICE_IP "sudo docker stop $CI_PROJECT_NAME || true"
+    - ssh -o StrictHostKeyChecking=no ubuntu@$SERVICE_IP "sudo docker rm $CI_PROJECT_NAME || true"
+    - ssh -o StrictHostKeyChecking=no ubuntu@$SERVICE_IP "sudo docker run
+      --env-file /home/ubuntu/env.list
       --env VIRTUAL_HOST=$DOMAIN
       --env VIRTUAL_PORT=$SERVER_PORT
       --env LETSENCRYPT_HOST=$DOMAIN
@@ -128,11 +128,11 @@ deploy:
       --network=nginx-proxy
       --name $CI_PROJECT_NAME
       -d -p $SERVER_PORT:$APP_PORT $CI_REGISTRY_IMAGE:$TAG"
-    - ssh -o StrictHostKeyChecking=no cicd@$SERVICE_IP "sudo docker image prune --filter=dangling=true -f"
-    - ssh -o StrictHostKeyChecking=no cicd@$SERVICE_IP "sudo docker network connect bridge $CI_PROJECT_NAME"
-    - ssh -o StrictHostKeyChecking=no cicd@$SERVICE_IP "sudo docker exec nginx-proxy nginx -s reload"
-    - ssh -o StrictHostKeyChecking=no cicd@$SERVICE_IP "sudo docker logout $CI_REGISTRY"
-    - ssh -o StrictHostKeyChecking=no cicd@$SERVICE_IP "sudo rm /home/cicd/env.list"
+    - ssh -o StrictHostKeyChecking=no ubuntu@$SERVICE_IP "sudo docker image prune --filter=dangling=true -f"
+    - ssh -o StrictHostKeyChecking=no ubuntu@$SERVICE_IP "sudo docker network connect bridge $CI_PROJECT_NAME"
+    - ssh -o StrictHostKeyChecking=no ubuntu@$SERVICE_IP "sudo docker exec nginx-proxy nginx -s reload"
+    - ssh -o StrictHostKeyChecking=no ubuntu@$SERVICE_IP "sudo docker logout $CI_REGISTRY"
+    - ssh -o StrictHostKeyChecking=no ubuntu@$SERVICE_IP "sudo rm /home/ubuntu/env.list"
   environment:
     name: $ENVIRONMENT
     url: $SERVICE_URL
