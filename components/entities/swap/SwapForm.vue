@@ -57,12 +57,11 @@ const swapPair = () => {
 const calcRate = (inputIndex: number, isMain?: boolean) => {
   const value = Number(pair[inputIndex].inputValue || 0);
   const safeRate = rate.value || 0;
-  const result = (isMain ? safeRate * value : value / safeRate);
-
+  const result = String(Math.trunc((isMain ? safeRate * value : value / safeRate) * 10 ** 9) / 10 ** 9);
   if (inputIndex === 0) {
-    pair[1].inputValue = !value ? '' : String(result);
+    pair[1].inputValue = !value ? '' : result;
   } else {
-    pair[0].inputValue = !value ? '' : String(result);
+    pair[0].inputValue = !value ? '' : result;
   }
 };
 const onSubmit = async () => {
@@ -76,6 +75,7 @@ const onSubmit = async () => {
   }
 
   try {
+    pair[0].inputValue = String(Math.trunc((Number(pair[0].inputValue)) * 10 ** 9) / 10 ** 9);
     isSwapping.value = true;
     await swap(getTonConnectUI(), address.value, pair[0].token.tokenAddress, pair[0].token.jsonArguments, pair[0].inputValue);
     modal.open(BaseModal, {
@@ -157,7 +157,7 @@ watch(isConnected, (val) => {
 
       <p :class="$style.info" class="mb-24">
         <span class=" weight-600">Network fee</span>
-        <span class="c-secondary-text">0.01 TON</span>
+        <span class="c-secondary-text">~0.265 TON</span>
       </p>
 
       <button
