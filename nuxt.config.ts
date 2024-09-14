@@ -1,8 +1,8 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 
-// const scripts = [
-//   { src: 'https://telegram.org/js/telegram-web-app.js?v=2' }
-// ];
+const scripts = [
+  { src: 'https://telegram.org/js/telegram-web-app.js' }
+];
 
 export default defineNuxtConfig({
   devtools: {
@@ -22,12 +22,9 @@ export default defineNuxtConfig({
   ],
 
   modules: [
-    '@nuxtjs/eslint-module',
-    '@gvade/nuxt3-svg-sprite'
+    '@nuxtjs/eslint-module'
   ],
-  svgSprite: {
-    elementClass: 'icon'
-  },
+
   components: [
     {
       path: '~/components',
@@ -37,14 +34,14 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'TAC',
+      title: 'Curve.fi x TAC',
       htmlAttrs: {
         lang: 'en'
       },
       meta: [
         {
           name: 'description',
-          content: 'TAC'
+          content: 'Swap with Curve.fi. Powered by TAC'
         },
         { charset: 'utf-8' },
         {
@@ -53,19 +50,10 @@ export default defineNuxtConfig({
         },
         {
           name: 'theme-color',
-          content: '#efeef4'
+          content: '#f2f2f7'
         }
       ],
       link: [
-        {
-          rel: 'preconnect',
-          href: 'https://cdn.fanz.ee'
-        },
-        {
-          rel: 'apple-touch-icon',
-          sizes: '180x180',
-          href: '/favicons/apple-touch-icon.png'
-        },
         {
           rel: 'manifest',
           href: '/site.webmanifest'

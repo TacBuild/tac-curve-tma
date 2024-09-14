@@ -22,7 +22,7 @@ defineProps({
   <div :class="$style.BaseModal">
     <div :class="$style.top">
       <span />
-      <SvgIcon name="cross" class="icon--32 c-secondary-text" @click="$emit('close')" />
+      <UiIcon name="cross" class="icon--32 c-secondary-text" @click="$emit('close')" />
     </div>
 
     <div :class="$style.content" class="mx-auto">

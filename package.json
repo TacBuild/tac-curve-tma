@@ -10,7 +10,6 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@gvade/nuxt3-svg-sprite": "^1.0.3",
     "@tonconnect/ui": "^2.0.9",
     "@vueuse/core": "^11.0.3",
     "gsap": "^3.12.5",

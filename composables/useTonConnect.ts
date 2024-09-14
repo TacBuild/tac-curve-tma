@@ -1,7 +1,7 @@
 import { type Account, CHAIN, THEME, TonConnectUI, toUserFriendlyAddress } from '@tonconnect/ui';
 
 export const useTonConnect = () => {
-  const { $isTelegram, $config } = useNuxtApp();
+  const { $config } = useNuxtApp();
 
   const isLoaded = ref(false);
   const account: Account = reactive({} as Account);

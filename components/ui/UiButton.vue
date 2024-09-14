@@ -92,7 +92,7 @@ const onClick = (e: Event) => {
       class="v-button__wrap"
     >
       <div class="v-button__loading">
-        <SvgIcon name="loading" />
+        <UiIcon name="loading" />
       </div>
     </div>
   </component>

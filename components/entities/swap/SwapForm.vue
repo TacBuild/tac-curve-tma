@@ -55,7 +55,7 @@ const onSubmit = () => {
           </template>
         </UiInput>
         <button key="swap-button" type="button" class="mx-auto" @click="swapPair">
-          <SvgIcon name="swap-arrows" class="c-secondary-text icon--32 " />
+          <UiIcon name="swap-arrows" class="c-secondary-text icon--32 " />
         </button>
         <UiInput
           :key="pair[1].id"
