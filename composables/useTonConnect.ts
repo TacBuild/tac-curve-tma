@@ -5,6 +5,7 @@ export const useTonConnect = () => {
 
   const isLoaded = ref(false);
   const account: Account = reactive({} as Account);
+  const walletName = ref('Wallet');
 
   const tonConnectUI = new TonConnectUI({
     manifestUrl: $config.public.tonconnectManifestUrl as string
@@ -26,6 +27,7 @@ export const useTonConnect = () => {
   tonConnectUI.onStatusChange((walletInfo) => {
     if (walletInfo?.account?.address) {
       Object.assign(account, walletInfo.account);
+      walletName.value = walletInfo?.name;
     }
   });
 
@@ -51,6 +53,7 @@ export const useTonConnect = () => {
     isConnected,
     address,
     friendlyAddress,
+    walletName,
     getTonConnectUI,
     disconnect
   };

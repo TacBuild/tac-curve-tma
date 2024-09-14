@@ -75,24 +75,13 @@ const onClick = (e: Event) => {
     v-bind="bindedAttrs"
     @click="onClick"
   >
-    <div
-      v-show="!loading"
-      class="v-button__wrap"
-    >
+    <div class="v-button__wrap">
       <div
         v-if="$slots.default"
         class="v-button__text"
       >
+        <span v-if="loading" class="v-button__loading" />
         <slot />
-      </div>
-    </div>
-
-    <div
-      v-if="loading"
-      class="v-button__wrap"
-    >
-      <div class="v-button__loading">
-        <UiIcon name="loading" />
       </div>
     </div>
   </component>
@@ -131,19 +120,9 @@ const onClick = (e: Event) => {
   }
 
   &.is-disabled {
-    background-color: var(--ui-button-secondary-disable-bg-color);
     cursor: default;
     pointer-events: none;
-    color: var(--ui-button-secondary-disable-text-color);
     opacity: 0.7;
-
-    #{$block}__circle {
-      transform: translate(-50%, -50%) scale(0);
-    }
-
-    #{$block}__icon {
-      filter: grayscale(1);
-    }
   }
 
   &.is-wide {
@@ -162,6 +141,7 @@ const onClick = (e: Event) => {
   }
 
   &__text {
+    display: flex;
     position: relative;
     z-index: 1;
     //width: 100%;
@@ -169,18 +149,35 @@ const onClick = (e: Event) => {
   }
 
   &__loading {
-    height: 24px;
-    animation: rotate 0.6s infinite linear;
+    display: inline-block;
+    margin-right: 8px;
+
+    &:before {
+      content: '/';
+      display: inline-block;
+      animation: loading 0.5s infinite linear;
+      width: 24px;
+      height: 24px;
+      text-align: center;
+    }
   }
 }
 
-@keyframes rotate {
+@keyframes loading {
   0% {
-    transform: rotate(0);
+    content: '/';
   }
 
-  100% {
-    transform: rotate(360deg);
+  25% {
+    content: '–';
+  }
+
+  50% {
+    content: '\\';
+  }
+
+  75% {
+    content: '|';
   }
 }
 </style>

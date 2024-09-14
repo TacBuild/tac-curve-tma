@@ -22,7 +22,8 @@ export default defineNuxtConfig({
   ],
 
   modules: [
-    '@nuxtjs/eslint-module'
+    '@nuxtjs/eslint-module',
+    'nuxt-proxy-request'
   ],
 
   components: [
@@ -31,6 +32,13 @@ export default defineNuxtConfig({
       pathPrefix: false
     }
   ],
+
+  devServer: {
+    https: {
+      key: process.env.HTTPS_KEY,
+      cert: process.env.HTTPS_CERT
+    }
+  },
 
   app: {
     head: {
@@ -78,8 +86,8 @@ export default defineNuxtConfig({
           sizes: '16x16',
           href: '/favicons/favicon-16x16.png'
         }
-      ]
-      // script: scripts
+      ],
+      script: scripts
     },
     pageTransition: {
       name: 'page',
@@ -127,6 +135,19 @@ export default defineNuxtConfig({
       tonconnectManifestUrl: process.env.TONCONNECT_MANIFEST_URL || '',
       telegramMiniAppBotUrl: process.env.TELEGRAM_MINI_APP_BOT_URL || ''
     }
+  },
+
+  proxy: {
+    options: [
+      {
+        target: process.env.TONCENTER_URL || 'localhost:5000',
+        changeOrigin: true,
+        pathRewrite: {
+          '^/jsonRPC': '/jsonRPC'
+        },
+        pathFilter: ['/jsonRPC']
+      }
+    ]
   },
 
   compatibilityDate: '2024-04-03'

@@ -3,13 +3,14 @@ import type { Token } from '~/entities/token';
 import { useTonConnect } from '~/composables/useTonConnect';
 import { useModal } from '~/components/ui/composables/useModal';
 import { BaseModal } from '#components';
+import { swapToTAC } from '#imports';
 
 const modal = useModal();
-const { isLoaded, isConnected, getTonConnectUI, disconnect } = useTonConnect();
-const pair: { id: number, token: Token, inputValue?: number | string }[] = reactive([
+const { isLoaded, isConnected, address, walletName, getTonConnectUI, disconnect } = useTonConnect();
+const pair: { id: number, token: Token, inputValue: string }[] = reactive([
   {
     id: 1,
-    token: { ticker: 'TON', iconUrl: '/tokens/ton.webp' },
+    token: { ticker: 'stTON', iconUrl: '/tokens/stton.png' },
     inputValue: '1'
   },
   {
@@ -18,23 +19,44 @@ const pair: { id: number, token: Token, inputValue?: number | string }[] = react
     inputValue: ''
   }
 ]);
+const isSwapping = ref(false);
 
 const swapPair = () => {
   pair.reverse();
 };
 
-const onSubmit = () => {
+const onSubmit = async () => {
+  if (!pair[0].inputValue) {
+    return;
+  }
+
   if (!isConnected.value) {
     getTonConnectUI().modal.open();
     return;
   }
 
-  modal.open(BaseModal, {
-    props: {
-      title: 'Pending',
-      text: 'Your transaction is in pending status. Please wait for its confirmation'
+  if (pair[1].token.ticker === 'TAC') {
+    try {
+      isSwapping.value = true;
+      await swapToTAC(getTonConnectUI().connector, address.value, pair[0].inputValue);
+      modal.open(BaseModal, {
+        props: {
+          title: 'Pending',
+          text: 'Your transaction is in pending status. Please wait for its confirmation'
+        }
+      });
+    } catch (e) {
+      console.warn(e);
+      modal.open(BaseModal, {
+        props: {
+          title: 'Failed',
+          text: 'Something went wrong. Make sure you have enough token balance and try again'
+        }
+      });
+    } finally {
+      isSwapping.value = false;
     }
-  });
+  }
 };
 </script>
 
@@ -86,13 +108,14 @@ const onSubmit = () => {
         :class="$style.disconnect"
         type="button"
         class="p1 c-disabled weight-700 mx-auto mb-16"
+        :disabled="isSwapping"
         @click="disconnect()"
       >
         Disconnect wallet
       </button>
 
-      <UiButton type="submit" wide>
-        {{ !isConnected ? 'Connect wallet' : 'Swap' }}
+      <UiButton type="submit" :loading="isSwapping" :disabled="isSwapping" wide>
+        {{ !isConnected ? 'Connect wallet' : isSwapping ? `Check ${walletName}` : 'Swap' }}
       </UiButton>
     </template>
     <template v-else>
