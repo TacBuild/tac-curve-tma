@@ -129,6 +129,7 @@ watch(isConnected, (val) => {
         <UiInput
           :key="pair[0].id"
           v-model="pair[0].inputValue"
+          name="swap-from"
           maxlength="12"
           inputmode="numeric"
           only-number
@@ -148,6 +149,7 @@ watch(isConnected, (val) => {
         <UiInput
           :key="pair[1].id"
           v-model="pair[1].inputValue"
+          name="swap-to"
           maxlength="12"
           inputmode="numeric"
           only-number
@@ -170,7 +172,7 @@ watch(isConnected, (val) => {
 
       <p :class="$style.info" class="mb-24">
         <span class=" weight-600">Network fee</span>
-        <span class="c-secondary-text">~0.265 TON</span>
+        <span class="c-secondary-text">~0.14 TON</span>
       </p>
 
       <button

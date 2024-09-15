@@ -31,10 +31,10 @@ const getSwapPayload = (amount: string, fromAddress: string, jsonArguments: stri
     target: '0xd350bf040068fbc509dbc9cb48bf5feeb1c7a707',
     methodName: 'exchange(address,uint256,uint256,uint256,uint256)',
     arguments: jsonArguments,
-    caller: fromAddress,
+    caller: Address.parse(fromAddress).toString(),
     mint: [{
       token_address: '0x2cb284c531fb21a70e2c24ede980239e643b7b5d',
-      amount: toNano(amount).toString()
+      amount: Number(toNano(amount))
     }],
     unlock: []
   });
