@@ -1,14 +1,15 @@
 import { type Account, CHAIN, THEME, TonConnectUI, toUserFriendlyAddress } from '@tonconnect/ui';
+import { truncate } from '~/utils/string-utils';
 
 export const useTonConnect = () => {
-  const { $config } = useNuxtApp();
+  const config = useRuntimeConfig().public;
 
   const isLoaded = ref(false);
   const account: Account = reactive({} as Account);
   const walletName = ref('Wallet');
 
   const tonConnectUI = new TonConnectUI({
-    manifestUrl: $config.public.tonconnectManifestUrl as string
+    manifestUrl: config.tonconnectManifestUrl as string
   });
   Object.assign(account, tonConnectUI.account);
   tonConnectUI.uiOptions = {
@@ -17,7 +18,7 @@ export const useTonConnect = () => {
       borderRadius: 'none'
     },
     actionsConfiguration: {
-      twaReturnUrl: $config.public.telegramMiniAppBotUrl as `${string}://${string}`
+      twaReturnUrl: config.telegramMiniAppBotUrl as `${string}://${string}`
     }
   };
 
@@ -32,7 +33,9 @@ export const useTonConnect = () => {
   });
 
   const address = computed(() => account?.address || '');
-  const friendlyAddress = computed(() => toUserFriendlyAddress(account?.address || ''));
+  const friendlyAddress = computed(() => account?.address ? toUserFriendlyAddress(account.address) : '');
+  const shortAddress = computed(() => friendlyAddress.value ? truncate(friendlyAddress.value) : '');
+  const shorterAddress = computed(() => friendlyAddress.value ? truncate(friendlyAddress.value, 3) : '');
   const isConnected = computed(() => Boolean(address.value));
   const getTonConnectUI = () => {
     return tonConnectUI;
@@ -54,6 +57,8 @@ export const useTonConnect = () => {
     address,
     friendlyAddress,
     walletName,
+    shortAddress,
+    shorterAddress,
     getTonConnectUI,
     disconnect
   };

@@ -135,7 +135,10 @@ export default defineNuxtConfig({
       tonconnectManifestUrl: process.env.TONCONNECT_MANIFEST_URL || '',
       telegramMiniAppBotUrl: process.env.TELEGRAM_MINI_APP_BOT_URL || '',
       ethersProviderUrl: process.env.ETHERS_PROVIDER_URL || '',
-      ethersPoolAddress: process.env.ETHERS_POOL_ADDRESS || ''
+      ethersContractAddress: process.env.ETHERS_CONTRACT_ADDRESS || '',
+      swapPayloadToAddress: process.env.SWAP_PAYLOAD_TO_ADDRESS || '',
+      swapPayloadJsonTarget: process.env.SWAP_PAYLOAD_JSON_TARGET || '',
+      swapPayloadJsonMintTokenAddress: process.env.SWAP_PAYLOAD_JSON_MINT_TOKEN_ADDRESS || ''
     }
   },
 

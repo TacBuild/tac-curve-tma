@@ -4,11 +4,12 @@ import { type Token, tokens } from '~/entities/token';
 import { useTonConnect } from '~/composables/useTonConnect';
 import { useModal } from '~/components/ui/composables/useModal';
 import { BaseModal } from '#components';
-import { getSwapRates, swap } from '~/utils/ton-utils';
+import { SLIPPAGE_PERCENT_VALUE } from '~/utils/ton-utils';
+import { useSwap } from '~/composables/useSwap';
 
-const { $config } = useNuxtApp();
 const modal = useModal();
-const { isLoaded, isConnected, address, walletName, getTonConnectUI, disconnect } = useTonConnect();
+const { isLoaded, isConnected, address, walletName, shorterAddress, getTonConnectUI, disconnect } = useTonConnect();
+const { swap, getSwapRates } = useSwap();
 const pair: { main?: boolean, id: number, token: Token, inputValue: string, balance: number }[] = reactive([
   {
     main: true,
@@ -40,7 +41,7 @@ const isSubmitDisabled = computed(() => {
 const loadRates = async () => {
   try {
     isLoadingRates.value = true;
-    rate.value = Number(await getSwapRates(String(10 ** 9), $config.public.ethersPoolAddress, $config.public.ethersProviderUrl)) / (10 ** 9);
+    rate.value = Number(await getSwapRates(String(10 ** 9))) / (10 ** 9);
     calcRate(0, pair[0].main);
   } catch (e) {
     console.warn(e);
@@ -140,7 +141,7 @@ watch(isConnected, (val) => {
             {{ isConnected ? `Avail. ${isLoading ? 'loading...' : pair[0].balance}` : 'You send' }}
           </template>
           <template #append>
-            <TokenButton :token="pair[0].token" />
+            <TokenButton :token="pair[0].token" :desc="shorterAddress" />
           </template>
         </UiInput>
         <button key="swap-button" type="button" class="mx-auto" @click="swapPair">
@@ -167,7 +168,7 @@ watch(isConnected, (val) => {
 
       <p :class="$style.info" class="mb-8">
         <span class=" weight-600">Slippage tolerance</span>
-        <span class="c-secondary-text">0.5%</span>
+        <span class="c-secondary-text">{{ SLIPPAGE_PERCENT_VALUE }}%</span>
       </p>
 
       <p :class="$style.info" class="mb-24">

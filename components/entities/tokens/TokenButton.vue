@@ -5,6 +5,11 @@ defineProps({
   token: {
     type: Object as PropType<Token>,
     default: () => ({} as Token)
+  },
+
+  desc: {
+    type: String,
+    default: ''
   }
 });
 </script>
@@ -12,9 +17,14 @@ defineProps({
 <template>
   <button :class="$style.TokenButton" type="button" @click.stop>
     <span :class="$style.icon" class="icon" :style="{ backgroundImage: `url(${token.iconUrl})` }" />
-    <span class="mx-auto weight-700">
-      {{ token.ticker }}
-    </span>
+    <div class="mx-auto">
+      <p class=" weight-700">
+        {{ token.ticker }}
+      </p>
+      <p v-if="desc" class="c-secondary-text p4 weight-400">
+        {{ desc }}
+      </p>
+    </div>
   </button>
 </template>
 
