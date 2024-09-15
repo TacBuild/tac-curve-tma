@@ -1,9 +1,10 @@
+<script setup lang="ts">
+</script>
+
 <template>
-  <div>
+  <main>
     <TheHeader />
     <NuxtPage />
     <UiModals />
-  </div>
+  </main>
 </template>
-<script setup lang="ts">
-</script>

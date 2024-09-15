@@ -29,6 +29,14 @@ const isLoading = ref(false);
 const isLoadingRates = ref(false);
 const isSwapping = ref(false);
 
+const isSubmitDisabled = computed(() => {
+  if (!isConnected.value) {
+    return !isLoaded.value;
+  }
+
+  return isSwapping.value || isLoading.value || !pair[0].inputValue || Number(pair[0].inputValue) > pair[0].balance;
+});
+
 const loadRates = async () => {
   try {
     isLoadingRates.value = true;
@@ -179,7 +187,7 @@ watch(isConnected, (val) => {
       <UiButton
         type="submit"
         :loading="isSwapping || isLoading"
-        :disabled="isSwapping || isLoading || !pair[0].inputValue || Number(pair[0].inputValue) > pair[0].balance"
+        :disabled="isSubmitDisabled"
         wide
       >
         {{ !isConnected ? 'Connect wallet' : isSwapping ? `Check ${walletName}` : 'Swap' }}
