@@ -114,7 +114,7 @@ export default defineNuxtConfig({
     build: {
       rollupOptions: {
         output: {
-          inlineDynamicImports: true // TODO: disable chunking
+          inlineDynamicImports: true
         }
       }
     }

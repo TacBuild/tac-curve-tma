@@ -2,7 +2,7 @@ import { Address, beginCell, fromNano, toNano, TonClient } from '@ton/ton';
 import type { SendTransactionRequest, TonConnectUI } from '@tonconnect/ui';
 import { Base64 } from '@tonconnect/protocol';
 import { ethers } from 'ethers';
-import { randomInt } from '~/utils/number-utils';
+// import { randomInt } from '~/utils/number-utils';
 
 const TONCENTER_URL_ENDPOINT = '/jsonRPC';
 
@@ -24,9 +24,9 @@ export const getUserJettonWalletAddress = async (userAddress: string, tokenAddre
 const getSwapPayload = (amount: string, fromAddress: string, jsonArguments: string) => {
   const toAddress = 'EQBcB0XZEv-T_9tYnbJc-DoYqAFz71k5KUkZTLX1etwfuMIB';
   const timestamp = Math.floor(+new Date() / 1000);
-  const randAppend = randomInt(1, 1000);
+  // const randAppend = randomInt(1, 1000);
   const json = JSON.stringify({
-    query_id: timestamp + randAppend,
+    query_id: 0, // timestamp + randAppend
     timestamp,
     target: '0xd350bf040068fbc509dbc9cb48bf5feeb1c7a707',
     methodName: 'exchange(address,uint256,uint256,uint256,uint256)',
@@ -44,7 +44,7 @@ const getSwapPayload = (amount: string, fromAddress: string, jsonArguments: stri
 
   const payload = beginCell()
     .storeUint(0xF8A7EA5, 32)
-    .storeUint(timestamp + randAppend, 64)
+    .storeUint(0, 64) // timestamp + randAppend
     .storeCoins(toNano(amount))
     .storeAddress(Address.parse(toAddress))
     .storeAddress(Address.parse(fromAddress)).storeBit(false).storeCoins(toNano(forwardAmount)).storeMaybeRef(l2Data).endCell();
@@ -55,6 +55,7 @@ const getSwapPayload = (amount: string, fromAddress: string, jsonArguments: stri
 
 export const swap = async (tonConnect: TonConnectUI, fromAddress: string, tokenAddress: string, jsonArguments: string, amount: string, commission = '0.35') => {
   console.log('*****Swapping*****');
+
   console.table({
     fromAddress,
     tokenAddress,
@@ -139,8 +140,8 @@ export const getImplementationContract = (poolAddress: string, providerAddress: 
   return new ethers.Contract(poolAddress, implementationAbi, provider);
 };
 
-export const getSwapRates = async (amount: string, poolAddress: string, providerAddress: string) => {
-  const implementation = await getImplementationContract(poolAddress, providerAddress);
+export const getSwapRates = (amount: string, poolAddress: string, providerAddress: string) => {
+  const implementation = getImplementationContract(poolAddress, providerAddress);
 
   return implementation.get_dy(0, 1, amount);
 };
