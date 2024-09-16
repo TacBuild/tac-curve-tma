@@ -1,11 +1,12 @@
 import { Address, beginCell, toNano } from '@ton/ton';
 import { Base64 } from '@tonconnect/protocol';
 import type { SendTransactionRequest, TonConnectUI } from '@tonconnect/ui';
-import { ethers } from 'ethers';
+import { Contract, ethers } from 'ethers';
 import { CHAIN } from '@tonconnect/ui';
 import { getUserJettonWalletAddress } from '~/utils/ton-utils';
 
 export const useSwap = () => {
+  let contract: Contract;
   const config = useRuntimeConfig().public;
 
   const getSwapPayload = (amount: string, fromAddress: string, swapKeys: Array<number>) => {
@@ -93,65 +94,67 @@ export const useSwap = () => {
     return await tonConnect.sendTransaction(transaction);
   };
 
-  const getImplementationContract = () => {
-    const implementationAbi = [{
-      stateMutability: 'view',
-      type: 'function',
-      name: 'get_dy',
-      inputs: [
-        {
-          name: 'i',
-          type: 'uint256'
-        },
-        {
-          name: 'j',
-          type: 'uint256'
-        },
-        {
-          name: 'dx',
-          type: 'uint256'
-        }
-      ],
-      outputs: [
-        {
-          name: '',
-          type: 'uint256'
-        }
-      ]
-    },
-    {
-      stateMutability: 'view',
-      type: 'function',
-      name: 'coins',
-      inputs: [
-        {
-          name: 'arg0',
-          type: 'uint256'
-        }
-      ],
-      outputs: [
-        {
-          name: '',
-          type: 'address'
-        }
-      ]
-    }
+  const getContract = () => {
+    const abi = [
+      {
+        stateMutability: 'view',
+        type: 'function',
+        name: 'get_dy',
+        inputs: [
+          {
+            name: 'i',
+            type: 'uint256'
+          },
+          {
+            name: 'j',
+            type: 'uint256'
+          },
+          {
+            name: 'dx',
+            type: 'uint256'
+          }
+        ],
+        outputs: [
+          {
+            name: '',
+            type: 'uint256'
+          }
+        ]
+      },
+      {
+        stateMutability: 'view',
+        type: 'function',
+        name: 'coins',
+        inputs: [
+          {
+            name: 'arg0',
+            type: 'uint256'
+          }
+        ],
+        outputs: [
+          {
+            name: '',
+            type: 'address'
+          }
+        ]
+      }
     ];
-
     const provider = ethers.getDefaultProvider(config.ethersProviderUrl);
-    return new ethers.Contract(config.ethersContractAddress, implementationAbi, provider);
+
+    return new ethers.Contract(config.ethersContractAddress, abi, provider);
   };
 
-  const getSwapRates = (amount: string) => {
-    const implementation = getImplementationContract();
+  const getSwapRates = (amount: string, swapKeys: Array<number>) => {
+    if (!contract) {
+      contract = getContract();
+    }
 
-    return implementation.get_dy(0, 1, amount);
+    return contract.get_dy(swapKeys[0], swapKeys[1], amount);
   };
 
   return {
     getSwapPayload,
     swap,
-    getImplementationContract,
     getSwapRates
   };
 };

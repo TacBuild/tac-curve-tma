@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { UserRejectsError } from '@tonconnect/ui';
+import { useDebounceFn } from '@vueuse/core';
 import { type Token, tokens } from '~/entities/token';
 import { useTonConnect } from '~/composables/useTonConnect';
 import { useModal } from '~/components/ui/composables/useModal';
@@ -25,7 +26,6 @@ const pair: { main?: boolean, id: number, token: Token, inputValue: string, bala
     balance: 0
   }
 ]);
-const rate = ref(0);
 const isLoading = ref(false);
 const isLoadingRates = ref(false);
 const isSwapping = ref(false);
@@ -38,16 +38,9 @@ const isSubmitDisabled = computed(() => {
   return isSwapping.value || isLoading.value || !pair[0].inputValue || Number(pair[0].inputValue) > pair[0].balance;
 });
 
-const loadRates = async () => {
-  try {
-    isLoadingRates.value = true;
-    rate.value = Number(await getSwapRates(String(10 ** 9))) / (10 ** 9);
-    calcRate(0, pair[0].main);
-  } catch (e) {
-    console.warn(e);
-  } finally {
-    isLoadingRates.value = false;
-  }
+const getRate = async (keys: Array<number>) => {
+  const rate = await getSwapRates(String(10 ** 9), keys);
+  return Number(rate || 0);
 };
 const loadBalances = async () => {
   try {
@@ -64,16 +57,23 @@ const loadBalances = async () => {
 const swapPair = () => {
   pair.reverse();
 };
-const calcRate = (inputIndex: number, isMain?: boolean) => {
+const calcRate = useDebounceFn(async (inputIndex: number) => {
   const value = Number(pair[inputIndex].inputValue || 0);
-  const safeRate = rate.value || 0;
-  const result = String(Math.trunc((isMain ? safeRate * value : value / safeRate) * 10 ** 9) / 10 ** 9);
+  const keys = pair.map(o => o.token.swapKey);
+  let rate;
+  try {
+    rate = value <= 0 ? 0 : await getRate(inputIndex === 0 ? keys : keys.reverse());
+  } catch (e) {
+    console.warn(e);
+    rate = 0;
+  }
+  const result = String(Math.trunc(rate * value) / 10 ** 9);
   if (inputIndex === 0) {
     pair[1].inputValue = !value ? '' : result;
   } else {
     pair[0].inputValue = !value ? '' : result;
   }
-};
+}, 200);
 const onSubmit = async () => {
   if (!pair[0].inputValue) {
     return;
@@ -116,7 +116,7 @@ const onSubmit = async () => {
   }
 };
 
-loadRates();
+calcRate(0);
 
 watch(isConnected, (val) => {
   if (val) {
@@ -138,7 +138,7 @@ watch(isConnected, (val) => {
           inputmode="numeric"
           only-number
           :disabled="isSwapping || isLoadingRates"
-          @input="calcRate(0, pair[0].main)"
+          @input="calcRate(0)"
         >
           <template #label>
             {{ isConnected ? `Avail. ${isLoading ? 'loading...' : pair[0].balance}` : 'You send' }}
@@ -159,7 +159,7 @@ watch(isConnected, (val) => {
           inputmode="numeric"
           only-number
           :disabled="isSwapping || isLoadingRates"
-          @input="calcRate(1, pair[1].main)"
+          @input="calcRate(1)"
         >
           <template #label>
             {{ isConnected ? `Avail. ${isLoading ? 'loading...' : pair[1].balance}` : 'You receive' }}
