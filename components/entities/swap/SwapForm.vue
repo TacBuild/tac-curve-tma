@@ -38,8 +38,8 @@ const isSubmitDisabled = computed(() => {
   return isSwapping.value || isLoading.value || !pair[0].inputValue || Number(pair[0].inputValue) > pair[0].balance;
 });
 
-const getRate = async (keys: Array<number>) => {
-  const rate = await getSwapRates(String(10 ** 9), keys);
+const getRate = async (value: number, keys: Array<number>) => {
+  const rate = await getSwapRates(String(value * 10 ** 9), keys);
   return Number(rate || 0);
 };
 const loadBalances = async () => {
@@ -62,12 +62,12 @@ const calcRate = useDebounceFn(async (inputIndex: number) => {
   const keys = pair.map(o => o.token.swapKey);
   let rate;
   try {
-    rate = value <= 0 ? 0 : await getRate(inputIndex === 0 ? keys : keys.reverse());
+    rate = value <= 0 ? 0 : await getRate(value, inputIndex === 0 ? keys : keys.reverse());
   } catch (e) {
     console.warn(e);
     rate = 0;
   }
-  const result = String(Math.trunc(rate * value) / 10 ** 9);
+  const result = String(Math.trunc(rate) / 10 ** 9);
   if (inputIndex === 0) {
     pair[1].inputValue = !value ? '' : result;
   } else {
