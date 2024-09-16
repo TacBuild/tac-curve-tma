@@ -3,7 +3,7 @@ export interface Token {
   ticker: string
   iconUrl: string
   tokenAddress: string
-  jsonArguments: string
+  swapKey: number
 }
 
 export const tokens: Record<string, Token> = {
@@ -12,13 +12,13 @@ export const tokens: Record<string, Token> = {
     ticker: 'stTON',
     iconUrl: '/tokens/stton.png',
     tokenAddress: 'EQDJfaGp5pgN8oVGyCQI0AvUPMiuMyzaWq7Ckdf_wVZYm1IY',
-    jsonArguments: 'AAAAAAAAAAAAAAAAAT7UvbBC0pQBfF3AUnO4F+qzXvoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABdIdugAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=='
+    swapKey: 0
   },
   tac: {
     name: 'tac',
     ticker: 'TAC',
     iconUrl: '/tokens/tac.webp',
     tokenAddress: 'EQC7-W1nM4DwUnI4_vGnQcLjgwYSw6hQixCdBF1XD_rmZAYZ',
-    jsonArguments: 'AAAAAAAAAAAAAAAAAT7UvbBC0pQBfF3AUnO4F+qzXvoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABdIdugAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=='
+    swapKey: 1
   }
 };

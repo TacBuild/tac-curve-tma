@@ -13,6 +13,7 @@ export const useTonConnect = () => {
   });
   Object.assign(account, tonConnectUI.account);
   tonConnectUI.uiOptions = {
+    language: 'en',
     uiPreferences: {
       theme: THEME.LIGHT,
       borderRadius: 'none'
@@ -27,13 +28,21 @@ export const useTonConnect = () => {
   });
   tonConnectUI.onStatusChange((walletInfo) => {
     if (walletInfo?.account?.address) {
+      console.log(walletInfo);
       Object.assign(account, walletInfo.account);
       walletName.value = walletInfo?.name;
     }
   });
 
   const address = computed(() => account?.address || '');
-  const friendlyAddress = computed(() => account?.address ? toUserFriendlyAddress(account.address) : '');
+  const friendlyAddress = computed(() => account?.address ? toUserFriendlyAddress(account.address, true) : '');
+  // const friendlyAddress = computed(() => account?.address
+  //   ? Address.parse(account.address).toString({
+  //     bounceable: true,
+  //     testOnly: true,
+  //     urlSafe: true
+  //   })
+  //   : '');
   const shortAddress = computed(() => friendlyAddress.value ? truncate(friendlyAddress.value) : '');
   const shorterAddress = computed(() => friendlyAddress.value ? truncate(friendlyAddress.value, 3) : '');
   const isConnected = computed(() => Boolean(address.value));

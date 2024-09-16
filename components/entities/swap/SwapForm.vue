@@ -87,12 +87,12 @@ const onSubmit = async () => {
   try {
     pair[0].inputValue = String(Math.trunc((Number(pair[0].inputValue)) * 10 ** 9) / 10 ** 9);
     isSwapping.value = true;
-    await swap(getTonConnectUI(), address.value, pair[0].token.tokenAddress, pair[0].token.jsonArguments, pair[0].inputValue);
+    await swap(getTonConnectUI(), address.value, pair[0].token.tokenAddress, pair.map(o => o.token.swapKey), pair[0].inputValue);
     console.log('*****Swapped');
     modal.open(BaseModal, {
       props: {
-        title: 'Confirmed',
-        text: 'Congratulations! Your swap transaction has been confirmed. Check out your updated balance in your wallet'
+        title: 'Transaction submitted',
+        text: 'Please wait a couple of minutes for the swap to complete and check your wallet balance.'
       },
       onClose: () => {
         loadBalances();

@@ -2,12 +2,14 @@ import { Address, beginCell, toNano } from '@ton/ton';
 import { Base64 } from '@tonconnect/protocol';
 import type { SendTransactionRequest, TonConnectUI } from '@tonconnect/ui';
 import { ethers } from 'ethers';
+import { CHAIN } from '@tonconnect/ui';
 import { getUserJettonWalletAddress } from '~/utils/ton-utils';
 
 export const useSwap = () => {
   const config = useRuntimeConfig().public;
 
-  const getSwapPayload = (amount: string, fromAddress: string, jsonArguments: string) => {
+  const getSwapPayload = (amount: string, fromAddress: string, swapKeys: Array<number>) => {
+    const abi = new ethers.AbiCoder();
     const timestamp = Math.floor(+new Date() / 1000);
     // const randAppend = randomInt(1, 1000);
     const json = JSON.stringify({
@@ -15,7 +17,16 @@ export const useSwap = () => {
       timestamp,
       target: config.swapPayloadJsonTarget,
       methodName: 'exchange(address,uint256,uint256,uint256,uint256)',
-      arguments: jsonArguments,
+      arguments: abi.encode(
+        ['address', 'uint256', 'uint256', 'uint256', 'uint256'],
+        [
+          config.ethersContractAddress,
+          swapKeys[0],
+          swapKeys[1],
+          Number(toNano(amount)),
+          0
+        ]
+      ),
       caller: Address.parse(fromAddress).toString(),
       mint: [{
         token_address: config.swapPayloadJsonMintTokenAddress,
@@ -38,13 +49,13 @@ export const useSwap = () => {
     return Base64.encode(payload.toBoc());
   };
 
-  const swap = async (tonConnect: TonConnectUI, fromAddress: string, tokenAddress: string, jsonArguments: string, amount: string, commission = '0.35') => {
+  const swap = async (tonConnect: TonConnectUI, fromAddress: string, tokenAddress: string, swapKeys: Array<number>, amount: string, commission = '0.35') => {
     console.log('*****Swapping*****');
 
     console.table({
       fromAddress,
       tokenAddress,
-      jsonArguments,
+      swapKeys,
       amount,
       commission
     });
@@ -57,9 +68,10 @@ export const useSwap = () => {
         {
           address: jettonAddress,
           amount: toNano(commission).toString(),
-          payload: getSwapPayload(amount, fromAddress, jsonArguments).toString()
+          payload: getSwapPayload(amount, fromAddress, swapKeys).toString()
         }
-      ]
+      ],
+      network: CHAIN.TESTNET
     };
 
     console.log('*****Sending transaction: ', transaction);
