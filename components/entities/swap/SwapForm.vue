@@ -92,7 +92,8 @@ const onSubmit = async () => {
     modal.open(BaseModal, {
       props: {
         title: 'Transaction submitted',
-        text: 'Please wait a couple of minutes for the swap to complete and check your wallet balance.'
+        text: 'Please wait a couple of minutes for the swap to complete and check your wallet balance.',
+        status: 'success'
       },
       onClose: () => {
         loadBalances();
@@ -106,7 +107,8 @@ const onSubmit = async () => {
           ? 'Transaction was not sent'
           : e instanceof UserRejectsError
             ? 'You rejected the transaction'
-            : 'Something went wrong. Make sure you have enough token balance and try again'
+            : 'Something went wrong. Make sure you have enough token balance and try again',
+        status: 'error'
       }
     });
   } finally {
