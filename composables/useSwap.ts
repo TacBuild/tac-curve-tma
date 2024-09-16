@@ -9,8 +9,19 @@ export const useSwap = () => {
   const config = useRuntimeConfig().public;
 
   const getSwapPayload = (amount: string, fromAddress: string, swapKeys: Array<number>) => {
-    const abi = new ethers.AbiCoder();
     const timestamp = Math.floor(+new Date() / 1000);
+    const abi = new ethers.AbiCoder();
+    const encodedParameters = abi.encode(
+      ['address', 'uint256', 'uint256', 'uint256', 'uint256'],
+      [
+        config.ethersContractAddress,
+        swapKeys[0],
+        swapKeys[1],
+        Number(toNano(amount)),
+        0
+      ]
+    );
+    const base64Parameters = Buffer.from(encodedParameters.split('0x')[1], 'hex').toString('base64');
     // const randAppend = randomInt(1, 1000);
     console.log(
       '*****not encoded values: ',
@@ -23,34 +34,14 @@ export const useSwap = () => {
         0
       ]
     );
-    console.log(
-      '*****abi encoded: ',
-      abi.encode(
-        ['address', 'uint256', 'uint256', 'uint256', 'uint256'],
-        [
-          config.ethersContractAddress,
-          swapKeys[0],
-          swapKeys[1],
-          Number(toNano(amount)),
-          0
-        ]
-      )
-    );
+    console.log('*****abi encoded: ', encodedParameters);
+    console.log('*****decoded from hex to base64', base64Parameters);
     const json = JSON.stringify({
       query_id: 0, // timestamp + randAppend
       timestamp,
       target: config.swapPayloadJsonTarget,
       methodName: 'exchange(address,uint256,uint256,uint256,uint256)',
-      arguments: abi.encode(
-        ['address', 'uint256', 'uint256', 'uint256', 'uint256'],
-        [
-          config.ethersContractAddress,
-          swapKeys[0],
-          swapKeys[1],
-          Number(toNano(amount)),
-          0
-        ]
-      ),
+      arguments: base64Parameters,
       caller: Address.parse(fromAddress).toString(),
       mint: [{
         token_address: config.swapPayloadJsonMintTokenAddress,
