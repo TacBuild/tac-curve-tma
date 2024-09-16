@@ -12,6 +12,30 @@ export const useSwap = () => {
     const abi = new ethers.AbiCoder();
     const timestamp = Math.floor(+new Date() / 1000);
     // const randAppend = randomInt(1, 1000);
+    console.log(
+      '*****not encoded values: ',
+      ['address', 'uint256', 'uint256', 'uint256', 'uint256'],
+      [
+        config.ethersContractAddress,
+        swapKeys[0],
+        swapKeys[1],
+        Number(toNano(amount)),
+        0
+      ]
+    );
+    console.log(
+      '*****abi encoded: ',
+      abi.encode(
+        ['address', 'uint256', 'uint256', 'uint256', 'uint256'],
+        [
+          config.ethersContractAddress,
+          swapKeys[0],
+          swapKeys[1],
+          Number(toNano(amount)),
+          0
+        ]
+      )
+    );
     const json = JSON.stringify({
       query_id: 0, // timestamp + randAppend
       timestamp,
