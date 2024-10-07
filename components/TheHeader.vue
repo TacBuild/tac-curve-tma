@@ -12,7 +12,7 @@
       </h1>
 
       <div class="right c-secondary-text p3">
-        Powered by:
+        Powered by
 
         <div class="logo-tac">
           <img src="/logo-tac.webp" alt="TAC">

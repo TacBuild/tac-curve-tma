@@ -28,7 +28,6 @@ export const useTonConnect = () => {
   });
   tonConnectUI.onStatusChange((walletInfo) => {
     if (walletInfo?.account?.address) {
-      console.log(walletInfo);
       Object.assign(account, walletInfo.account);
       walletName.value = walletInfo?.name;
     }
