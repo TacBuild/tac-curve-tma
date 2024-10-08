@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@ton/ton": "^15.0.0",
-    "@tonconnect/ui": "^2.0.9",
+    "@tonconnect/ui": "^2.0.6",
     "@vueuse/core": "^11.0.3",
     "ethers": "^6.13.2",
     "gsap": "^3.12.5",

@@ -1,5 +1,9 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 
+const scripts = [
+  { src: 'https://telegram.org/js/telegram-web-app.js' }
+];
+
 export default defineNuxtConfig({
   devtools: {
     enabled: Boolean(process.env.DEV)
@@ -82,7 +86,8 @@ export default defineNuxtConfig({
           sizes: '16x16',
           href: '/favicons/favicon-16x16.png'
         }
-      ]
+      ],
+      script: scripts
     },
     pageTransition: {
       name: 'page',
@@ -107,6 +112,7 @@ export default defineNuxtConfig({
       }
     },
     build: {
+      target: 'modules',
       rollupOptions: {
         output: {
           inlineDynamicImports: true
