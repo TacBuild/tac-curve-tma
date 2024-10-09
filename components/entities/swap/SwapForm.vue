@@ -144,7 +144,7 @@ watch(isConnected, (val) => {
             {{ isConnected ? `Avail. ${isLoading ? 'loading...' : pair[0].balance}` : 'You send' }}
           </template>
           <template #append>
-            <TokenButton :token="pair[0].token" :desc="shorterAddress" />
+            <TokenButton key="tb0" :token="pair[0].token" :desc="shorterAddress" />
           </template>
         </UiInput>
         <button key="swap-button" type="button" class="mx-auto" @click="swapPair">
@@ -165,7 +165,7 @@ watch(isConnected, (val) => {
             {{ isConnected ? `Avail. ${isLoading ? 'loading...' : pair[1].balance}` : 'You receive' }}
           </template>
           <template #append>
-            <TokenButton :token="pair[1].token" />
+            <TokenButton key="tb1" :token="pair[1].token" />
           </template>
         </UiInput>
       </TransitionGroup>
