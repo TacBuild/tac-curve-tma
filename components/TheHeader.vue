@@ -6,8 +6,14 @@
   <header class="header">
     <div class="wrap">
       <h1 class="logo">
-        <a href="https://curve.fi" target="_blank">
-          <img src="/logo.webp" alt="Curve">
+        <a
+          href="https://curve.fi"
+          target="_blank"
+        >
+          <img
+            src="/logo.webp"
+            alt="Curve"
+          >
         </a>
       </h1>
 
@@ -15,7 +21,10 @@
         Powered by:
 
         <div class="logo-tac">
-          <img src="/logo-tac.webp" alt="TAC logo">
+          <img
+            src="/logo-tac.webp"
+            alt="TAC logo"
+          >
         </div>
       </div>
     </div>
@@ -43,6 +52,7 @@
   height: 100%;
   width: 100%;
   max-width: var(--container-w);
+  padding: var(--container-padding);
   background-color: var(--c-body-bg);
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 

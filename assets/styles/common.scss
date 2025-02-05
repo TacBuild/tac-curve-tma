@@ -38,10 +38,7 @@ body {
 .container {
   width: 100%;
   max-width: var(--container-w);
-
-  @include respond-to(mobile) {
-    padding: var(--container-padding);
-  }
+  padding: var(--container-padding);
 }
 
 .icon {
