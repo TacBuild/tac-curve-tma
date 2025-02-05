@@ -1,50 +1,31 @@
 <script setup lang="ts">
-import { gsap } from 'gsap';
-
-const props = defineProps({
+defineProps({
   error: {
     type: String,
-    default: ''
+    default: '',
   },
-  noPadding: Boolean
-});
-
-const updateHeight = (el: Element) => {
-  gsap.to(el, {
-    duration: 0.3,
-    ease: 'power1',
-    height: props.error ? 'auto' : 0
-  });
-};
+  noPadding: Boolean,
+})
 </script>
 
 <template>
-  <ClientOnly>
-    <Transition
-      name="fade-fast"
-      appear
-      @enter="updateHeight"
-      @leave="updateHeight"
-    >
-      <div
-        v-if="error"
-        class="v-error"
-      >
-        <div :class="['v-error__wrap', '_noPadding']">
-          <span
-            role="alert"
-            v-html="error"
-          />
-        </div>
-      </div>
-    </Transition>
-  </ClientOnly>
+  <div
+    v-if="error"
+    class="v-error"
+  >
+    <div :class="['v-error__wrap', '_noPadding']">
+      <span
+        role="alert"
+        v-html="error"
+      />
+    </div>
+  </div>
 </template>
 
 <style lang='scss'>
   .v-error {
-    overflow: hidden;
-    height: 0;
+    font-size: 14px;
+    margin-top: 2px;
     color: var(--ui-danger-color);
 
     &__wrap {

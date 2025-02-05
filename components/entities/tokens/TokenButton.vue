@@ -1,27 +1,38 @@
 <script setup lang="ts">
-import type { Token } from '~/entities/token';
+import type { Token } from '~/entities/token'
 
 defineProps({
   token: {
     type: Object as PropType<Token>,
-    default: () => ({} as Token)
+    default: () => ({} as Token),
   },
 
   desc: {
     type: String,
-    default: ''
-  }
-});
+    default: '',
+  },
+})
 </script>
 
 <template>
-  <button :class="$style.TokenButton" type="button" @click.stop>
-    <span :class="$style.icon" class="icon" :style="{ backgroundImage: `url(${token.iconUrl})` }" />
+  <button
+    :class="$style.TokenButton"
+    type="button"
+    @click.stop
+  >
+    <span
+      :class="$style.icon"
+      class="icon"
+      :style="{ backgroundImage: `url(${token.logo})` }"
+    />
     <div class="mx-auto">
       <p class=" weight-700">
-        {{ token.ticker }}
+        {{ token.tokenName }}
       </p>
-      <p v-if="desc" class="c-secondary-text p4 weight-400">
+      <p
+        v-if="desc"
+        class="c-secondary-text p4 weight-400"
+      >
         {{ desc }}
       </p>
     </div>

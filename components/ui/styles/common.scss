@@ -21,10 +21,10 @@
   --ui-warning-dark-color: var(--c-orange-600);
   --ui-warning-text-color: var(--c-orange-500);
   --ui-warning-highlight-color: var(--c-orange-100);
-  --ui-danger-color: var(--c-red-500);
-  --ui-danger-dark-color: var(--c-red-600);
-  --ui-danger-text-color: var(--c-red-500);
-  --ui-danger-highlight-color: var(--c-red-100);
+  --ui-danger-color: red;
+  --ui-danger-dark-color: red;
+  --ui-danger-text-color: red;
+  --ui-danger-highlight-color: var(--c-secondary-dark-text);
 
   --ui-transition: var(--trs-fast);
 

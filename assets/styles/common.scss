@@ -1,10 +1,11 @@
-// Store common css here. Tag or utility styles.
-@import "./common/variables";
-@import "./common/reset";
-@import "./common/utility";
-@import "./common/typography";
-@import "./common/transitions";
-@import "./common/animations";
+@use "mixins" as *;
+@use 'modern-normalize/modern-normalize.css';
+@use "variables";
+@use "reset";
+@use "typography";
+@use "animations";
+@use "transitions";
+@use "utility";
 
 html,
 body {

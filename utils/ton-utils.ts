@@ -1,31 +1,19 @@
-import { Address, beginCell, fromNano, TonClient } from '@ton/ton';
-// import { randomInt } from '~/utils/number-utils';
+import type { Address } from '@ton/ton'
+import { fromNano, TonClient } from '@ton/ton'
 
-export const SLIPPAGE_PERCENT_VALUE = 0.5;
-export const MIN_INPUT_SWAP_VALUE = 25;
-export const TONCENTER_URL_ENDPOINT = '/jsonRPC';
+export const SLIPPAGE_PERCENT_VALUE = 0.5
+export const MIN_INPUT_SWAP_VALUE = 25
 
-export const getUserJettonWalletAddress = async (userAddress: string, tokenAddress: string) => {
-  const client = new TonClient({
-    endpoint: TONCENTER_URL_ENDPOINT
-  });
+export const fetchTonBalance = async (address: Address) => {
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  const client = new TonClient({ endpoint: 'https://testnet.toncenter.com/api/v2/jsonRPC' })
 
-  const address = Address.parse(userAddress);
-  const cell = beginCell().storeAddress(address).endCell();
-  const result = await client.runMethod(Address.parse(tokenAddress), 'get_wallet_address', [{
-    type: 'slice',
-    cell
-  }]);
-
-  return result.stack.readAddress().toString();
-};
-
-export const getJettonBalance = async (address: string, tokenAddress: string) => {
-  const jettonAddress = await getUserJettonWalletAddress(address, tokenAddress);
-  const client = new TonClient({
-    endpoint: '/jsonRPC'
-  });
-
-  const result = await client.runMethod(Address.parse(jettonAddress), 'get_wallet_data');
-  return Number(fromNano(result.stack.readNumber()));
-};
+  try {
+    const v = await client.getBalance(address)
+    return +Number(fromNano(v)).toFixed(4)
+  }
+  catch (e) {
+    console.warn('Failed to getTONBalance: ' + e)
+    return 0
+  }
+}

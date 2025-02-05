@@ -1,51 +1,33 @@
-import { toNano } from '@ton/ton';
-import type { TonConnectUI } from '@tonconnect/ui';
-import { Contract, ethers } from 'ethers';
-import { CHAIN } from '@tonconnect/ui';
-import type { JettonProxyMsgParameters } from 'tac-sdk';
-import { TacSdk } from 'tac-sdk';
-import { TONCENTER_URL_ENDPOINT } from '~/utils/ton-utils';
+import { type Contract, ethers } from 'ethers'
+import { type AssetBridgingData, SenderFactory } from 'tac-sdk'
+import { toNano } from '@ton/ton'
 
 export const useSwap = () => {
-  let contract: Contract;
-  const config = useRuntimeConfig().public;
+  let contract: Contract
+  const { tacSdk } = useTac()
+  const { getTonConnectUI } = useTonConnect()
+  const proxyAddress = '0xF080CaFA628071C4304eBA0832136231667f4609'
+  const evmProviderUrl = 'https://newyork-inap-72-251-230-233.ankr.com/tac_tacd_testnet_full_rpc_1'
 
-  const swap = async (tonConnect: TonConnectUI, fromAddress: string, tokenAddress: string, swapKeys: Array<number>, amount: number | string) => {
-    const abi = new ethers.AbiCoder();
-    const encodedParameters = abi.encode(
-      ['address', 'uint256', 'uint256', 'uint256', 'uint256'],
-      [
-        config.ethersContractAddress,
-        swapKeys[0],
-        swapKeys[1],
-        Number(toNano(amount)),
-        0
-      ]
-    );
+  const swap = async (poolAddress: string, tokenAddress: string, swapKeys: Array<number>, amount: number, decimals: number = 9) => {
+    const evmProxyMsg = {
+      evmTargetAddress: proxyAddress,
+      methodName: 'exchange(bytes,bytes)',
+      encodedParameters: ethers.AbiCoder.defaultAbiCoder().encode(
+        ['tuple(address,uint256,uint256,uint256,uint256)'],
+        [[poolAddress, swapKeys[0], swapKeys[1], BigInt(amount * 10 ** decimals), toNano(0)]],
+      ),
+    }
 
-    const params: JettonProxyMsgParameters = {
-      fromAddress,
-      jettonAmount: Number(amount),
-      proxyMsg: {
-        evmTargetAddress: config.swapPayloadJsonTarget,
-        methodName: 'exchange(address,uint256,uint256,uint256,uint256)',
-        encodedParameters
-      },
-      tokenAddress,
-      tonConnect,
-      tonAmount: 0.35
-    };
+    const assets: AssetBridgingData[] = [{
+      amount: Number(amount),
+      address: tokenAddress === 'ton' ? undefined : tokenAddress,
+    }]
+    const sender = await SenderFactory.getSender({ tonConnect: getTonConnectUI() })
 
-    const tacSdk = new TacSdk({
-      tonClientParameters: {
-        endpoint: TONCENTER_URL_ENDPOINT
-      },
-      network: CHAIN.TESTNET
-    });
-
-    return await tacSdk.sendJettonWithProxyMsg(params);
-  };
-  const getContract = () => {
+    return tacSdk.value?.sendCrossChainTransaction(evmProxyMsg, sender, assets)
+  }
+  const getContract = async (poolAddress: string) => {
     const abi = [
       {
         stateMutability: 'view',
@@ -54,56 +36,38 @@ export const useSwap = () => {
         inputs: [
           {
             name: 'i',
-            type: 'uint256'
+            type: 'uint256',
           },
           {
             name: 'j',
-            type: 'uint256'
+            type: 'uint256',
           },
           {
             name: 'dx',
-            type: 'uint256'
-          }
+            type: 'uint256',
+          },
         ],
         outputs: [
           {
             name: '',
-            type: 'uint256'
-          }
-        ]
+            type: 'uint256',
+          },
+        ],
       },
-      {
-        stateMutability: 'view',
-        type: 'function',
-        name: 'coins',
-        inputs: [
-          {
-            name: 'arg0',
-            type: 'uint256'
-          }
-        ],
-        outputs: [
-          {
-            name: '',
-            type: 'address'
-          }
-        ]
-      }
-    ];
-    const provider = ethers.getDefaultProvider(config.ethersProviderUrl);
-
-    return new ethers.Contract(config.ethersContractAddress, abi, provider);
-  };
-  const getSwapRates = (amount: string, swapKeys: Array<number>) => {
+    ]
+    const provider = ethers.getDefaultProvider(evmProviderUrl)
+    return new ethers.Contract(poolAddress, abi, provider)
+  }
+  const getSwapRates = async (poolAddress: string, amount: string, swapKeys: Array<number>) => {
     if (!contract) {
-      contract = getContract();
+      contract = await getContract(poolAddress)
     }
 
-    return contract.get_dy(swapKeys[0], swapKeys[1], amount);
-  };
+    return contract.get_dy(swapKeys[0], swapKeys[1], amount)
+  }
 
   return {
     swap,
-    getSwapRates
-  };
-};
+    getSwapRates,
+  }
+}

@@ -1,0 +1,18 @@
+@use "sass:map";
+$breakpoints: (
+  mobile: 0,
+  tablet: 768px,
+  laptop: 1440px,
+);
+
+@mixin respond-to($breakpoint) {
+  @if map.has-key($breakpoints, $breakpoint) {
+    $breakpoint-value: map.get($breakpoints, $breakpoint);
+
+    @media (max-width: $breakpoint-value) {
+      @content;
+    }
+  } @else {
+    @warn 'Invalid breakpoint: #{$breakpoint}.';
+  }
+}

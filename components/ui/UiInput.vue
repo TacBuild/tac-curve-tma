@@ -1,72 +1,73 @@
 <script setup lang="ts">
 defineOptions({
-  inheritAttrs: false
-});
-const model = defineModel<string | number>({ default: '' });
-const emits = defineEmits(['blur', 'focus', 'enter', 'input', 'change', 'update:model-value']);
+  inheritAttrs: false,
+})
+const model = defineModel<string | number>({ default: '' })
+const emits = defineEmits(['blur', 'focus', 'enter', 'input', 'change', 'update:model-value'])
 const props = defineProps({
   name: {
     type: String,
-    default: ''
+    default: '',
   },
 
   label: {
     type: String,
-    default: ''
+    default: '',
   },
 
   type: {
     type: String,
-    default: 'text'
+    default: 'text',
   },
 
   color: {
     type: String,
-    default: ''
+    default: '',
   },
 
   error: {
     type: String,
-    default: ''
+    default: '',
   },
 
   disabled: Boolean,
-  onlyNumber: Boolean
-});
+  onlyNumber: Boolean,
+})
 
-const isFocused = ref(false);
-const inputRef = ref();
+const isFocused = ref(false)
+const inputRef = ref()
 
 const classes = computed(() => {
   return {
     'is-focused': isFocused.value,
     'is-disabled': props.disabled,
     'has-value': Boolean(model.value),
-    'has-error': Boolean(props.error)
-  };
-});
+    'has-error': Boolean(props.error),
+  }
+})
 
 const onFocus = (e: Event) => {
   if (props.disabled) {
-    return;
+    return
   }
 
-  isFocused.value = true;
-  emits('focus', e);
-};
+  isFocused.value = true
+  emits('focus', e)
+}
 const onBlur = (e: Event) => {
-  isFocused.value = false;
-  emits('blur', e);
-};
+  isFocused.value = false
+  emits('blur', e)
+}
 const onInput = (e: Event) => {
-  const value = (e.target as HTMLInputElement).value;
+  const value = (e.target as HTMLInputElement).value
   if (props.onlyNumber && isNaN(Number(value)) && Boolean(value)) {
-    (e.target as HTMLInputElement).value = String(model.value);
-  } else {
-    model.value = value;
+    (e.target as HTMLInputElement).value = String(model.value)
   }
-  emits('input', e);
-};
+  else {
+    model.value = value
+  }
+  emits('input', e)
+}
 </script>
 
 <template>
@@ -79,7 +80,10 @@ const onInput = (e: Event) => {
       @click="inputRef.focus()"
     >
       <div class="v-input__content">
-        <div v-if="label || $slots.label" class="v-input__label">
+        <div
+          v-if="label || $slots.label"
+          class="v-input__label"
+        >
           <slot name="label">
             {{ label }}
           </slot>
@@ -135,10 +139,8 @@ const onInput = (e: Event) => {
   }
 
   &.has-error {
-    #{$block}__wrap {
-      @include hover() {
-        box-shadow: inset 0 0 0 3px var(--ui-danger-highlight-color);
-      }
+    #{$block}__wrap:hover {
+      //box-shadow: inset 0 0 0 3px var(--ui-danger-highlight-color);
     }
 
     #{$block}__native {

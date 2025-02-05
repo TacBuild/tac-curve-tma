@@ -1,105 +1,142 @@
 <script setup lang="ts">
-import { UserRejectsError } from '@tonconnect/ui';
-import { useDebounceFn } from '@vueuse/core';
-import { type Token, tokens } from '~/entities/token';
-import { useTonConnect } from '~/composables/useTonConnect';
-import { useModal } from '~/components/ui/composables/useModal';
-import { BaseModal } from '#components';
-import { SLIPPAGE_PERCENT_VALUE } from '~/utils/ton-utils';
-import { useSwap } from '~/composables/useSwap';
+import { UserRejectsError } from '@tonconnect/ui'
+import { useDebounceFn } from '@vueuse/core'
+import { Network, OperationTracker } from 'tac-sdk'
+import { Address } from '@ton/ton'
+import { pools, type Token, tokens } from '~/entities/token'
+import { useTonConnect } from '~/composables/useTonConnect'
+import { useModal } from '~/components/ui/composables/useModal'
+import { BaseModal } from '#components'
+import { fetchTonBalance, SLIPPAGE_PERCENT_VALUE } from '~/utils/ton-utils'
+import { useSwap } from '~/composables/useSwap'
 
-const modal = useModal();
-const { isLoaded, isConnected, address, walletName, shorterAddress, getTonConnectUI, disconnect } = useTonConnect();
-const { swap, getSwapRates } = useSwap();
-const pair: { main?: boolean, id: number, token: Token, inputValue: string, balance: number }[] = reactive([
-  {
-    main: true,
-    id: 1,
-    token: tokens.stton,
-    inputValue: '1',
-    balance: 0
-  },
-  {
-    id: 2,
-    token: tokens.tac,
-    inputValue: '',
-    balance: 0
-  }
-]);
-const isLoading = ref(false);
-const isLoadingRates = ref(false);
-const isSwapping = ref(false);
+const modal = useModal()
+const {
+  isLoaded,
+  isConnected,
+  address,
+  walletName,
+  shorterAddress,
+  getTonConnectUI,
+  disconnect,
+} = useTonConnect()
+const {
+  swap,
+  getSwapRates,
+} = useSwap()
+const {
+  tacSdk,
+  isLoaded: isTacLoaded,
+} = useTac()
+
+const pool = ref(pools[0])
+
+const isLoadingBalances = ref(false)
+const isLoadingRates = ref(false)
+const isSwapping = ref(false)
+const errorRate = ref('')
 
 const isSubmitDisabled = computed(() => {
   if (!isConnected.value) {
-    return !isLoaded.value;
+    return !isLoaded.value
   }
 
-  return isSwapping.value || isLoading.value || !pair[0].inputValue || Number(pair[0].inputValue) > pair[0].balance;
-});
+  return isSwapping.value || isLoadingBalances.value || !pair[0].inputValue || Number(pair[0].inputValue) > pair[0].balance
+})
+const isReady = computed(() => isConnected.value && isTacLoaded.value)
+const pair: { id: number, token: Token, inputValue: string, balance: number, swapKey: 0 | 1 }[] = reactive([{
+  id: 1,
+  token: tokens[0],
+  inputValue: '1',
+  balance: 0,
+  swapKey: 0,
+}, {
+  id: 2,
+  token: tokens[1],
+  inputValue: '0',
+  balance: 0,
+  swapKey: 1 },
+])
 
 const getRate = async (value: number, keys: Array<number>) => {
-  const rate = await getSwapRates(String(value * 10 ** 9), keys);
-  return Number(rate || 0);
-};
+  const rate = await getSwapRates(pool.value[1], String(value * 10 ** 9), keys)
+  return Number(rate || 0)
+}
 const loadBalances = async () => {
   try {
-    isLoading.value = true;
-    pair[0].balance = await getJettonBalance(address.value, pair[0].token.tokenAddress);
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    pair[1].balance = await getJettonBalance(address.value, pair[1].token.tokenAddress);
-  } catch (e) {
-    console.warn(e);
-  } finally {
-    isLoading.value = false;
+    isLoadingBalances.value = true
+    pair[0].balance = pair[0].token.tvmTokenAddress === 'ton'
+      ? await fetchTonBalance(Address.parse(address.value))
+      : Number(await tacSdk.value?.getUserJettonBalance(address.value, pair[0].token.tvmTokenAddress)) / 10 ** pair[0].token.decimals || 0
+    pair[1].balance = pair[1].token.tvmTokenAddress === 'ton'
+      ? await fetchTonBalance(Address.parse(address.value))
+      : Number(await tacSdk.value?.getUserJettonBalance(address.value, pair[1].token.tvmTokenAddress)) / 10 ** pair[1].token.decimals || 0
   }
-};
+  catch (e) {
+    console.warn(e)
+  }
+  finally {
+    isLoadingBalances.value = false
+  }
+}
 const swapPair = () => {
-  pair.reverse();
-};
+  pair.reverse()
+}
 const calcRate = useDebounceFn(async (inputIndex: number) => {
-  const value = Number(pair[inputIndex].inputValue || 0);
-  const keys = pair.map(o => o.token.swapKey);
-  let rate;
+  errorRate.value = ''
+  const value = Number(pair[inputIndex].inputValue || 0)
+  const keys = pair.map(o => o.swapKey)
+  let rate
   try {
-    rate = value <= 0 ? 0 : await getRate(value, inputIndex === 0 ? keys : keys.reverse());
-  } catch (e) {
-    console.warn(e);
-    rate = 0;
+    rate = value <= 0 ? 0 : await getRate(value, inputIndex === 0 ? keys : keys.reverse())
   }
-  const result = String(Math.trunc(rate) / 10 ** 9);
+  catch (e) {
+    errorRate.value = 'Unable to calculate rate'
+    console.warn(e)
+    rate = 0
+  }
+  const result = String(Math.trunc(rate) / 10 ** 9)
   if (inputIndex === 0) {
-    pair[1].inputValue = !value ? '' : result;
-  } else {
-    pair[0].inputValue = !value ? '' : result;
+    pair[1].inputValue = !value ? '' : result
   }
-}, 200);
+  else {
+    pair[0].inputValue = !value ? '' : result
+  }
+}, 200)
 const onSubmit = async () => {
   if (!pair[0].inputValue) {
-    return;
+    return
   }
 
   if (!isConnected.value) {
-    getTonConnectUI().modal.open();
-    return;
+    getTonConnectUI().modal.open()
+    return
   }
 
   try {
-    pair[0].inputValue = String(Math.trunc((Number(pair[0].inputValue)) * 10 ** 9) / 10 ** 9);
-    isSwapping.value = true;
-    await swap(getTonConnectUI(), address.value, pair[0].token.tokenAddress, pair.map(o => o.token.swapKey), pair[0].inputValue);
-    console.log('*****Swapped');
+    pair[0].inputValue = String(Math.trunc((Number(pair[0].inputValue)) * 10 ** 9) / 10 ** 9)
+    isSwapping.value = true
+    console.log(pool.value)
+    const txLinker = await swap(pool.value[1], pair[0].token.tvmTokenAddress, pair.map(o => o.swapKey), Number(pair[0].inputValue), pair[0].token.decimals)
+    console.log(txLinker)
+
+    if (!txLinker) {
+      throw 'TX linker not found.'
+    }
+
     modal.open(BaseModal, {
       props: {
         title: 'Transaction submitted',
         text: 'Please wait a couple of minutes for the swap to complete and check your wallet balance.',
-        status: 'success'
+        status: 'success',
       },
       onClose: () => {
-        loadBalances();
-      }
-    });
-  } catch (e) {
+        loadBalances()
+      },
+    })
+  }
+  catch (e) {
+    console.warn(e)
     modal.open(BaseModal, {
       props: {
         title: 'Failed',
@@ -108,27 +145,78 @@ const onSubmit = async () => {
           : e instanceof UserRejectsError
             ? 'You rejected the transaction'
             : 'Something went wrong. Make sure you have enough token balance and try again',
-        status: 'error'
-      }
-    });
-  } finally {
-    isSwapping.value = false;
+        status: 'error',
+      },
+    })
   }
-};
+  finally {
+    isSwapping.value = false
+  }
+}
 
-calcRate(0);
+calcRate(0)
 
-watch(isConnected, (val) => {
+watch(pool, () => {
+  const keys = pool.value[0].split('-')
+  const token1 = tokens.find(token => token.tokenName === keys[0])
+  const token2 = tokens.find(token => token.tokenName === keys[1])
+
+  if (token1 && token2) {
+    Object.assign(pair, [
+      {
+        id: 1,
+        token: token1,
+        inputValue: '1',
+        balance: 0,
+        swapKey: 0,
+      },
+      {
+        id: 2,
+        token: token2,
+        inputValue: '0',
+        balance: 0,
+        swapKey: 1,
+      },
+    ])
+
+    if (isReady.value) {
+      loadBalances()
+      calcRate(0)
+    }
+  }
+})
+watch(isReady, (val) => {
   if (val) {
-    loadBalances();
+    loadBalances()
   }
-}, { immediate: true });
+}, { immediate: true })
 </script>
 
 <template>
-  <form :class="$style.SwapForm" @submit.prevent="onSubmit">
+  <form
+    :class="$style.SwapForm"
+    @submit.prevent="onSubmit"
+  >
     <template v-if="isLoaded">
-      <TransitionGroup tag="div" name="swap" :class="$style.inputs" class="mb-16">
+      <UiSelect
+        v-model="pool as unknown as Array<never>"
+        label="Pool"
+        class="mb-12"
+      >
+        <option
+          v-for="pool in pools"
+          :key="pool[1]"
+          :value="pool"
+        >
+          {{ pool[0] }}
+        </option>
+      </UiSelect>
+      <TransitionGroup
+        tag="div"
+        name="swap"
+        :class="$style.inputs"
+        class="mb-16"
+      >
         <UiInput
           :key="pair[0].id"
           v-model="pair[0].inputValue"
@@ -141,14 +229,30 @@ watch(isConnected, (val) => {
           @input="calcRate(0)"
         >
           <template #label>
-            {{ isConnected ? `Avail. ${isLoading ? 'loading...' : pair[0].balance}` : 'You send' }}
+            {{
+              isConnected ? `Available: ${isLoadingBalances || !isTacLoaded
+                ? 'loading...' : pair[0].balance}`
+              : 'You send'
+            }}
           </template>
           <template #append>
-            <TokenButton key="tb0" :token="pair[0].token" :desc="shorterAddress" />
+            <TokenButton
+              key="tb0"
+              :token="pair[0].token"
+              :desc="shorterAddress"
+            />
           </template>
         </UiInput>
-        <button key="swap-button" type="button" class="mx-auto" @click="swapPair">
-          <UiIcon name="swap-arrows" class="c-secondary-text icon--32 " />
+        <button
+          key="swap-button"
+          type="button"
+          class="mx-auto"
+          @click="swapPair"
+        >
+          <UiIcon
+            name="swap-arrows"
+            class="c-secondary-text icon--32 "
+          />
         </button>
         <UiInput
           :key="pair[1].id"
@@ -159,23 +263,37 @@ watch(isConnected, (val) => {
           inputmode="numeric"
           only-number
           :disabled="isSwapping || isLoadingRates"
+          :error="errorRate"
           @input="calcRate(1)"
         >
           <template #label>
-            {{ isConnected ? `Avail. ${isLoading ? 'loading...' : pair[1].balance}` : 'You receive' }}
+            {{
+              isConnected ? `Available: ${isLoadingBalances || !isTacLoaded
+                ? 'loading...' : pair[1].balance}`
+              : 'You receive'
+            }}
           </template>
           <template #append>
-            <TokenButton key="tb1" :token="pair[1].token" />
+            <TokenButton
+              key="tb1"
+              :token="pair[1].token"
+            />
           </template>
         </UiInput>
       </TransitionGroup>
 
-      <p :class="$style.info" class="mb-8">
+      <p
+        :class="$style.info"
+        class="mb-8"
+      >
         <span class=" weight-600">Slippage tolerance</span>
         <span class="c-secondary-text">{{ SLIPPAGE_PERCENT_VALUE }}%</span>
       </p>
 
-      <p :class="$style.info" class="mb-24">
+      <p
+        :class="$style.info"
+        class="mb-24"
+      >
         <span class=" weight-600">Network fee</span>
         <span class="c-secondary-text">~0.14 TON</span>
       </p>
@@ -193,7 +311,7 @@ watch(isConnected, (val) => {
 
       <UiButton
         type="submit"
-        :loading="isSwapping || isLoading"
+        :loading="isSwapping || isLoadingBalances || !isTacLoaded"
         :disabled="isSubmitDisabled"
         wide
       >
@@ -209,11 +327,11 @@ watch(isConnected, (val) => {
 </template>
 
 <style module lang="scss">
-
 .SwapForm {
   display: flex;
   flex-direction: column;
 }
+
 .inputs {
   position: relative;
   display: flex;
@@ -229,5 +347,4 @@ watch(isConnected, (val) => {
 .disconnect {
   cursor: pointer;
 }
-
 </style>
