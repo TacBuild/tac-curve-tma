@@ -1,7 +1,7 @@
 <script setup lang="ts">
 defineProps<{ label: string }>()
 const inputRef = ref()
-const model = defineModel<string | number | Array<never>>({ default: '' })
+const model = defineModel<unknown>()
 
 onMounted(() => {
   console.log(inputRef.value)

@@ -199,16 +199,16 @@ watch(isReady, (val) => {
   >
     <template v-if="isLoaded">
       <UiSelect
-        v-model="pool as unknown as Array<never>"
+        v-model="pool"
         label="Pool"
         class="mb-12"
       >
         <option
-          v-for="pool in pools"
-          :key="pool[1]"
-          :value="pool"
+          v-for="item in pools"
+          :key="item[1]"
+          :value="item"
         >
-          {{ pool[0] }}
+          {{ item[0] }}
         </option>
       </UiSelect>
       <TransitionGroup
