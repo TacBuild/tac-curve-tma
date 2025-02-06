@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { useModal } from './composables/useModal';
+import { useModal } from './composables/useModal'
 
-const { list } = useModal();
+const { list } = useModal()
 </script>
 
 <template>

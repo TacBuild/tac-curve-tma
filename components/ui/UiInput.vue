@@ -4,36 +4,15 @@ defineOptions({
 })
 const model = defineModel<string | number>({ default: '' })
 const emits = defineEmits(['blur', 'focus', 'enter', 'input', 'change', 'update:model-value'])
-const props = defineProps({
-  name: {
-    type: String,
-    default: '',
-  },
-
-  label: {
-    type: String,
-    default: '',
-  },
-
-  type: {
-    type: String,
-    default: 'text',
-  },
-
-  color: {
-    type: String,
-    default: '',
-  },
-
-  error: {
-    type: String,
-    default: '',
-  },
-
-  disabled: Boolean,
-  onlyNumber: Boolean,
-})
-
+const props = defineProps<{
+  name?: string
+  label?: string
+  type?: string
+  color?: string
+  error?: string
+  disabled?: boolean
+  onlyNumber?: boolean
+}>()
 const isFocused = ref(false)
 const inputRef = ref()
 

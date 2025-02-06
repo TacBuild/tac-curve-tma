@@ -1,11 +1,6 @@
 <script setup lang="ts">
 defineProps<{ label: string }>()
-const inputRef = ref()
 const model = defineModel<unknown>()
-
-onMounted(() => {
-  console.log(inputRef.value)
-})
 </script>
 
 <template>
@@ -30,19 +25,12 @@ onMounted(() => {
 </template>
 
 <style lang="scss">
-.v-input {
-  &__wrap {
-    cursor: default !important;
-  }
-  & select {
-    width: 100%;
-    padding-top: 20px;
-  }
-
-}
-
 .v-select {
   position: relative;
+
+  & .v-input__wrap {
+    cursor: default;
+  }
 
   & .v-input__label {
     position: absolute;
@@ -50,5 +38,11 @@ onMounted(() => {
     left: 16px;
     top: 8px;
   }
+
+  & select {
+    width: 100%;
+    padding-top: 20px;
+  }
+
 }
 </style>

@@ -1,5 +1,5 @@
-@use "mixins" as *;
-@use 'modern-normalize/modern-normalize.css';
+@use 'modern-normalize';
+@use "fonts";
 @use "variables";
 @use "reset";
 @use "typography";
@@ -38,7 +38,10 @@ body {
 .container {
   width: 100%;
   max-width: var(--container-w);
-  padding: var(--container-padding);
+
+  @include respond-to(mobile) {
+    padding: var(--container-padding);
+  }
 }
 
 .icon {

@@ -1,27 +1,27 @@
 <script setup lang="ts">
-import { useModal } from './composables/useModal';
+import { useModal } from './composables/useModal'
 
-const modal = useModal();
+const modal = useModal()
 const props = defineProps({
   id: {
     type: Number,
-    default: 0
+    default: 0,
   },
 
   component: {
     type: Object,
     default: () => ({}),
-    required: true
+    required: true,
   },
 
   data: {
     type: Object,
-    default: () => {}
-  }
-});
+    default: () => {},
+  },
+})
 
-const isComponentVisible = ref(false);
-const isPreventClose = ref(false);
+const isComponentVisible = ref(false)
+const isPreventClose = ref(false)
 
 const styles = computed(() => {
   return {
@@ -29,46 +29,47 @@ const styles = computed(() => {
     top: props.data.top || 0,
     bottom: props.data.top || 0,
     height: props.data.height || 'auto',
-    position: props.data.position || 'fixed'
-  };
-});
+    position: props.data.position || 'fixed',
+  }
+})
 
 const close = () => {
   if (isPreventClose.value) {
-    return;
+    return
   }
 
   if (props.data.onClose) {
-    props.data.onClose();
-  } else if (props.data.props?.onClose) {
-    props.data.props.onClose();
+    props.data.onClose()
+  }
+  else if (props.data.props?.onClose) {
+    props.data.props.onClose()
   }
 
-  isComponentVisible.value = false;
-};
+  isComponentVisible.value = false
+}
 const onClickWrapper = () => {
   if (!props.data.isNotClosable) {
-    close();
+    close()
   }
-};
+}
 const beforeComponentLeave = () => {
-  modal.close(props.id);
+  modal.close(props.id)
 
   if (props.data.beforeComponentLeave) {
-    props.data.beforeComponentLeave();
+    props.data.beforeComponentLeave()
   }
-};
+}
 const handlePreventClose = (value: boolean) => {
-  isPreventClose.value = value;
-};
+  isPreventClose.value = value
+}
 
 onMounted(() => {
-  isComponentVisible.value = true;
-});
+  isComponentVisible.value = true
+})
 
 onBeforeUnmount(() => {
-  isComponentVisible.value = false;
-});
+  isComponentVisible.value = false
+})
 </script>
 
 <template>

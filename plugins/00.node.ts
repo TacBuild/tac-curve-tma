@@ -1,13 +1,13 @@
-import { Buffer } from 'buffer';
-import { defineNuxtPlugin } from '#app';
+import { Buffer } from 'buffer'
+import { defineNuxtPlugin } from '#app'
 
-globalThis.Buffer = Buffer;
+globalThis.Buffer = Buffer
 if (!(Buffer.alloc(1).subarray(0, 1) instanceof Buffer)) {
-  Buffer.prototype.subarray = function subarray (...args: [begin: number | undefined, end: number | undefined]) {
-    const result = Uint8Array.prototype.subarray.apply(this, args);
-    Object.setPrototypeOf(result, Buffer.prototype);
-    return result;
-  };
+  Buffer.prototype.subarray = function subarray(...args: [begin: number | undefined, end: number | undefined]) {
+    const result = Uint8Array.prototype.subarray.apply(this, args)
+    Object.setPrototypeOf(result, Buffer.prototype)
+    return result
+  }
 }
 
-export default defineNuxtPlugin(() => {});
+export default defineNuxtPlugin(() => {})

@@ -16,17 +16,6 @@
           >
         </a>
       </h1>
-
-      <div class="right c-secondary-text p3">
-        Powered by:
-
-        <div class="logo-tac">
-          <img
-            src="/logo-tac.webp"
-            alt="TAC logo"
-          >
-        </div>
-      </div>
     </div>
   </header>
 </template>
@@ -52,12 +41,11 @@
   height: 100%;
   width: 100%;
   max-width: var(--container-w);
-  padding: var(--container-padding);
   background-color: var(--c-body-bg);
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 
   @include respond-to(mobile) {
-    padding: 0 var(--container-padding-side);
+    padding: var(--container-padding);
   }
 }
 

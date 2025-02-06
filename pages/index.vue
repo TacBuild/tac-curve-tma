@@ -3,7 +3,10 @@
 
 <template>
   <section class="page-wrapper">
-    <div class="container" :class="$style.container">
+    <div
+      class="container"
+      :class="$style.container"
+    >
       <h1 class="h1 mb-12">
         Swap
       </h1>

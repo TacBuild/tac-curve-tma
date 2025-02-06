@@ -1,66 +1,66 @@
 <script setup lang="ts">
-import { NuxtLink } from '#components';
+import { NuxtLink } from '#components'
 
-const emits = defineEmits(['click']);
+const emits = defineEmits(['click'])
 const props = defineProps({
   type: {
     type: String,
-    default: 'button'
+    default: 'button',
   },
 
   to: {
     type: String,
-    default: ''
+    default: '',
   },
 
   href: {
     type: String,
-    default: ''
+    default: '',
   },
 
   target: {
     type: String,
-    default: ''
+    default: '',
   },
 
   wide: Boolean,
   disabled: Boolean,
-  loading: Boolean
-});
+  loading: Boolean,
+})
 
 const bindedAttrs = computed(() => {
   if (props.href) {
     return {
-      href: props.href
-    };
+      href: props.href,
+    }
   }
 
   if (props.to) {
     return {
-      to: props.to
-    };
+      to: props.to,
+    }
   }
 
-  return {};
-});
+  return {}
+})
 const tag = computed(() => {
-  return props.href ? 'a' : props.to ? NuxtLink : 'button';
-});
+  return props.href ? 'a' : props.to ? NuxtLink : 'button'
+})
 const classes = computed(() => {
   return {
     'is-wide': props.wide,
     'is-loading': props.loading,
-    'is-disabled': props.disabled
-  };
-});
+    'is-disabled': props.disabled,
+  }
+})
 
 const onClick = (e: Event) => {
   if (props.loading || props.disabled) {
-    return;
+    return
   }
 
-  emits('click', e);
-};
+  emits('click', e)
+}
 </script>
 
 <template>
@@ -80,7 +80,10 @@ const onClick = (e: Event) => {
         v-if="$slots.default"
         class="v-button__text"
       >
-        <span v-if="loading" class="v-button__loading" />
+        <span
+          v-if="loading"
+          class="v-button__loading"
+        />
         <slot />
       </div>
     </div>

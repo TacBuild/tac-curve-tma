@@ -82,9 +82,8 @@ export default defineNuxtConfig({
   },
 
   css: [
-    '~/assets/styles/fonts.scss',
-    '~/assets/styles/common.scss',
-    '~/components/ui/styles/common.scss',
+    '~/assets/styles/main.scss',
+    '~/components/ui/styles/main.scss',
   ],
 
   runtimeConfig: {
@@ -117,7 +116,7 @@ export default defineNuxtConfig({
     css: {
       preprocessorOptions: {
         scss: {
-          additionalData: '@use "@/assets/styles/mixins.scss" as *;',
+          additionalData: '@use "~/assets/styles/mixins.scss" as *;',
         },
       },
     },

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { UserRejectsError } from '@tonconnect/ui'
 import { useDebounceFn } from '@vueuse/core'
-import { Network, OperationTracker } from 'tac-sdk'
 import { Address } from '@ton/ton'
 import { pools, type Token, tokens } from '~/entities/token'
 import { useTonConnect } from '~/composables/useTonConnect'
@@ -35,6 +34,20 @@ const isLoadingBalances = ref(false)
 const isLoadingRates = ref(false)
 const isSwapping = ref(false)
 const errorRate = ref('')
+const pair: { id: number, token: Token, inputValue: string, balance: number, swapKey: 0 | 1 }[]
+  = reactive([{
+    id: 1,
+    token: tokens[0],
+    inputValue: '1',
+    balance: 0,
+    swapKey: 0,
+  }, {
+    id: 2,
+    token: tokens[1],
+    inputValue: '0',
+    balance: 0,
+    swapKey: 1 },
+  ])
 
 const isSubmitDisabled = computed(() => {
   if (!isConnected.value) {
@@ -44,19 +57,6 @@ const isSubmitDisabled = computed(() => {
   return isSwapping.value || isLoadingBalances.value || !pair[0].inputValue || Number(pair[0].inputValue) > pair[0].balance
 })
 const isReady = computed(() => isConnected.value && isTacLoaded.value)
-const pair: { id: number, token: Token, inputValue: string, balance: number, swapKey: 0 | 1 }[] = reactive([{
-  id: 1,
-  token: tokens[0],
-  inputValue: '1',
-  balance: 0,
-  swapKey: 0,
-}, {
-  id: 2,
-  token: tokens[1],
-  inputValue: '0',
-  balance: 0,
-  swapKey: 1 },
-])
 
 const getRate = async (value: number, keys: Array<number>) => {
   const rate = await getSwapRates(pool.value[1], String(value * 10 ** 9), keys)
@@ -81,6 +81,7 @@ const loadBalances = async () => {
 }
 const swapPair = () => {
   pair.reverse()
+  calcRate(0)
 }
 const calcRate = useDebounceFn(async (inputIndex: number) => {
   errorRate.value = ''
@@ -116,12 +117,16 @@ const onSubmit = async () => {
   try {
     pair[0].inputValue = String(Math.trunc((Number(pair[0].inputValue)) * 10 ** 9) / 10 ** 9)
     isSwapping.value = true
-    console.log(pool.value)
-    const txLinker = await swap(pool.value[1], pair[0].token.tvmTokenAddress, pair.map(o => o.swapKey), Number(pair[0].inputValue), pair[0].token.decimals)
-    console.log(txLinker)
+    const txLinker = await swap(
+      pool.value[1],
+      pair[0].token.tvmTokenAddress,
+      pair.map(o => o.swapKey),
+      Number(pair[0].inputValue),
+      pair[0].token.decimals,
+    )
 
     if (!txLinker) {
-      throw 'TX linker not found.'
+      return
     }
 
     modal.open(BaseModal, {
@@ -223,7 +228,7 @@ watch(isReady, (val) => {
           name="swap-from"
           maxlength="12"
           autocomplete="off"
-          inputmode="numeric"
+          inputmode="decimal"
           only-number
           :disabled="isSwapping || isLoadingRates"
           @input="calcRate(0)"
@@ -260,7 +265,7 @@ watch(isReady, (val) => {
           name="swap-to"
           maxlength="12"
           autocomplete="off"
-          inputmode="numeric"
+          inputmode="decimal"
           only-number
           :disabled="isSwapping || isLoadingRates"
           :error="errorRate"
