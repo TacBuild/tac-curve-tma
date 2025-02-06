@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { UserRejectsError } from '@tonconnect/ui'
 import { useDebounceFn } from '@vueuse/core'
-import { Address } from '@ton/ton'
+import { Address, fromNano, toNano } from '@ton/ton'
 import { pools, type Token, tokens } from '~/entities/token'
 import { useTonConnect } from '~/composables/useTonConnect'
 import { useModal } from '~/components/ui/composables/useModal'
@@ -58,8 +58,8 @@ const isSubmitDisabled = computed(() => {
 })
 const isReady = computed(() => isConnected.value && isTacLoaded.value)
 
-const getRate = async (value: number, keys: Array<number>) => {
-  const rate = await getSwapRates(pool.value[1], String(value * 10 ** 9), keys)
+const getRate = async (method: 'get_dy' | 'get_dx', value: number, keys: Array<number>) => {
+  const rate = await getSwapRates(method, pool.value[1], toNano(value), keys)
   return Number(rate || 0)
 }
 const loadBalances = async () => {
@@ -89,14 +89,14 @@ const calcRate = useDebounceFn(async (inputIndex: number) => {
   const keys = pair.map(o => o.swapKey)
   let rate
   try {
-    rate = value <= 0 ? 0 : await getRate(value, inputIndex === 0 ? keys : keys.reverse())
+    rate = value <= 0 ? 0 : await getRate(inputIndex === 0 ? 'get_dy' : 'get_dx', value, keys)
   }
   catch (e) {
     errorRate.value = 'Unable to calculate rate'
     console.warn(e)
     rate = 0
   }
-  const result = String(Math.trunc(rate) / 10 ** 9)
+  const result = fromNano(rate)
   if (inputIndex === 0) {
     pair[1].inputValue = !value ? '' : result
   }
@@ -121,8 +121,7 @@ const onSubmit = async () => {
       pool.value[1],
       pair[0].token.tvmTokenAddress,
       pair.map(o => o.swapKey),
-      Number(pair[0].inputValue),
-      pair[0].token.decimals,
+      BigInt(Number(pair[0].inputValue) * 10 ** pair[0].token.decimals || 9),
     )
 
     if (!txLinker) {

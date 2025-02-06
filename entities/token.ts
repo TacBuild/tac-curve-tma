@@ -194,7 +194,7 @@ export const tokens: Token[] = [
     title: 'Renzo ETH',
     logo: '/tokens/ezeth.png',
     tokenName: 'ezETH',
-    tvmTokenAddress: 'EQC_GKr_BeOeT_fA-tYT54rUiBkr3v9KLlFUo0yfiGC8PAml\n',
+    tvmTokenAddress: 'EQC_GKr_BeOeT_fA-tYT54rUiBkr3v9KLlFUo0yfiGC8PAml',
     tokenValue: '150000000000000',
     upperBound: '10000000000000000000',
     lowerBound: '50000000000000',

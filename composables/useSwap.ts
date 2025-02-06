@@ -9,13 +9,13 @@ export const useSwap = () => {
   const proxyAddress = '0xF080CaFA628071C4304eBA0832136231667f4609'
   const evmProviderUrl = 'https://newyork-inap-72-251-230-233.ankr.com/tac_tacd_testnet_full_rpc_1'
 
-  const swap = async (poolAddress: string, tokenAddress: string, swapKeys: Array<number>, amount: number, decimals: number = 9) => {
+  const swap = async (poolAddress: string, tokenAddress: string, swapKeys: Array<number>, amount: bigint) => {
     const evmProxyMsg = {
       evmTargetAddress: proxyAddress,
       methodName: 'exchange(bytes,bytes)',
       encodedParameters: ethers.AbiCoder.defaultAbiCoder().encode(
         ['tuple(address,uint256,uint256,uint256,uint256)'],
-        [[poolAddress, swapKeys[0], swapKeys[1], BigInt(amount * 10 ** decimals), toNano(0)]],
+        [[poolAddress, swapKeys[0], swapKeys[1], amount, toNano(0)]],
       ),
     }
 
@@ -29,6 +29,31 @@ export const useSwap = () => {
   }
   const getContract = async (poolAddress: string) => {
     const abi = [
+      {
+        stateMutability: 'view',
+        type: 'function',
+        name: 'get_dx',
+        inputs: [
+          {
+            name: 'i',
+            type: 'uint256',
+          },
+          {
+            name: 'j',
+            type: 'uint256',
+          },
+          {
+            name: 'dx',
+            type: 'uint256',
+          },
+        ],
+        outputs: [
+          {
+            name: '',
+            type: 'uint256',
+          },
+        ],
+      },
       {
         stateMutability: 'view',
         type: 'function',
@@ -58,12 +83,12 @@ export const useSwap = () => {
     const provider = ethers.getDefaultProvider(evmProviderUrl)
     return new ethers.Contract(poolAddress, abi, provider)
   }
-  const getSwapRates = async (poolAddress: string, amount: string, swapKeys: Array<number>) => {
+  const getSwapRates = async (method: 'get_dx' | 'get_dy', poolAddress: string, amount: bigint, swapKeys: number[]) => {
     if (!contract) {
       contract = await getContract(poolAddress)
     }
 
-    return contract.get_dy(swapKeys[0], swapKeys[1], amount)
+    return contract[method](swapKeys[0], swapKeys[1], amount)
   }
 
   return {
