@@ -227,6 +227,7 @@ watch(isReady, (val) => {
           v-model="pair[0].inputValue"
           name="swap-from"
           maxlength="12"
+          step="0.1"
           autocomplete="off"
           inputmode="decimal"
           only-number
@@ -265,6 +266,7 @@ watch(isReady, (val) => {
           name="swap-to"
           maxlength="12"
           autocomplete="off"
+          step="0.1"
           inputmode="decimal"
           only-number
           :disabled="isSwapping || isLoadingRates"

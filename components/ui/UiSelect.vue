@@ -42,6 +42,7 @@ const model = defineModel<unknown>()
   & select {
     width: 100%;
     padding-top: 20px;
+    border-radius: 0;
   }
 
 }
