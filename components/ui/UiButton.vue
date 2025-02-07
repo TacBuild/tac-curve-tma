@@ -2,31 +2,17 @@
 import { NuxtLink } from '#components'
 
 const emits = defineEmits(['click'])
-const props = defineProps({
-  type: {
-    type: String,
-    default: 'button',
-  },
-
-  to: {
-    type: String,
-    default: '',
-  },
-
-  href: {
-    type: String,
-    default: '',
-  },
-
-  target: {
-    type: String,
-    default: '',
-  },
-
-  wide: Boolean,
-  disabled: Boolean,
-  loading: Boolean,
-})
+const props = withDefaults(defineProps<Partial<{
+  type: string
+  to: string
+  href: string
+  target: string
+  size: 'small' | undefined
+  color: 'secondary' | undefined
+  wide: boolean
+  disabled: boolean
+  loading: boolean
+}>>(), { type: 'button' })
 
 const bindedAttrs = computed(() => {
   if (props.href) {
@@ -50,7 +36,8 @@ const classes = computed(() => {
   return {
     'is-wide': props.wide,
     'is-loading': props.loading,
-    'is-disabled': props.disabled,
+    [`v-button--${props.size}`]: Boolean(props.size),
+    [`v-button--${props.color}`]: Boolean(props.color),
   }
 })
 
@@ -122,10 +109,12 @@ const onClick = (e: Event) => {
     pointer-events: none;
   }
 
-  &.is-disabled {
+  &[disabled] {
     cursor: default;
     pointer-events: none;
-    opacity: 0.7;
+    background-color: var(--ui-button-primary-disabled-bg-color);
+    box-shadow: var(--ui-button-primary-disabled-box-shadow);
+    color: var(--ui-button-primary-disabled-text-color);
   }
 
   &.is-wide {
@@ -162,6 +151,24 @@ const onClick = (e: Event) => {
       width: 24px;
       height: 24px;
       text-align: center;
+    }
+  }
+
+  &--small {
+    min-height: 31px;
+    min-width: 52px;
+    padding: 0 6px;
+    font-size: var(--ui-button-small-font-size);
+  }
+
+  &--secondary {
+    background-color: var(--ui-button-secondary-bg-color);
+    color: var(--ui-button-secondary-text-color);
+    box-shadow: var(--ui-button-secondary-box-shadow);
+
+    &:active {
+      background-color: var(--ui-button-secondary-active-bg-color);
+      box-shadow: var(--ui-button-secondary-active-box-shadow);
     }
   }
 }

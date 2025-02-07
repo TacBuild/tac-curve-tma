@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { UserRejectsError } from '@tonconnect/ui'
 import { useDebounceFn } from '@vueuse/core'
-import { Address, fromNano, toNano } from '@ton/ton'
+import { Address } from '@ton/ton'
 import { pools, type Token, tokens } from '~/entities/token'
 import { useTonConnect } from '~/composables/useTonConnect'
 import { useModal } from '~/components/ui/composables/useModal'
-import { BaseModal } from '#components'
-import { fetchTonBalance, SLIPPAGE_PERCENT_VALUE } from '~/utils/ton-utils'
+import { SwapConfirmModal, SwapStatusModal } from '#components'
+import { fetchTonBalance } from '~/utils/ton-utils'
 import { useSwap } from '~/composables/useSwap'
 
 const modal = useModal()
@@ -20,6 +20,7 @@ const {
   disconnect,
 } = useTonConnect()
 const {
+  slippagePercent,
   swap,
   getSwapRates,
 } = useSwap()
@@ -58,19 +59,21 @@ const isSubmitDisabled = computed(() => {
 })
 const isReady = computed(() => isConnected.value && isTacLoaded.value)
 
-const getRate = async (method: 'get_dy' | 'get_dx', value: number, keys: Array<number>) => {
-  const rate = await getSwapRates(method, pool.value[1], toNano(value), keys)
-  return Number(rate || 0)
+const getRate = async (value: number, keys: Array<number>, inputIndex: number) => {
+  const method = inputIndex === 0 ? 'get_dy' : 'get_dx'
+  const decimals = pair[inputIndex === 0 ? 0 : 1].token.decimals
+  const rate = await getSwapRates(method, pool.value[1], BigInt(Math.floor(value * 10 ** decimals)), keys)
+  return nanoToValue(rate, pair[inputIndex === 0 ? 1 : 0].token.decimals)
 }
 const loadBalances = async () => {
   try {
     isLoadingBalances.value = true
-    pair[0].balance = pair[0].token.tvmTokenAddress === 'ton'
+    pair[0].balance = !pair[0].token.evmTokenAddress
       ? await fetchTonBalance(Address.parse(address.value))
-      : Number(await tacSdk.value?.getUserJettonBalance(address.value, pair[0].token.tvmTokenAddress)) / 10 ** pair[0].token.decimals || 0
-    pair[1].balance = pair[1].token.tvmTokenAddress === 'ton'
+      : nanoToValue(await tacSdk.value?.getUserJettonBalance(address.value, await tacSdk.value?.getTVMTokenAddress(pair[0].token.evmTokenAddress)) || 0, pair[0].token.decimals)
+    pair[1].balance = !pair[1].token.evmTokenAddress
       ? await fetchTonBalance(Address.parse(address.value))
-      : Number(await tacSdk.value?.getUserJettonBalance(address.value, pair[1].token.tvmTokenAddress)) / 10 ** pair[1].token.decimals || 0
+      : nanoToValue(await tacSdk.value?.getUserJettonBalance(address.value, await tacSdk.value?.getTVMTokenAddress(pair[1].token.evmTokenAddress)) || 0, pair[1].token.decimals)
   }
   catch (e) {
     console.warn(e)
@@ -89,19 +92,18 @@ const calcRate = useDebounceFn(async (inputIndex: number) => {
   const keys = pair.map(o => o.swapKey)
   let rate
   try {
-    rate = value <= 0 ? 0 : await getRate(inputIndex === 0 ? 'get_dy' : 'get_dx', value, keys)
+    rate = value <= 0 ? 0 : await getRate(value, keys, inputIndex)
   }
   catch (e) {
     errorRate.value = 'Unable to calculate rate'
     console.warn(e)
     rate = 0
   }
-  const result = fromNano(rate)
   if (inputIndex === 0) {
-    pair[1].inputValue = !value ? '' : result
+    pair[1].inputValue = !value ? '' : String(rate)
   }
   else {
-    pair[0].inputValue = !value ? '' : result
+    pair[0].inputValue = !value ? '' : String(rate)
   }
 }, 200)
 const onSubmit = async () => {
@@ -114,12 +116,24 @@ const onSubmit = async () => {
     return
   }
 
+  pair[0].inputValue = String(Math.trunc((Number(pair[0].inputValue)) * 10 ** pair[0].token.decimals) / 10 ** pair[0].token.decimals)
+  modal.open(SwapConfirmModal, {
+    props: {
+      poolAddress: pool.value[1],
+      fromToken: pair[0].token,
+      toToken: pair[1].token,
+      fromValue: pair[0].inputValue,
+      swapMethod: pair[0].swapKey === 0 ? 'get_dy' : 'get_dx',
+      onConfirm: handleSwap,
+    },
+  })
+}
+const handleSwap = async () => {
   try {
-    pair[0].inputValue = String(Math.trunc((Number(pair[0].inputValue)) * 10 ** pair[0].token.decimals) / 10 ** pair[0].token.decimals)
     isSwapping.value = true
     const txLinker = await swap(
       pool.value[1],
-      pair[0].token.tvmTokenAddress,
+      pair[0].token.evmTokenAddress || 'ton',
       pair.map(o => o.swapKey),
       Number(pair[0].inputValue),
       pair[0].token.decimals || 9,
@@ -129,7 +143,7 @@ const onSubmit = async () => {
       return
     }
 
-    modal.open(BaseModal, {
+    modal.open(SwapStatusModal, {
       props: {
         title: 'Transaction submitted',
         text: 'Please wait a couple of minutes for the swap to complete and check your wallet balance.',
@@ -142,7 +156,7 @@ const onSubmit = async () => {
   }
   catch (e) {
     console.warn(e)
-    modal.open(BaseModal, {
+    modal.open(SwapStatusModal, {
       props: {
         title: 'Failed',
         text: (e as Error).message.includes('Transaction was not sent')
@@ -157,6 +171,10 @@ const onSubmit = async () => {
   finally {
     isSwapping.value = false
   }
+}
+const setMax = () => {
+  pair[0].inputValue = String(pair[0].balance)
+  calcRate(0)
 }
 
 calcRate(0)
@@ -227,8 +245,8 @@ watch(isReady, (val) => {
           v-model="pair[0].inputValue"
           name="swap-from"
           maxlength="12"
-          step="0.1"
           autocomplete="off"
+          step="0.1"
           inputmode="decimal"
           only-number
           :disabled="isSwapping || isLoadingRates"
@@ -242,11 +260,21 @@ watch(isReady, (val) => {
             }}
           </template>
           <template #append>
-            <TokenButton
-              key="tb0"
-              :token="pair[0].token"
-              :desc="shorterAddress"
-            />
+            <div class="flex-center">
+              <UiButton
+                size="small"
+                class="mr-8"
+                :disabled="isSwapping || isLoadingBalances"
+                @click.stop="setMax"
+              >
+                MAX
+              </UiButton>
+              <TokenButton
+                key="tb0"
+                :token="pair[0].token"
+                :desc="shorterAddress"
+              />
+            </div>
           </template>
         </UiInput>
         <button
@@ -294,7 +322,13 @@ watch(isReady, (val) => {
         class="mb-8"
       >
         <span class=" weight-600">Slippage tolerance</span>
-        <span class="c-secondary-text">{{ SLIPPAGE_PERCENT_VALUE }}%</span>
+        <span class="c-secondary-text flex-center">
+          <span class="mr-4">{{ slippagePercent }}%</span>
+          <!-- <UiIcon
+            name="cog"
+            @click="openSlippageToleranceSettings"
+          /> -->
+        </span>
       </p>
 
       <p

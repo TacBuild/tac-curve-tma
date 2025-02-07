@@ -5,9 +5,7 @@ defineOptions({
 const model = defineModel<string | number>({ default: '' })
 const emits = defineEmits(['blur', 'focus', 'enter', 'input', 'change', 'update:model-value'])
 const props = defineProps<{
-  name?: string
   label?: string
-  type?: string
   color?: string
   error?: string
   disabled?: boolean
@@ -73,8 +71,6 @@ const onInput = (e: Event) => {
             :value="model"
             v-bind="$attrs"
             class="v-input__native"
-            :type="type"
-            :name="name"
             :disabled="disabled"
             @blur="onBlur"
             @focus="onFocus"

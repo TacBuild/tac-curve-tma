@@ -1,13 +1,15 @@
-import { type Contract, ethers } from 'ethers'
+import { ethers } from 'ethers'
 import { type AssetBridgingData, SenderFactory } from 'tac-sdk'
 import { toNano } from '@ton/ton'
+import { useLocalStorage } from '@vueuse/core'
+import { DEFAULT_SLIPPAGE_PERCENT_VALUE } from '~/utils/ton-utils'
 
 export const useSwap = () => {
-  let contract: Contract
   const { tacSdk } = useTac()
   const { getTonConnectUI } = useTonConnect()
   const proxyAddress = '0xF080CaFA628071C4304eBA0832136231667f4609'
   const evmProviderUrl = 'https://newyork-inap-72-251-230-233.ankr.com/tac_tacd_testnet_full_rpc_1'
+  const slippagePercent = useLocalStorage('swap-slippage-percent', DEFAULT_SLIPPAGE_PERCENT_VALUE)
 
   const swap = async (poolAddress: string, tokenAddress: string, swapKeys: Array<number>, amount: number, decimals: number = 9) => {
     const evmProxyMsg = {
@@ -21,13 +23,14 @@ export const useSwap = () => {
 
     const assets: AssetBridgingData[] = [{
       amount: amount,
-      address: tokenAddress === 'ton' ? undefined : tokenAddress,
+      address: tokenAddress === '' ? undefined : await tacSdk.value?.getTVMTokenAddress(tokenAddress),
     }]
     const sender = await SenderFactory.getSender({ tonConnect: getTonConnectUI() })
 
     return tacSdk.value?.sendCrossChainTransaction(evmProxyMsg, sender, assets)
   }
   const getContract = async (poolAddress: string) => {
+    console.log(poolAddress)
     const abi = [
       {
         stateMutability: 'view',
@@ -83,16 +86,14 @@ export const useSwap = () => {
     const provider = ethers.getDefaultProvider(evmProviderUrl)
     return new ethers.Contract(poolAddress, abi, provider)
   }
-  const getSwapRates = async (method: 'get_dx' | 'get_dy', poolAddress: string, amount: bigint, swapKeys: number[]) => {
-    if (!contract) {
-      contract = await getContract(poolAddress)
-    }
-
+  const getSwapRates = async (method: 'get_dx' | 'get_dy', poolAddress: string, amount: bigint, swapKeys: number[]): Promise<bigint> => {
+    const contract = await getContract(poolAddress)
     return contract[method](swapKeys[0], swapKeys[1], amount)
   }
 
   return {
     swap,
     getSwapRates,
+    slippagePercent,
   }
 }

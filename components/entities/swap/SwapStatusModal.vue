@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import type { PropType } from 'vue'
-
 defineEmits(['close'])
 defineProps({
   title: {
@@ -26,20 +24,11 @@ defineProps({
 </script>
 
 <template>
-  <div :class="$style.BaseModal">
-    <div :class="$style.top">
-      <span />
-      <UiIcon
-        name="cross"
-        class="icon--32 c-secondary-text"
-        @click="$emit('close')"
-      />
-    </div>
-
-    <div
-      :class="$style.content"
-      class="mx-auto"
-    >
+  <BaseModalWrapper
+    :class="$style.SwapStatusModal"
+    @close="$emit('close')"
+  >
+    <div :class="$style.content">
       <div
         v-if="status"
         :class="$style.status"
@@ -81,12 +70,14 @@ defineProps({
           />
         </svg>
       </div>
+
       <p
         v-if="title"
         class="h1 center"
       >
         {{ title }}
       </p>
+
       <p
         v-if="text"
         class="center c-secondary-text"
@@ -95,48 +86,25 @@ defineProps({
       </p>
     </div>
 
-    <UiButton
-      wide
-      @click="$emit('close')"
-    >
-      {{ buttonLabel }}
-    </UiButton>
-  </div>
+    <template #bottom>
+      <UiButton
+        wide
+        @click="$emit('close')"
+      >
+        {{ buttonLabel }}
+      </UiButton>
+    </template>
+  </BaseModalWrapper>
 </template>
 
 <style lang="scss" module>
-.BaseModal {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  padding: 16px;
-  background-color: var(--c-white);
-  min-width: 375px;
-  max-width: 600px;
-  overflow: auto;
-  max-height: calc(100svh - 32px);
-
-  @include respond-to(mobile) {
-    top: auto;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    transform: translate(0, 0);
-  }
-}
-
-.top {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 36px;
-  height: 32px;
+.SwapStatusModal {
+  //
 }
 
 .status {
   width: 46px;
   height: 46px;
-  margin-top: -52px;
 }
 
 .content {
@@ -144,6 +112,6 @@ defineProps({
   flex-direction: column;
   gap: 12px;
   margin-bottom: 55px;
-  max-width: 278px;
+  //max-width: 278px;
 }
 </style>

@@ -8,40 +8,49 @@
   --ui-on-primary-color: var(--c-white);
   --ui-primary-dark-color: var(--c-primary-dark);
   --ui-primary-text-color: var(--c-primary-text);
-  --ui-primary-highlight-color: var(--c-blue-100);
-  --ui-secondary-color: var(--c-secondary);
-  --ui-secondary-dark-color: var(--c-secondary-dark);
   --ui-secondary-text-color: var(--c-secondary-text);
-  --ui-secondary-dark-text-color: var(--c-secondary-dark-text);
-  --ui-success-color: var(--c-green-500);
-  --ui-success-dark-color: var(--c-green-600);
-  --ui-success-text-color: var(--c-green-500);
-  --ui-success-highlight-color: var(--c-green-100);
-  --ui-warning-color: var(--c-orange-500);
-  --ui-warning-dark-color: var(--c-orange-600);
-  --ui-warning-text-color: var(--c-orange-500);
-  --ui-warning-highlight-color: var(--c-orange-100);
-  --ui-danger-color: red;
-  --ui-danger-dark-color: red;
-  --ui-danger-text-color: red;
-  --ui-danger-highlight-color: var(--c-secondary-dark-text);
-
+  --ui-disabled-text-color: var(--c-disabled);
   --ui-transition: var(--trs-fast);
+  --ui-danger-color: red;
 
   --ui-button-font-size: 18px;
+  --ui-button-small-font-size: 15px;
   --ui-button-font-weight: 600;
   --ui-button-line-height: 21px;
   --ui-button-letter-spacing: 0;
 
   --ui-button-primary-bg-color: var(--c-primary);
   --ui-button-primary-box-shadow: 1px 0 0 0 var(--c-primary-dark) inset, 0 1px 0 0 var(--c-primary-dark) inset, -4px 0 0 0 var(--c-primary-dark) inset, 0 -4px 0 0 var(--c-primary-dark) inset;
+  --ui-button-primary-text-color: var(--c-white);
   --ui-button-primary-hover-bg-color: var(--c-primary);
   --ui-button-primary-active-bg-color: var(--c-primary);
   --ui-button-primary-active-box-shadow: 4px 0 0 0 var(--c-primary-dark) inset, 0 4px 0 0 var(--c-primary-dark) inset, -1px 0 0 0 var(--c-primary-dark) inset, 0 -1px 0 0 var(--c-primary-dark) inset;
-  --ui-button-primary-disable-bg-color: var(--c-primary);
-  --ui-button-primary-text-color: var(--c-white);
-  --ui-button-primary-disable-text-color: var(--c-white);
+  --ui-button-primary-disabled-bg-color: var(--c-disabled);
+  --ui-button-primary-disabled-text-color: var(--c-secondary-text);
+  --ui-button-primary-disabled-box-shadow: 1px 0 0 0 var(--c-secondary-text) inset, 0 1px 0 0 var(--c-secondary-text) inset, -4px 0 0 0 var(--c-secondary-text) inset, 0 -4px 0 0 var(--c-secondary-text) inset;
+
+  --ui-button-secondary-bg-color: transparent;
+  --ui-button-secondary-box-shadow: none;
+  --ui-button-secondary-text-color: #6B6B71;
+  --ui-button-secondary-hover-bg-color: transparent;
+  --ui-button-secondary-active-bg-color: transparent;
+  --ui-button-secondary-active-box-shadow: none;
+  --ui-button-secondary-disable-bg-color: transparent;
+  --ui-button-secondary-disable-text-color: var(--c-disabled);
+
+  --ui-radio-font-size: 15px;
+  --ui-radio-line-height: 17px;
+  --ui-radio-gap-x: 8px;
+  --ui-radio-gap-y: 24px;
+  --ui-radio-circle-size: 20px;
+  --ui-radio-point-size: 15px;
+
+  --ui-tabs-font-size: 18px;
+  --ui-tabs-line-height: 21px;
+  --ui-tabs-font-weight: 600;
 
   --ui-input-box-shadow: 2px 0 0 0 #484D56 inset, 0 2px 0 0 #484D56 inset, -1px 0 0 0 #484D56 inset, 0 -1px 0 0 #484D56 inset;
   --ui-input-focus-box-shadow: -2px 0 0 0 #484D56 inset, 0 -2px 0 0 #484D56 inset, 1px 0 0 0 #484D56 inset, 0 1px 0 0 #484D56 inset;
+  --ui-input-warning-box-shadow: 2px 0 0 0 var(--c-orange) inset, 0 2px 0 0 var(--c-orange) inset, -1px 0 0 0 var(--c-orange) inset, 0 -1px 0 0 var(--c-orange) inset;
+  --ui-input-warning-focus-box-shadow: -2px 0 0 0 var(--c-orange) inset, 0 -2px 0 0 var(--c-orange) inset, 1px 0 0 0 var(--c-orange) inset, 0 1px 0 0 var(--c-orange) inset;
 }

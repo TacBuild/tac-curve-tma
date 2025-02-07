@@ -77,6 +77,14 @@
   margin-top: 32px;
 }
 
+.mb-2 {
+  margin-bottom: 2px;
+}
+
+.mb-4 {
+  margin-bottom: 4px;
+}
+
 .mb-8 {
   margin-bottom: 8px;
 }
@@ -188,6 +196,10 @@
 
 .c-secondary-text {
   color: var(--c-secondary-text);
+}
+
+.c-orange {
+  color: var(--c-orange);
 }
 
 .c-disabled {
@@ -304,4 +316,8 @@
 
 .center {
   text-align: center;
+}
+
+.right {
+  text-align: right;
 }

@@ -22,7 +22,7 @@ export const useModal = () => {
     close(id, true)
   }
 
-  const open = (component: Component, data: ModalData) => {
+  const open = (component: Component, data: ModalData = {}) => {
     if (popstateHandler) {
       // sometimes pushState can trigger unwanted closings of modals
       window.removeEventListener('popstate', popstateHandler)

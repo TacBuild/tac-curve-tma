@@ -1,10 +1,20 @@
 <script setup lang="ts">
 defineProps<{ label: string }>()
 const model = defineModel<unknown>()
+const isFocused = ref(false)
+
+const classes = computed(() => {
+  return {
+    'is-focused': isFocused.value,
+  }
+})
 </script>
 
 <template>
-  <div class="v-select v-input">
+  <div
+    class="v-select v-input"
+    :class="classes"
+  >
     <div
       v-if="label || $slots.label"
       class="v-input__label"
@@ -18,6 +28,8 @@ const model = defineModel<unknown>()
       v-model="model"
       class="v-input__wrap"
       v-bind="$attrs"
+      @focus="isFocused = true"
+      @blur="isFocused = false"
     >
       <slot />
     </select>
@@ -41,7 +53,8 @@ const model = defineModel<unknown>()
 
   & select {
     width: 100%;
-    padding-top: 20px;
+    padding-top: 22px;
+    font-weight: var(--ui-font-weight);
     border-radius: 0;
   }
 
