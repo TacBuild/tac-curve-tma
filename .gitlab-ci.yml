@@ -48,7 +48,7 @@ proxy_check:
   - chmod 644 ~/.ssh/known_hosts
   script:
     - scp -r ./.gitlab/proxy_check.sh $SERVICE_USER@$SERVICE_IP:./proxy_check.sh
-    - ssh -o StrictHostKeyChecking=no $SERVICE_USER@$SERVICE_IP "sudo DOMAIN='$DOMAIN' bash /home/cicd/proxy_check.sh"
+    - ssh -o StrictHostKeyChecking=no $SERVICE_USER@$SERVICE_IP "sudo bash /home/cicd/proxy_check.sh"
   environment:
     name: $ENVIRONMENT
     url: $SERVICE_URL
