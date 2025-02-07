@@ -133,7 +133,7 @@ const handleSwap = async () => {
     isSwapping.value = true
     const txLinker = await swap(
       pool.value[1],
-      pair[0].token.evmTokenAddress || 'ton',
+      pair[0].token.evmTokenAddress,
       pair.map(o => o.swapKey),
       Number(pair[0].inputValue),
       pair[0].token.decimals || 9,
