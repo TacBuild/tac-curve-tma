@@ -10,7 +10,7 @@ const walletName = ref('Wallet')
 const address = computed(() => account?.address || '')
 
 const tonConnectUI = new TonConnectUI({
-  manifestUrl: config.tonconnectManifestUrl as string,
+  manifestUrl: 'https://curve.tac.build/tonconnect-manifest.json',
 })
 Object.assign(account, tonConnectUI.account)
 tonConnectUI.uiOptions = {

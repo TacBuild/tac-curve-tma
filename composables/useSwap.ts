@@ -9,18 +9,18 @@ export const useSwap = () => {
   const proxyAddress = '0xF080CaFA628071C4304eBA0832136231667f4609'
   const evmProviderUrl = 'https://newyork-inap-72-251-230-233.ankr.com/tac_tacd_testnet_full_rpc_1'
 
-  const swap = async (poolAddress: string, tokenAddress: string, swapKeys: Array<number>, amount: bigint) => {
+  const swap = async (poolAddress: string, tokenAddress: string, swapKeys: Array<number>, amount: number, decimals: number = 9) => {
     const evmProxyMsg = {
       evmTargetAddress: proxyAddress,
       methodName: 'exchange(bytes,bytes)',
       encodedParameters: ethers.AbiCoder.defaultAbiCoder().encode(
         ['tuple(address,uint256,uint256,uint256,uint256)'],
-        [[poolAddress, swapKeys[0], swapKeys[1], amount, toNano(0)]],
+        [[poolAddress, swapKeys[0], swapKeys[1], BigInt(amount * 10 ** decimals), toNano(0)]],
       ),
     }
 
     const assets: AssetBridgingData[] = [{
-      amount: Number(amount),
+      amount: amount,
       address: tokenAddress === 'ton' ? undefined : tokenAddress,
     }]
     const sender = await SenderFactory.getSender({ tonConnect: getTonConnectUI() })

@@ -121,7 +121,8 @@ const onSubmit = async () => {
       pool.value[1],
       pair[0].token.tvmTokenAddress,
       pair.map(o => o.swapKey),
-      BigInt(Number(pair[0].inputValue) * 10 ** pair[0].token.decimals || 9),
+      Number(pair[0].inputValue),
+      pair[0].token.decimals || 9,
     )
 
     if (!txLinker) {

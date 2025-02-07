@@ -136,17 +136,4 @@ export default defineNuxtConfig({
   },
 
   eslint: { config: { stylistic: true } },
-
-  proxy: {
-    options: [
-      {
-        target: process.env.TONCENTER_URL || 'localhost:5000',
-        changeOrigin: true,
-        pathRewrite: {
-          '^/jsonRPC': '/jsonRPC',
-        },
-        pathFilter: ['/jsonRPC'],
-      },
-    ],
-  },
 })
