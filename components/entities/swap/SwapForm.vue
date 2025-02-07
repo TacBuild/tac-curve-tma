@@ -115,7 +115,7 @@ const onSubmit = async () => {
   }
 
   try {
-    pair[0].inputValue = String(Math.trunc((Number(pair[0].inputValue)) * 10 ** 9) / 10 ** 9)
+    pair[0].inputValue = String(Math.trunc((Number(pair[0].inputValue)) * 10 ** pair[0].token.decimals) / 10 ** pair[0].token.decimals)
     isSwapping.value = true
     const txLinker = await swap(
       pool.value[1],
