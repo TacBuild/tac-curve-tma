@@ -5,7 +5,7 @@ import { Address } from '@ton/ton'
 import { pools, type Token, tokens } from '~/entities/token'
 import { useTonConnect } from '~/composables/useTonConnect'
 import { useModal } from '~/components/ui/composables/useModal'
-import { SwapConfirmModal, SwapStatusModal } from '#components'
+import { HistoryTransactionDetailsModal, SwapConfirmModal, SwapStatusModal } from '#components'
 import { fetchTonBalance } from '~/utils/ton-utils'
 import { useSwap } from '~/composables/useSwap'
 
@@ -117,12 +117,14 @@ const onSubmit = async () => {
   }
 
   pair[0].inputValue = String(Math.trunc((Number(pair[0].inputValue)) * 10 ** pair[0].token.decimals) / 10 ** pair[0].token.decimals)
+  calcRate(0)
   modal.open(SwapConfirmModal, {
     props: {
       poolAddress: pool.value[1],
       fromToken: pair[0].token,
       toToken: pair[1].token,
       fromValue: pair[0].inputValue,
+      toValue: pair[1].inputValue,
       swapMethod: pair[0].swapKey === 0 ? 'get_dy' : 'get_dx',
       onConfirm: handleSwap,
     },
@@ -146,10 +148,22 @@ const handleSwap = async () => {
     modal.open(SwapStatusModal, {
       props: {
         title: 'Transaction submitted',
-        text: 'Please wait a couple of minutes for the swap to complete and check your wallet balance.',
+        text: 'Please wait a minute for the swap to complete and check your wallet balance.',
         status: 'success',
+        buttonLabel: 'Show status',
       },
       onClose: () => {
+        setTimeout(() => {
+          modal.open(HistoryTransactionDetailsModal, {
+            props: {
+              fromToken: pair[0].token,
+              toToken: pair[1].token,
+              fromValue: pair[0].inputValue,
+              toValue: pair[1].inputValue,
+              transactionLinker: txLinker,
+            },
+          })
+        }, 300)
         loadBalances()
       },
     })
@@ -176,6 +190,22 @@ const setMax = () => {
   pair[0].inputValue = String(pair[0].balance)
   calcRate(0)
 }
+// const debugTXModal = () => {
+//   modal.open(HistoryTransactionDetailsModal, {
+//     props: {
+//       fromToken: tokens[0],
+//       toToken: tokens[1],
+//       fromValue: 1,
+//       toValue: 1,
+//       transactionLinker: {
+//         caller: 'EQDNNBEAsX5vjftxckJuEVP8rPrN5NwTAxWibf9kvFk6DbF5',
+//         shardCount: 1,
+//         shardedId: '1738963669',
+//         timestamp: 1738963086,
+//       },
+//     },
+//   })
+// }
 
 calcRate(0)
 

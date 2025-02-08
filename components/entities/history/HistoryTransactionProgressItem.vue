@@ -1,10 +1,17 @@
 <script setup lang="ts">
-const { label, link, status } = defineProps<{ label: string, link?: string, status?: 'success' | 'error' | 'pending' }>()
+const { label, link, status } = defineProps<{
+  label: string
+  link?: string
+  status?: 'success' | 'error' | 'pending'
+}>()
 </script>
 
 <template>
   <div :class="$style.HistoryTransactionProgressItem">
-    <HistoryTransactionProgressIcon :status="status" />
+    <HistoryTransactionProgressIcon
+      :class="$style.icon"
+      :status="status"
+    />
 
     <p class="p3">
       {{ label }}
@@ -39,6 +46,10 @@ const { label, link, status } = defineProps<{ label: string, link?: string, stat
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+.icon {
+  flex-shrink: 0;
 }
 
 .link {

@@ -54,3 +54,22 @@
   --ui-input-warning-box-shadow: 2px 0 0 0 var(--c-orange) inset, 0 2px 0 0 var(--c-orange) inset, -1px 0 0 0 var(--c-orange) inset, 0 -1px 0 0 var(--c-orange) inset;
   --ui-input-warning-focus-box-shadow: -2px 0 0 0 var(--c-orange) inset, 0 -2px 0 0 var(--c-orange) inset, 1px 0 0 0 var(--c-orange) inset, 0 1px 0 0 var(--c-orange) inset;
 }
+
+
+@keyframes loading {
+  0% {
+    content: '/';
+  }
+
+  25% {
+    content: '–';
+  }
+
+  50% {
+    content: '\\';
+  }
+
+  75% {
+    content: '|';
+  }
+}

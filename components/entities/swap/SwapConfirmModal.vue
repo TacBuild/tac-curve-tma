@@ -1,33 +1,17 @@
 <script setup lang="ts">
-import { fromNano, toNano } from '@ton/ton'
 import type { Token } from '~/entities/token'
 
-const { getSwapRates } = useSwap()
-
+const emits = defineEmits(['close'])
 const props = defineProps<{
   poolAddress: string
   fromToken: Token
   toToken: Token
+  toValue: number | string
   fromValue: number | string
-  swapMethod: 'get_dx' | 'get_dy'
   onConfirm: () => void
 }>()
-const emits = defineEmits(['close'])
 
-const toValue = ref('')
-
-const getRate = async () => {
-  console.log(props.swapMethod, props.poolAddress, toNano(props.fromValue))
-  const rate = await getSwapRates(props.swapMethod, props.poolAddress, toNano(props.fromValue), [0, 1])
-  return Number(rate || 0)
-}
-
-const load = async () => {
-  const rate = Number(props.fromValue) <= 0 ? 0 : await getRate()
-  toValue.value = fromNano(rate)
-}
-
-load()
+const confirmBtnWrap = ref()
 
 const onSubmit = () => {
   props.onConfirm()
@@ -35,24 +19,30 @@ const onSubmit = () => {
     emits('close')
   })
 }
+
+onMounted(() => {
+  const btn = confirmBtnWrap.value.firstChild as HTMLButtonElement
+  if (btn) {
+    btn.focus()
+  }
+})
 </script>
 
 <template>
-  <form @submit.prevent="onSubmit">
-    <BaseModalWrapper @close="$emit('close')">
-      <template #title>
-        Confirm swap
-      </template>
+  <BaseModalWrapper @close="$emit('close')">
+    <template #title>
+      Confirm swap
+    </template>
 
-      <TokenPairSwapInfo
-        class="mb-16"
-        :from-token="fromToken"
-        :to-token="toToken"
-        :from-value="fromValue"
-        :to-value="toValue"
-      />
+    <TokenPairSwapInfo
+      class="mb-16"
+      :from-token="fromToken"
+      :to-token="toToken"
+      :from-value="fromValue"
+      :to-value="toValue"
+    />
 
-      <!-- <p
+    <!-- <p
         :class="$style.info"
         class="mb-12"
       >
@@ -62,41 +52,42 @@ const onSubmit = () => {
         </span>
       </p> -->
 
-      <p
-        :class="$style.info"
-        class="mb-12"
-      >
-        <span class="weight-600">Slippage tolerance:</span>
-        <span class="c-secondary-text weight-600">0.5%</span>
-      </p>
+    <p
+      :class="$style.info"
+      class="mb-12"
+    >
+      <span class="weight-600">Slippage tolerance:</span>
+      <span class="c-secondary-text weight-600">0.5%</span>
+    </p>
 
-      <p
-        :class="$style.info"
-        class="mb-24"
-      >
-        <span class="weight-600">Network fee</span>
-        <span class="c-secondary-text weight-600">~0.14 TON</span>
-      </p>
+    <p
+      :class="$style.info"
+      class="mb-24"
+    >
+      <span class="weight-600">Network fee</span>
+      <span class="c-secondary-text weight-600">~0.14 TON</span>
+    </p>
 
-      <template #bottom>
+    <template #bottom>
+      <div ref="confirmBtnWrap">
         <UiButton
           class="mb-4"
-          type="submit"
           wide
+          @click="onSubmit"
         >
           Confirm
         </UiButton>
-        <UiButton
-          type="button"
-          wide
-          color="secondary"
-          @click="$emit('close')"
-        >
-          Close
-        </UiButton>
-      </template>
-    </BaseModalWrapper>
-  </form>
+      </div>
+
+      <UiButton
+        wide
+        color="secondary"
+        @click="$emit('close')"
+      >
+        Close
+      </UiButton>
+    </template>
+  </BaseModalWrapper>
 </template>
 
 <style module lang="scss">

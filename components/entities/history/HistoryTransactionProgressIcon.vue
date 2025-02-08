@@ -76,6 +76,11 @@ const { status } = defineProps<{ status?: 'success' | 'error' | 'pending' }>()
     </defs>
   </svg>
 
+  <span
+    v-else-if="status === 'pending'"
+    :class="$style.loader"
+  />
+
   <svg
     v-else
     width="19"
@@ -99,3 +104,22 @@ const { status } = defineProps<{ status?: 'success' | 'error' | 'pending' }>()
     />
   </svg>
 </template>
+
+<style lang="scss" module>
+.loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 19px;
+  height: 18px;
+  line-height: 0;
+
+  &:before :global {
+    content: '/';
+    display: inline-block;
+    animation: loading 0.5s infinite linear;
+    text-align: center;
+    font-size: 14px;
+  }
+}
+</style>

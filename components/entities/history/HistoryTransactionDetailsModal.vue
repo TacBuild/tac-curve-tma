@@ -1,7 +1,22 @@
 <script setup lang="ts">
-import { tokens } from '~/entities/token'
+import type { TransactionLinker } from 'tac-sdk'
+import type { Token } from '~/entities/token'
 
 defineEmits(['close'])
+const { transactionLinker } = defineProps<{
+  fromToken: Token
+  toToken: Token
+  fromValue: number | string
+  toValue: number | string
+  transactionLinker: TransactionLinker
+}>()
+
+const { operationId, status, error, destroy } = useOperationTracker(transactionLinker)
+const date = new Date(transactionLinker.timestamp * 1000).toLocaleString()
+
+onUnmounted(() => {
+  destroy()
+})
 </script>
 
 <template>
@@ -12,26 +27,38 @@ defineEmits(['close'])
           Swap details
         </p>
         <p class="p4">
-          September 3, 2024,  2:18 PM
+          {{ date }}
         </p>
       </div>
     </template>
 
     <TokenPairSwapInfo
       class="mb-16 mt-4"
-      :from-token="tokens[0]"
-      :to-token="tokens[1]"
-      from-value="1"
-      to-value="1"
+      :from-token="fromToken"
+      :to-token="toToken"
+      :from-value="fromValue"
+      :to-value="toValue"
     />
 
-    <HistoryTransactionProgressList class="mb-24" />`
+    <HistoryTransactionProgressList
+      v-if="!error"
+      :operation-id="operationId"
+      :status="status"
+      class="mb-24"
+    />
+
+    <p
+      v-else
+      class="mt-8 mb-24 c-orange"
+    >
+      {{ error }}
+    </p>
 
     <UiButton
       wide
       @click="$emit('close')"
     >
-      Back
+      Close
     </UiButton>
   </BaseModalWrapper>
 </template>

@@ -23,7 +23,7 @@ defineEmits(['close'])
   </div>
 </template>
 
-<style lang="scss" module>
+<style module lang="scss">
 .BaseModal {
   position: absolute;
   left: 50%;

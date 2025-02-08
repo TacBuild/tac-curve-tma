@@ -172,22 +172,4 @@ const onClick = (e: Event) => {
     }
   }
 }
-
-@keyframes loading {
-  0% {
-    content: '/';
-  }
-
-  25% {
-    content: '–';
-  }
-
-  50% {
-    content: '\\';
-  }
-
-  75% {
-    content: '|';
-  }
-}
 </style>
