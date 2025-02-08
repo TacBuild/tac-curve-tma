@@ -7,7 +7,6 @@ const scripts = [
 export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
-    'nuxt-proxy-request',
   ],
 
   ssr: false,
