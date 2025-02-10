@@ -21,12 +21,11 @@ export const useSwap = () => {
       ),
     }
 
+    const sender = await SenderFactory.getSender({ tonConnect: getTonConnectUI() })
     const assets: AssetBridgingData[] = [{
       amount: amount,
       address: tokenAddress === '' ? undefined : await tacSdk.value?.getTVMTokenAddress(tokenAddress),
     }]
-    const sender = await SenderFactory.getSender({ tonConnect: getTonConnectUI() })
-
     return tacSdk.value?.sendCrossChainTransaction(evmProxyMsg, sender, assets)
   }
   const getContract = async (poolAddress: string) => {

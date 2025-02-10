@@ -126,7 +126,9 @@ const onSubmit = async () => {
       fromValue: pair[0].inputValue,
       toValue: pair[1].inputValue,
       swapMethod: pair[0].swapKey === 0 ? 'get_dy' : 'get_dx',
-      onConfirm: handleSwap,
+      onConfirm: () => {
+        setTimeout(() => handleSwap(), 300)
+      },
     },
   })
 }
