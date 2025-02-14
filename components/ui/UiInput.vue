@@ -36,7 +36,8 @@ const onBlur = (e: Event) => {
   emits('blur', e)
 }
 const onInput = (e: Event) => {
-  const value = (e.target as HTMLInputElement).value
+  let value = (e.target as HTMLInputElement).value
+  value = value.replace(',', '.')
   if (props.onlyNumber && isNaN(Number(value)) && Boolean(value)) {
     (e.target as HTMLInputElement).value = String(model.value)
   }
