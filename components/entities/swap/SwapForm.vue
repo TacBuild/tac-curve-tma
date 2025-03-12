@@ -31,6 +31,7 @@ const {
 
 const pool = ref(pools[0])
 
+const poolTokens: Ref<Token[]> = ref([])
 const isLoadingBalances = ref(false)
 const isLoadingRates = ref(false)
 const isSwapping = ref(false)
@@ -93,6 +94,7 @@ const calcRate = useDebounceFn(async (inputIndex: number) => {
   let rate
   try {
     rate = value <= 0 ? 0 : await getRate(value, keys, inputIndex)
+    console.log(value, keys, inputIndex)
   }
   catch (e) {
     errorRate.value = 'Unable to calculate rate'
@@ -192,54 +194,65 @@ const setMax = () => {
   pair[0].inputValue = String(pair[0].balance)
   calcRate(0)
 }
-// const debugTXModal = () => {
-//   modal.open(HistoryTransactionDetailsModal, {
-//     props: {
-//       fromToken: tokens[0],
-//       toToken: tokens[1],
-//       fromValue: 1,
-//       toValue: 1,
-//       transactionLinker: {
-//         caller: 'EQDNNBEAsX5vjftxckJuEVP8rPrN5NwTAxWibf9kvFk6DbF5',
-//         shardCount: 1,
-//         shardedId: '1738963669',
-//         timestamp: 1738963086,
-//       },
-//     },
-//   })
-// }
+const onTokenChange = (token: Token, index: number) => {
+  const validPools = pools.filter(pool => pool[0].includes(token.tokenName))
+
+  if (validPools.length < 0) {
+    return
+  }
+
+  // set selected token
+  Object.assign(pair[index], {
+    id: index + 1,
+    token,
+    inputValue: index === 0 ? '1' : '0',
+    balance: 0,
+    swapKey: 0,
+  })
+
+  const currentPoolKey = `${pair[0].token.tokenName}-${pair[1].token.tokenName}`
+  const invertedCurrentPoolKey = `${pair[1].token.tokenName}-${pair[0].token.tokenName}`
+  pool.value = validPools.find(pool => [currentPoolKey, invertedCurrentPoolKey].includes(pool[0])) || validPools[0]
+  const keys = pool.value[0].split('-')
+
+  const pairKey = keys.find(key => key !== token.tokenName)
+  const pairToken = tokens.find(token => token.tokenName === pairKey)
+
+  Object.assign(pair[index === 0 ? 1 : 0], {
+    id: index === 0 ? 2 : 1,
+    token: pairToken,
+    inputValue: '',
+    balance: 0,
+    swapKey: 1,
+  })
+
+  pair[0].swapKey = (keys.findIndex(key => key === pair[0].token.tokenName) || 0) as 0 | 1
+  pair[1].swapKey = (keys.findIndex(key => key === pair[1].token.tokenName) || 0) as 0 | 1
+  if (isReady.value) {
+    loadBalances()
+  }
+
+  calcRate(0)
+}
+const updatePoolTokens = () => {
+  poolTokens.value.length = 0
+  const validPools = pools.filter(pool => pool[0].includes(pair[0].token.tokenName))
+
+  validPools.forEach((pool) => {
+    const keys = pool[0].split('-')
+    const pairKey = keys.find(key => key !== pair[0].token.tokenName)
+    const token = tokens.find(token => token.tokenName === pairKey)
+    if (token) {
+      poolTokens.value.push(token)
+    }
+  })
+}
 
 calcRate(0)
 
-watch(pool, () => {
-  const keys = pool.value[0].split('-')
-  const token1 = tokens.find(token => token.tokenName === keys[0])
-  const token2 = tokens.find(token => token.tokenName === keys[1])
-
-  if (token1 && token2) {
-    Object.assign(pair, [
-      {
-        id: 1,
-        token: token1,
-        inputValue: '1',
-        balance: 0,
-        swapKey: 0,
-      },
-      {
-        id: 2,
-        token: token2,
-        inputValue: '0',
-        balance: 0,
-        swapKey: 1,
-      },
-    ])
-
-    if (isReady.value) {
-      loadBalances()
-      calcRate(0)
-    }
-  }
-})
+watch(() => pair[0].token, () => {
+  updatePoolTokens()
+}, { immediate: true })
 watch(isReady, (val) => {
   if (val) {
     loadBalances()
@@ -253,19 +266,6 @@ watch(isReady, (val) => {
     @submit.prevent="onSubmit"
   >
     <template v-if="isLoaded">
-      <UiSelect
-        v-model="pool"
-        label="Pool"
-        class="mb-12"
-      >
-        <option
-          v-for="item in pools"
-          :key="item[1]"
-          :value="item"
-        >
-          {{ item[0] }}
-        </option>
-      </UiSelect>
       <TransitionGroup
         tag="div"
         name="swap"
@@ -303,8 +303,10 @@ watch(isReady, (val) => {
               </UiButton>
               <TokenButton
                 key="tb0"
-                :token="pair[0].token"
                 :desc="shorterAddress"
+                :tokens="tokens"
+                :model-value="pair[0].token"
+                @change="onTokenChange($event, 0)"
               />
             </div>
           </template>
@@ -343,7 +345,9 @@ watch(isReady, (val) => {
           <template #append>
             <TokenButton
               key="tb1"
-              :token="pair[1].token"
+              :tokens="poolTokens"
+              :model-value="pair[1].token"
+              @change="onTokenChange($event, 1)"
             />
           </template>
         </UiInput>

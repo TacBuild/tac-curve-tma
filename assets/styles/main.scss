@@ -3,7 +3,6 @@
 @use "variables";
 @use "reset";
 @use "typography";
-@use "animations";
 @use "transitions";
 @use "utility";
 
@@ -23,7 +22,7 @@ body {
   letter-spacing: 0;
   -ms-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
-  -webkit-font-smoothing: subpixel-antialiased;
+    -webkit-font-smoothing: subpixel-antialiased;
   -webkit-tap-highlight-color: transparent;
   transition: background-color var(--trs-default);
 }

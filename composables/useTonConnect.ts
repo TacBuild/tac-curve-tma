@@ -36,7 +36,6 @@ tonConnectUI.connectionRestored.then(() => {
   isLoaded.value = true
 })
 tonConnectUI.onStatusChange((walletInfo) => {
-  console.log('onStatusChange', walletInfo)
   if (walletInfo?.account?.address) {
     Object.assign(account, walletInfo.account)
     walletName.value = walletInfo?.name

@@ -9,6 +9,7 @@ defineEmits(['close'])
         <span />
       </slot>
       <UiIcon
+        :class="$style.close"
         name="cross"
         class="icon--32 c-secondary-text"
         @click="$emit('close')"
@@ -34,7 +35,7 @@ defineEmits(['close'])
   min-width: 375px;
   max-width: 600px;
   overflow: auto;
-  max-height: calc(100svh - 32px);
+  max-height: calc(80dvh);
 
   @include respond-to(mobile) {
     top: auto;
@@ -42,6 +43,7 @@ defineEmits(['close'])
     bottom: 0;
     width: 100%;
     min-width: 100%;
+    max-height: calc(90dvh);
     transform: translate(0, 0);
     border-top-left-radius: 24px;
     border-top-right-radius: 24px;
@@ -57,5 +59,9 @@ defineEmits(['close'])
   font-size: 19px;
   line-height: 21px;
   font-weight: 600;
+}
+
+.close {
+  cursor: pointer;
 }
 </style>

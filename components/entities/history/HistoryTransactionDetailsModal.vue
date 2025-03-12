@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { TransactionLinker } from 'tac-sdk'
+import type { TransactionLinker } from '@tonappchain/sdk'
 import type { Token } from '~/entities/token'
 
 defineEmits(['close'])
