@@ -56,7 +56,10 @@ const isSubmitDisabled = computed(() => {
     return !isLoaded.value
   }
 
-  return isSwapping.value || isLoadingBalances.value || !pair[0].inputValue || Number(pair[0].inputValue) > pair[0].balance
+  return Boolean(errorRate.value) || isSwapping.value
+    || isLoadingBalances.value || !pair[0].inputValue
+    || Number(pair[0].inputValue) > pair[0].balance
+    || Number(pair[0].inputValue) <= 0
 })
 const isReady = computed(() => isConnected.value && isTacLoaded.value)
 
@@ -97,7 +100,7 @@ const calcRate = useDebounceFn(async (inputIndex: number) => {
     console.log(value, keys, inputIndex)
   }
   catch (e) {
-    errorRate.value = 'Unable to calculate rate'
+    errorRate.value = 'Unable to calculate rate. Price impact may be very high.'
     console.warn(e)
     rate = 0
   }
@@ -205,7 +208,7 @@ const onTokenChange = (token: Token, index: number) => {
   Object.assign(pair[index], {
     id: index + 1,
     token,
-    inputValue: index === 0 ? '1' : '0',
+    inputValue: pair[index].inputValue,
     balance: 0,
     swapKey: 0,
   })
@@ -221,7 +224,7 @@ const onTokenChange = (token: Token, index: number) => {
   Object.assign(pair[index === 0 ? 1 : 0], {
     id: index === 0 ? 2 : 1,
     token: pairToken,
-    inputValue: '',
+    inputValue: '0',
     balance: 0,
     swapKey: 1,
   })
@@ -232,7 +235,7 @@ const onTokenChange = (token: Token, index: number) => {
     loadBalances()
   }
 
-  calcRate(0)
+  calcRate(index)
 }
 const updatePoolTokens = () => {
   poolTokens.value.length = 0
