@@ -2,13 +2,14 @@ import {
   Network,
   OperationTracker,
   type TransactionLinker,
-} from 'tac-sdk'
+} from '@tonappchain/sdk'
+import { StageName } from '@tonappchain/sdk/dist/structs/Struct'
 
 const POOL_MS = 5000
-const MAX_RETRIES = 12
+const MAX_RETRIES = 40
 export const useOperationTracker = (transactionLinker: TransactionLinker | undefined) => {
   let interval: ReturnType<typeof setInterval>
-  const tracker = new OperationTracker(Network.Testnet)
+  const tracker = new OperationTracker(Network.TESTNET)
   const operationId = ref('')
   const status = ref('')
   const error = ref('')
@@ -33,15 +34,15 @@ export const useOperationTracker = (transactionLinker: TransactionLinker | undef
     if (operationId.value) {
       const res = await tracker.getOperationStatus(operationId.value)
 
-      if (status.value !== res.status) {
+      if (status.value !== res.stage) {
         remainingRetries = MAX_RETRIES
       }
 
-      status.value = res.status
+      status.value = res.stage
       // error.value = res.errorMessage || '' FIXME: setting error breaks pooling now
     }
 
-    if (status.value === 'TVMMerkleMessageExecuted') {
+    if (status.value === StageName.EXECUTED_IN_TON) {
       clearInterval(interval)
     }
   }
