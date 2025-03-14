@@ -74,10 +74,20 @@ const loadBalances = async () => {
     isLoadingBalances.value = true
     pair[0].balance = !pair[0].token.evmTokenAddress
       ? await fetchTonBalance(Address.parse(address.value))
-      : nanoToValue(await tacSdk.value?.getUserJettonBalance(address.value, await tacSdk.value?.getTVMTokenAddress(pair[0].token.evmTokenAddress)) || 0, pair[0].token.decimals)
+      : nanoToValue(
+          await tacSdk.value?.getUserJettonBalance(
+            address.value,
+            await tacSdk.value?.getTVMTokenAddress(pair[0].token.evmTokenAddress)).catch(() => 0) || 0,
+          pair[0].token.decimals,
+        )
     pair[1].balance = !pair[1].token.evmTokenAddress
       ? await fetchTonBalance(Address.parse(address.value))
-      : nanoToValue(await tacSdk.value?.getUserJettonBalance(address.value, await tacSdk.value?.getTVMTokenAddress(pair[1].token.evmTokenAddress)) || 0, pair[1].token.decimals)
+      : nanoToValue(
+          await tacSdk.value?.getUserJettonBalance(
+            address.value,
+            await tacSdk.value?.getTVMTokenAddress(pair[1].token.evmTokenAddress)).catch(() => 0) || 0,
+          pair[1].token.decimals,
+        )
   }
   catch (e) {
     console.warn(e)
@@ -169,9 +179,11 @@ const handleSwap = async () => {
               toValue: pair[1].inputValue,
               transactionLinker: txLinker,
             },
+            onClose: () => {
+              loadBalances()
+            },
           })
         }, 300)
-        loadBalances()
       },
     })
   }
@@ -198,7 +210,7 @@ const setMax = () => {
   calcRate(0)
 }
 const onTokenChange = (token: Token, index: number) => {
-  const validPools = pools.filter(pool => pool[0].includes(token.tokenName))
+  const validPools = pools.filter(pool => pool[0].includes(token.symbol))
 
   if (validPools.length < 0) {
     return
@@ -213,13 +225,13 @@ const onTokenChange = (token: Token, index: number) => {
     swapKey: 0,
   })
 
-  const currentPoolKey = `${pair[0].token.tokenName}-${pair[1].token.tokenName}`
-  const invertedCurrentPoolKey = `${pair[1].token.tokenName}-${pair[0].token.tokenName}`
+  const currentPoolKey = `${pair[0].token.symbol}-${pair[1].token.symbol}`
+  const invertedCurrentPoolKey = `${pair[1].token.symbol}-${pair[0].token.symbol}`
   pool.value = validPools.find(pool => [currentPoolKey, invertedCurrentPoolKey].includes(pool[0])) || validPools[0]
   const keys = pool.value[0].split('-')
 
-  const pairKey = keys.find(key => key !== token.tokenName)
-  const pairToken = tokens.find(token => token.tokenName === pairKey)
+  const pairKey = keys.find(key => key !== token.symbol)
+  const pairToken = tokens.find(token => token.symbol === pairKey)
 
   Object.assign(pair[index === 0 ? 1 : 0], {
     id: index === 0 ? 2 : 1,
@@ -229,8 +241,8 @@ const onTokenChange = (token: Token, index: number) => {
     swapKey: 1,
   })
 
-  pair[0].swapKey = (keys.findIndex(key => key === pair[0].token.tokenName) || 0) as 0 | 1
-  pair[1].swapKey = (keys.findIndex(key => key === pair[1].token.tokenName) || 0) as 0 | 1
+  pair[0].swapKey = (keys.findIndex(key => key === pair[0].token.symbol) || 0) as 0 | 1
+  pair[1].swapKey = (keys.findIndex(key => key === pair[1].token.symbol) || 0) as 0 | 1
   if (isReady.value) {
     loadBalances()
   }
@@ -239,12 +251,12 @@ const onTokenChange = (token: Token, index: number) => {
 }
 const updatePoolTokens = () => {
   poolTokens.value.length = 0
-  const validPools = pools.filter(pool => pool[0].includes(pair[0].token.tokenName))
+  const validPools = pools.filter(pool => pool[0].includes(pair[0].token.symbol))
 
   validPools.forEach((pool) => {
     const keys = pool[0].split('-')
-    const pairKey = keys.find(key => key !== pair[0].token.tokenName)
-    const token = tokens.find(token => token.tokenName === pairKey)
+    const pairKey = keys.find(key => key !== pair[0].token.symbol)
+    const token = tokens.find(token => token.symbol === pairKey)
     if (token) {
       poolTokens.value.push(token)
     }

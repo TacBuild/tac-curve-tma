@@ -13,12 +13,12 @@ const props = defineProps<{
       <div :class="$style.img">
         <img
           :src="props.token.logo"
-          :alt="props.token.tokenName"
+          :alt="props.token.symbol"
         >
       </div>
 
       <p class="p2 weight-700">
-        {{ amount }} {{ token.tokenName }}
+        {{ amount }} {{ token.symbol }}
       </p>
     </div>
     <!-- <div

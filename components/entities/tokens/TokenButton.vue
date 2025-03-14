@@ -35,7 +35,7 @@ const open = () => {
     />
     <div class="mx-auto">
       <p class=" weight-700">
-        {{ model?.tokenName || 'Select' }}
+        {{ model?.symbol || 'Select' }}
       </p>
       <p
         v-if="desc"

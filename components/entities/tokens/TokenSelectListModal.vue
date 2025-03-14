@@ -36,7 +36,7 @@ const handleSelect = (token: Token) => {
         />
 
         <p class="weight-700 p1">
-          {{ token?.tokenName || 'Unknown' }}
+          {{ token?.symbol || 'Unknown' }}
         </p>
       </li>
     </ul>
