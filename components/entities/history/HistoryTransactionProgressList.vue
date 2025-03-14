@@ -1,16 +1,14 @@
 <script setup lang="ts">
-import { StageName } from '@tonappchain/sdk/dist/structs/Struct'
-
 const { operationId, status } = defineProps<{ operationId: string, status: string }>()
 
 const map: Record<string, number> = {
   '': 0,
-  [StageName.COLLECTED_IN_TAC]: 1,
-  [StageName.INCLUDED_IN_TAC_CONSENSUS]: 2,
-  [StageName.EXECUTED_IN_TAC]: 3,
-  [StageName.COLLECTED_IN_TON]: 4,
-  [StageName.INCLUDED_IN_TON_CONSENSUS]: 5,
-  [StageName.EXECUTED_IN_TON]: 6,
+  'EVMMerkleMessageCollected': 1,
+  'EVMMerkleRootSet': 2,
+  'EVMMerkleMessageExecuted': 3,
+  'TVMMerkleMessageCollected': 4,
+  'TVMMerkleRootSet': 5,
+  'TVMMerkleMessageExecuted': 6,
 }
 
 const getStatus = (key: string) => {
@@ -29,28 +27,28 @@ const items: Ref<{ label: string, status: 'success' | 'error' | 'pending' | unde
       status: operationId ? 'success' : 'pending',
     },
     {
-      label: 'Collected in TAC',
-      status: operationId ? getStatus(StageName.COLLECTED_IN_TAC) : undefined,
+      label: 'EVM message collected',
+      status: operationId ? getStatus('EVMMerkleMessageCollected') : undefined,
     },
     {
-      label: 'Included in TAC consensus',
-      status: getStatus(StageName.INCLUDED_IN_TAC_CONSENSUS),
+      label: 'EVM message executing',
+      status: getStatus('EVMMerkleRootSet'),
     },
     {
-      label: 'Executed in TAC',
-      status: getStatus(StageName.EXECUTED_IN_TAC),
+      label: 'EVM message executed',
+      status: getStatus('EVMMerkleMessageExecuted'),
     },
     {
-      label: 'Collected in TON',
-      status: getStatus(StageName.COLLECTED_IN_TON),
+      label: 'TVM message collected',
+      status: getStatus('TVMMerkleMessageCollected'),
     },
     {
-      label: 'Included in TON consensus',
-      status: getStatus(StageName.INCLUDED_IN_TON_CONSENSUS),
+      label: 'TVM message executing',
+      status: getStatus('TVMMerkleRootSet'),
     },
     {
-      label: 'Executed in TON',
-      status: getStatus(StageName.EXECUTED_IN_TON),
+      label: 'TVM message executed, complete',
+      status: getStatus('TVMMerkleMessageExecuted'),
     },
   ]
 })
