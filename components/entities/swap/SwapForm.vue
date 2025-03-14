@@ -236,7 +236,7 @@ const onTokenChange = (token: Token, index: number) => {
   Object.assign(pair[index === 0 ? 1 : 0], {
     id: index === 0 ? 2 : 1,
     token: pairToken,
-    inputValue: '0',
+    inputValue: pair[index === 0 ? 1 : 0].inputValue,
     balance: 0,
     swapKey: 1,
   })
@@ -247,7 +247,7 @@ const onTokenChange = (token: Token, index: number) => {
     loadBalances()
   }
 
-  calcRate(index)
+  calcRate(0)
 }
 const updatePoolTokens = () => {
   poolTokens.value.length = 0
