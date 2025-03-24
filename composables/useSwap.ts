@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import { type AssetBridgingData, SenderFactory } from '@tonappchain/sdk'
+import { type AssetBridgingData, SenderFactory } from 'tac-sdk'
 import { toNano } from '@ton/ton'
 import { useLocalStorage } from '@vueuse/core'
 import { DEFAULT_SLIPPAGE_PERCENT_VALUE } from '~/utils/ton-utils'
@@ -7,7 +7,7 @@ import { DEFAULT_SLIPPAGE_PERCENT_VALUE } from '~/utils/ton-utils'
 export const useSwap = () => {
   const { tacSdk } = useTac()
   const { getTonConnectUI } = useTonConnect()
-  const proxyAddress = '0x51b7C14f2Db9C9bA2AE4729622Abb0B9831f38f1'
+  const proxyAddress = '0xF080CaFA628071C4304eBA0832136231667f4609'
   const evmProviderUrl = 'https://newyork-inap-72-251-230-233.ankr.com/tac_tacd_testnet_full_rpc_1'
   const slippagePercent = useLocalStorage('swap-slippage-percent', DEFAULT_SLIPPAGE_PERCENT_VALUE)
 
