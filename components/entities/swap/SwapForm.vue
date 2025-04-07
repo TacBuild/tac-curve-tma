@@ -107,7 +107,6 @@ const calcRate = useDebounceFn(async (inputIndex: number) => {
   let rate
   try {
     rate = value <= 0 ? 0 : await getRate(value, keys, inputIndex)
-    console.log(value, keys, inputIndex)
   }
   catch (e) {
     errorRate.value = 'Unable to calculate rate. Price impact may be very high.'
@@ -115,10 +114,10 @@ const calcRate = useDebounceFn(async (inputIndex: number) => {
     rate = 0
   }
   if (inputIndex === 0) {
-    pair[1].inputValue = !value ? '' : String(rate)
+    pair[1].inputValue = !value ? '' : rate.toLocaleString('en', { useGrouping: false, maximumFractionDigits: pair[1].token.decimals })
   }
   else {
-    pair[0].inputValue = !value ? '' : String(rate)
+    pair[0].inputValue = !value ? '' : rate.toLocaleString('en', { useGrouping: false, maximumFractionDigits: pair[0].token.decimals })
   }
 }, 200)
 const onSubmit = async () => {
