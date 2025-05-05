@@ -90,6 +90,7 @@ export default defineNuxtConfig({
       telegramManifestUrl: process.env.TELEGRAM_MANIFEST_URL || '',
       tonconnectManifestUrl: process.env.TONCONNECT_MANIFEST_URL || '',
       telegramMiniAppBotUrl: process.env.TELEGRAM_MINI_APP_BOT_URL || '',
+      toncenterApiKey: process.env.TONCENTER_API_KEY || '',
     },
   },
 

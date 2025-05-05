@@ -72,6 +72,7 @@ const getRate = async (value: number, keys: Array<number>, inputIndex: number) =
 const loadBalances = async () => {
   try {
     isLoadingBalances.value = true
+
     pair[0].balance = !pair[0].token.evmTokenAddress
       ? await fetchTonBalance(Address.parse(address.value))
       : nanoToValue(
@@ -80,6 +81,7 @@ const loadBalances = async () => {
             await tacSdk.value?.getTVMTokenAddress(pair[0].token.evmTokenAddress)).catch(() => 0) || 0,
           pair[0].token.decimals,
         )
+
     pair[1].balance = !pair[1].token.evmTokenAddress
       ? await fetchTonBalance(Address.parse(address.value))
       : nanoToValue(
@@ -279,7 +281,7 @@ watch(isReady, (val) => {
     :class="$style.SwapForm"
     @submit.prevent="onSubmit"
   >
-    <template v-if="isLoaded">
+    <template v-if="isTacLoaded">
       <TransitionGroup
         tag="div"
         name="swap"
