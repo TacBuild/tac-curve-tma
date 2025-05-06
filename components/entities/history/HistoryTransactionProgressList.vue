@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { StageName } from '@tonappchain/sdk/dist/structs/Struct'
+import { useClipboard } from '@vueuse/core'
 
+const { copy, copied, isSupported } = useClipboard({ legacy: true })
 const { operationId, status } = defineProps<{ operationId: string, status: string }>()
 
 const map: Record<string, number> = {
@@ -54,6 +56,12 @@ const items: Ref<{ label: string, status: 'success' | 'error' | 'pending' | unde
     },
   ]
 })
+
+const copyOperationId = () => {
+  if (!copied.value) {
+    copy(operationId)
+  }
+}
 </script>
 
 <template>
@@ -65,7 +73,19 @@ const items: Ref<{ label: string, status: 'success' | 'error' | 'pending' | unde
       <HistoryTransactionProgressItem
         :label="item.label"
         :status="item.status"
-      />
+      >
+        <template v-if="idx === 0">
+          <UiButton
+            v-if="operationId && isSupported"
+            size="smaller"
+            class="p3"
+            :class="$style.copy"
+            @click="copyOperationId"
+          >
+            {{ copied ? 'Copied' : 'Copy ID' }}
+          </UiButton>
+        </template>
+      </HistoryTransactionProgressItem>
     </li>
   </ul>
 </template>
@@ -88,5 +108,12 @@ const items: Ref<{ label: string, status: 'success' | 'error' | 'pending' | unde
       background-image: url("data:image/svg+xml,<svg width=\"3\" height=\"19\" viewBox=\"0 0 3 19\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><g clip-path=\"url(%23clip0_3_2)\"><path d=\"M1.7207 17.4453V1\" stroke=\"%238E8E93\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-dasharray=\"4 6\"/></g><defs><clipPath id=\"clip0_3_2\"><rect width=\"3\" height=\"19\" fill=\"white\"/></clipPath></defs></svg>");
     }
   }
+}
+
+.copy {
+  margin-left: auto;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 </style>

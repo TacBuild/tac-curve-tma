@@ -7,7 +7,7 @@ const props = withDefaults(defineProps<Partial<{
   to: string
   href: string
   target: string
-  size: 'small' | undefined
+  size: 'small' | 'smaller' | undefined
   color: 'secondary' | undefined
   wide: boolean
   disabled: boolean
@@ -57,7 +57,7 @@ const onClick = (e: Event) => {
     :class="classes"
     class="v-button"
     :type="type"
-    :disabled="disabled"
+    :disabled="disabled || undefined"
     :target="target"
     v-bind="bindedAttrs"
     @click="onClick"
@@ -155,9 +155,16 @@ const onClick = (e: Event) => {
   }
 
   &--small {
-    min-height: 31px;
+    min-height: 42px;
     min-width: 52px;
-    padding: 0 6px;
+    padding: 0 12px;
+    font-size: var(--ui-button-small-font-size);
+  }
+
+  &--smaller {
+    min-width: 52px;
+    min-height: 32px;
+    padding: 0 9px 0 7px;
     font-size: var(--ui-button-small-font-size);
   }
 

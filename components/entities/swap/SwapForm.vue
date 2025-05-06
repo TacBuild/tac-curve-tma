@@ -310,7 +310,7 @@ watch(isReady, (val) => {
           <template #append>
             <div class="flex-center">
               <UiButton
-                size="small"
+                size="smaller"
                 class="mr-8"
                 :disabled="isSwapping || isLoadingBalances"
                 @click.stop="setMax"
