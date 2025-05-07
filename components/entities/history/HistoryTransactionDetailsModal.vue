@@ -3,7 +3,8 @@ import type { TransactionLinker } from '@tonappchain/sdk'
 import type { Token } from '~/entities/token'
 
 defineEmits(['close'])
-const { transactionLinker } = defineProps<{
+const { title = 'Swap details', transactionLinker } = defineProps<{
+  title: string
   fromToken: Token
   toToken: Token
   fromValue: number | string
@@ -24,7 +25,7 @@ onUnmounted(() => {
     <template #title>
       <div :class="$style.title">
         <p class="mb-4">
-          Swap details
+          {{ title }}
         </p>
         <p class="p4">
           {{ date }}
@@ -32,12 +33,12 @@ onUnmounted(() => {
       </div>
     </template>
 
-    <TokenPairSwapInfo
+    <TransactionAssetsInfo
       class="mb-16 mt-4"
-      :from-token="fromToken"
-      :to-token="toToken"
-      :from-value="fromValue"
-      :to-value="toValue"
+      :token-a="fromToken"
+      :token-b="toToken"
+      :value-a="fromValue"
+      :value-b="toValue"
     />
 
     <HistoryTransactionProgressList

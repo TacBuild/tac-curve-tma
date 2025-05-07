@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import type { Token } from '~/entities/token'
+import { poolsWithTokens, type PoolWithTokens } from '~/entities/pool'
 
+const props = defineProps<{ onSelect: (pool: PoolWithTokens) => void }>()
 const emits = defineEmits(['close', 'select'])
-const { title = 'Select token', tokens, onSelect } = defineProps<{ title?: string, tokens: Token[], onSelect: (e: Token) => void }>()
 
-const handleSelect = (token: Token) => {
-  if (onSelect) {
-    onSelect(token)
-  }
+const handleSelect = (pool: PoolWithTokens) => {
+  props.onSelect(pool)
   emits('close')
 }
 </script>
@@ -17,25 +15,26 @@ const handleSelect = (token: Token) => {
     <template #title>
       <div :class="$style.title">
         <p class="mb-4">
-          {{ title }}
+          Select pool
         </p>
       </div>
     </template>
 
     <ul :class="$style.list">
       <li
-        v-for="token in tokens"
-        :key="token.evmTokenAddress"
+        v-for="pool in poolsWithTokens"
+        :key="pool.address"
         :class="$style.item"
-        @click="handleSelect(token)"
+        @click="handleSelect(pool)"
       >
         <BaseAvatar
-          :src="token.logo"
+          v-if="pool"
           class="icon--32"
+          :src="[pool.tokens[0].logo, pool.tokens[1].logo]"
         />
 
         <p class="weight-700 p1">
-          {{ token?.symbol || 'Unknown' }}
+          {{ pool.name }}
         </p>
       </li>
     </ul>
@@ -45,6 +44,11 @@ const handleSelect = (token: Token) => {
 <style module lang="scss">
 .TokenSelectList {
   //
+}
+
+.icon {
+  background-position: center;
+  background-size: contain;
 }
 
 .list {

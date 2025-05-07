@@ -5,8 +5,7 @@ import { SwapStatusModal } from '#components'
 import { useModal } from '~/components/ui/composables/useModal'
 
 const modal = useModal()
-const config = useRuntimeConfig().public
-
+// const config = useRuntimeConfig().public
 const isLoaded = ref(false)
 const account: Account = reactive({} as Account)
 const walletName = ref('Wallet')
@@ -28,7 +27,7 @@ tonConnectUI.uiOptions = {
     borderRadius: 'none',
   },
   actionsConfiguration: {
-    twaReturnUrl: config.telegramMiniAppBotUrl as `${string}://${string}`,
+    // twaReturnUrl: config.telegramMiniAppBotUrl as `${string}://${string}`,
   },
 }
 

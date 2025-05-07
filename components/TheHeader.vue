@@ -3,9 +3,9 @@
 </script>
 
 <template>
-  <header class="header">
-    <div class="wrap">
-      <h1 class="logo">
+  <header :class="$style.header">
+    <div :class="$style.wrap">
+      <h1 :class="$style.logo">
         <a
           href="https://curve.fi"
           target="_blank"
@@ -16,11 +16,13 @@
           >
         </a>
       </h1>
+
+      <WalletButton />
     </div>
   </header>
 </template>
 
-<style lang="scss" scoped>
+<style lang="scss" module>
 .header {
   display: flex;
   justify-content: center;
@@ -42,7 +44,6 @@
   width: 100%;
   max-width: var(--container-w);
   background-color: var(--c-body-bg);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 
   @include respond-to(mobile) {
     padding: var(--container-padding);
@@ -52,23 +53,6 @@
 .logo {
   width: 114px;
   height: 36px;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-}
-
-.right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.logo-tac {
-  width: 58px;
-  height: 18px;
 
   img {
     width: 100%;

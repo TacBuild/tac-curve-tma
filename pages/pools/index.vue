@@ -3,7 +3,9 @@
 </script>
 
 <template>
-
+  <div>
+    <PoolList />
+  </div>
 </template>
 
 <style scoped lang="scss">

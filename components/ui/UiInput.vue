@@ -4,13 +4,13 @@ defineOptions({
 })
 const model = defineModel<string | number>({ default: '' })
 const emits = defineEmits(['blur', 'focus', 'enter', 'input', 'change', 'update:model-value'])
-const props = defineProps<{
-  label?: string
-  color?: string
-  error?: string
-  disabled?: boolean
-  onlyNumber?: boolean
-}>()
+const props = defineProps<Partial<{
+  label: string
+  color: string
+  error: string
+  disabled: boolean
+  onlyNumber: boolean
+}>>()
 const isFocused = ref(false)
 const inputRef = ref()
 
@@ -158,7 +158,7 @@ const onInput = (e: Event) => {
 
   &__append {
     flex-shrink: 0;
-    margin-right: -8px;
+    margin-right: -3px;
     margin-left: 8px;
   }
 

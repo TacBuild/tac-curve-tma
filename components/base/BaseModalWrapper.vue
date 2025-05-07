@@ -16,7 +16,7 @@ defineEmits(['close'])
       />
     </div>
 
-    <div class="mx-auto">
+    <div>
       <slot />
     </div>
 
@@ -26,6 +26,8 @@ defineEmits(['close'])
 
 <style module lang="scss">
 .BaseModal {
+  display: flex;
+  flex-direction: column;
   position: absolute;
   left: 50%;
   top: 50%;
@@ -43,10 +45,9 @@ defineEmits(['close'])
     bottom: 0;
     width: 100%;
     min-width: 100%;
+    padding: 16px;
     max-height: calc(90dvh);
     transform: translate(0, 0);
-    border-top-left-radius: 24px;
-    border-top-right-radius: 24px;
   }
 }
 
@@ -54,7 +55,7 @@ defineEmits(['close'])
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
   min-height: 32px;
   font-size: 19px;
   line-height: 21px;

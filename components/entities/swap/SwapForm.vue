@@ -2,36 +2,24 @@
 import { UserRejectsError } from '@tonconnect/ui'
 import { useDebounceFn } from '@vueuse/core'
 import { Address } from '@ton/ton'
-import { pools, type Token, tokens } from '~/entities/token'
+import { type Token, tokens } from '~/entities/token'
+import { pools } from '~/entities/pool'
 import { useTonConnect } from '~/composables/useTonConnect'
 import { useModal } from '~/components/ui/composables/useModal'
-import { HistoryTransactionDetailsModal, SwapConfirmModal, SwapStatusModal } from '#components'
+import { TransactionDetailsModal, TransactionConfirmModal, SwapStatusModal } from '#components'
 import { fetchTonBalance } from '~/utils/ton-utils'
 import { useSwap } from '~/composables/useSwap'
+import { formatNumber } from '~/utils/string-utils'
 
 const modal = useModal()
-const {
-  isLoaded,
-  isConnected,
-  address,
-  walletName,
-  shorterAddress,
-  getTonConnectUI,
-  disconnect,
-} = useTonConnect()
-const {
-  slippagePercent,
-  swap,
-  getSwapRates,
-} = useSwap()
-const {
-  tacSdk,
-  isLoaded: isTacLoaded,
-} = useTac()
+const { isLoaded, isConnected, address, walletName, getTonConnectUI } = useTonConnect()
+const { swap, getSwapRates, slippagePercent } = useSwap()
+const { tacSdk, isLoaded: isTacLoaded } = useTac()
 
 const pool = ref(pools[0])
 
 const poolTokens: Ref<Token[]> = ref([])
+const isPreparing = ref(false)
 const isLoadingBalances = ref(false)
 const isLoadingRates = ref(false)
 const isSwapping = ref(false)
@@ -56,7 +44,7 @@ const isSubmitDisabled = computed(() => {
     return !isLoaded.value
   }
 
-  return Boolean(errorRate.value) || isSwapping.value
+  return Boolean(errorRate.value) || isPreparing.value || isSwapping.value
     || isLoadingBalances.value || !pair[0].inputValue
     || Number(pair[0].inputValue) > pair[0].balance
     || Number(pair[0].inputValue) <= 0
@@ -133,15 +121,20 @@ const onSubmit = async () => {
   }
 
   pair[0].inputValue = String(Math.trunc((Number(pair[0].inputValue)) * 10 ** pair[0].token.decimals) / 10 ** pair[0].token.decimals)
-  calcRate(0)
-  modal.open(SwapConfirmModal, {
+  try {
+    isPreparing.value = true
+    await calcRate(0)
+  }
+  finally {
+    isPreparing.value = false
+  }
+  modal.open(TransactionConfirmModal, {
     props: {
-      poolAddress: pool.value[1],
-      fromToken: pair[0].token,
-      toToken: pair[1].token,
-      fromValue: pair[0].inputValue,
-      toValue: pair[1].inputValue,
-      swapMethod: pair[0].swapKey === 0 ? 'get_dy' : 'get_dx',
+      type: 'swap',
+      tokenA: pair[0].token,
+      tokenB: pair[1].token,
+      valueA: pair[0].inputValue,
+      valueB: pair[1].inputValue,
       onConfirm: () => {
         setTimeout(() => handleSwap(), 300)
       },
@@ -153,10 +146,10 @@ const handleSwap = async () => {
     isSwapping.value = true
     const txLinker = await swap(
       pool.value[1],
-      pair[0].token.evmTokenAddress,
       pair.map(o => o.swapKey),
-      Number(pair[0].inputValue),
-      pair[0].token.decimals || 9,
+      pair[0].token.evmTokenAddress,
+      valueToNano(pair[0].inputValue, pair[0].token.decimals),
+      valueToNano(pair[1].inputValue, pair[1].token.decimals),
     )
 
     if (!txLinker) {
@@ -172,12 +165,14 @@ const handleSwap = async () => {
       },
       onClose: () => {
         setTimeout(() => {
-          modal.open(HistoryTransactionDetailsModal, {
+          modal.open(TransactionDetailsModal, {
             props: {
-              fromToken: pair[0].token,
-              toToken: pair[1].token,
-              fromValue: pair[0].inputValue,
-              toValue: pair[1].inputValue,
+              type: 'swap',
+              title: 'Swap details',
+              tokenA: pair[0].token,
+              tokenB: pair[1].token,
+              valueA: pair[0].inputValue,
+              valueB: pair[1].inputValue,
               transactionLinker: txLinker,
             },
             onClose: () => {
@@ -302,8 +297,8 @@ watch(isReady, (val) => {
         >
           <template #label>
             {{
-              isConnected ? `Available: ${isLoadingBalances || !isTacLoaded
-                ? 'loading...' : pair[0].balance}`
+              isConnected ? `Avail. ${isLoadingBalances || !isTacLoaded
+                ? 'loading...' : formatNumber(pair[0].balance, pair[0].token.decimals)}`
               : 'You send'
             }}
           </template>
@@ -311,15 +306,14 @@ watch(isReady, (val) => {
             <div class="flex-center">
               <UiButton
                 size="smaller"
-                class="mr-8"
+                class="mr-12"
                 :disabled="isSwapping || isLoadingBalances"
                 @click.stop="setMax"
               >
                 MAX
               </UiButton>
-              <TokenButton
+              <TokenSelectButton
                 key="tb0"
-                :desc="shorterAddress"
                 :tokens="tokens"
                 :model-value="pair[0].token"
                 @change="onTokenChange($event, 0)"
@@ -335,7 +329,7 @@ watch(isReady, (val) => {
         >
           <UiIcon
             name="swap-arrows"
-            class="c-secondary-text icon--32 "
+            class="c-secondary-text icon--32"
           />
         </button>
         <UiInput
@@ -353,13 +347,13 @@ watch(isReady, (val) => {
         >
           <template #label>
             {{
-              isConnected ? `Available: ${isLoadingBalances || !isTacLoaded
-                ? 'loading...' : pair[1].balance}`
+              isConnected ? `Avail. ${isLoadingBalances || !isTacLoaded
+                ? 'loading...' : formatNumber(pair[1].balance, pair[1].token.decimals)}`
               : 'You receive'
             }}
           </template>
           <template #append>
-            <TokenButton
+            <TokenSelectButton
               key="tb1"
               :tokens="poolTokens"
               :model-value="pair[1].token"
@@ -373,14 +367,8 @@ watch(isReady, (val) => {
         :class="$style.info"
         class="mb-8"
       >
-        <span class=" weight-600">Slippage tolerance</span>
-        <span class="c-secondary-text flex-center">
-          <span class="mr-4">{{ slippagePercent }}%</span>
-          <!-- <UiIcon
-            name="cog"
-            @click="openSlippageToleranceSettings"
-          /> -->
-        </span>
+        <span class=" weight-600">Slippage Tolerance</span>
+        <span class="c-secondary-text">{{ slippagePercent }}%</span>
       </p>
 
       <p
@@ -391,20 +379,9 @@ watch(isReady, (val) => {
         <span class="c-secondary-text">~0.14 TON</span>
       </p>
 
-      <button
-        v-if="isConnected"
-        :class="$style.disconnect"
-        type="button"
-        class="p1 c-disabled weight-700 mx-auto mb-16"
-        :disabled="isSwapping"
-        @click="disconnect()"
-      >
-        Disconnect wallet
-      </button>
-
       <UiButton
         type="submit"
-        :loading="isSwapping || isLoadingBalances || !isTacLoaded"
+        :loading="isSwapping || isLoadingBalances || !isTacLoaded || isPreparing"
         :disabled="isSubmitDisabled"
         wide
       >

@@ -1,18 +1,5 @@
-<template>
-  <span
-    :class="$style.UiIcon"
-    class="icon"
-    v-html="icon"
-  />
-</template>
-
 <script lang="ts" setup>
-const props = defineProps({
-  name: {
-    type: String,
-    default: '',
-  },
-})
+const { name } = defineProps<{ name?: string }>()
 const icon = ref('')
 
 watchEffect(async () => {
@@ -22,13 +9,21 @@ watchEffect(async () => {
       import: 'default',
       eager: false,
     })
-    icon.value = await iconsImport[`/assets/icons/${props.name}.svg`]() as string
+    icon.value = await iconsImport[`/assets/icons/${name}.svg`]() as string
   }
   catch {
-    console.error(`Icon '${props.name}' doesn't exist in 'assets/icons'`)
+    console.error(`Icon '${name}' doesn't exist in 'assets/icons'`)
   }
 })
 </script>
+
+<template>
+  <span
+    :class="$style.UiIcon"
+    class="icon"
+    v-html="icon"
+  />
+</template>
 
 <style lang="scss" module>
 .UiIcon {

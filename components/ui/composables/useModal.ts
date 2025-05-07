@@ -1,18 +1,19 @@
 import { useScrollLock, useEventBus } from '@vueuse/core'
+import type { Raw } from 'vue'
 
-interface ModalData {
+export interface ModalData {
   transition?: string
   dropdown?: boolean
   noLock?: boolean
   absolute?: boolean
   isNotClosable?: boolean
   custom?: boolean
-  props?: Record<string, unknown>
+  props?: Record<string, any> // eslint-disable-line
   [key: string]: any // eslint-disable-line
 }
 
 let popstateHandler: EventListener | undefined
-const list: Record<string, unknown>[] = reactive([])
+const list: { id: number, component: Raw<Component>, data: ModalData }[] = reactive([])
 const hasModal = computed(() => list.length > 0)
 const lock = useScrollLock(document.body)
 const bus = useEventBus<string>('modal')

@@ -1,26 +1,6 @@
 <script setup lang="ts">
 defineEmits(['close'])
-defineProps({
-  title: {
-    type: String,
-    default: '',
-  },
-
-  text: {
-    type: String,
-    default: '',
-  },
-
-  buttonLabel: {
-    type: String,
-    default: 'Great',
-  },
-
-  status: {
-    type: String as PropType<'success' | 'pending' | 'error'>,
-    default: undefined,
-  },
-})
+const { buttonLabel = 'Great' } = defineProps<{ title?: string, text?: string, buttonLabel?: string, status?: 'success' | 'pending' | 'error' }>()
 </script>
 
 <template>

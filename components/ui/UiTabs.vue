@@ -1,20 +1,24 @@
 <script setup lang="ts">
 interface Tab {
-  label: string;
+  label: string
   value: unknown
 }
 
-const model = defineModel<unknown>({ default: undefined });
-const props = defineProps({
-  tabs: {
-    type: Array as PropType<Tab[]>,
-    default: () => []
+const model = defineModel<unknown>({ default: undefined })
+const props = defineProps<{ tabs: Tab[], size?: 'small' }>()
+
+const classes = computed(() => {
+  return {
+    [`v-tabs--${props.size}`]: Boolean(props.size),
   }
-});
+})
 </script>
 
 <template>
-  <div class="v-tabs">
+  <div
+    class="v-tabs"
+    :class="classes"
+  >
     <ul
       class="v-tabs__items"
       aria-role="tablist"
@@ -23,7 +27,7 @@ const props = defineProps({
         v-for="(tab, idx) in props.tabs"
         :key="idx"
         class="v-tabs__item"
-        :class="{'v-tabs__item--active': model === tab.value}"
+        :class="{ 'v-tabs__item--active': model === tab.value }"
         aria-role="tab"
         @click="model = tab.value"
       >
@@ -35,6 +39,8 @@ const props = defineProps({
 
 <style lang="scss">
 .v-tabs {
+  $root: &;
+
   &__items {
     display: flex;
     width: 100%;
@@ -59,6 +65,27 @@ const props = defineProps({
     &--active {
       color: var(--ui-primary-text-color);
       box-shadow: 0 -2px 0 0 inset var(--ui-primary-text-color);
+    }
+  }
+
+  &--small {
+    height: auto;
+
+    #{$root}__item {
+      height: inherit;
+      flex-grow: 0;
+      padding: 2px 4px;
+      box-shadow: none;
+      font-size: var(--ui-tabs-small-font-size);
+
+      &:not(:last-child) {
+        border-right: 2px solid var(--ui-disabled-text-color);
+      }
+
+      &--active {
+        color: var(--ui-primary-text-color);
+        box-shadow: none;
+      }
     }
   }
 }

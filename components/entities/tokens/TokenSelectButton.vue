@@ -23,18 +23,17 @@ const open = () => {
 
 <template>
   <button
-    :class="$style.TokenButton"
+    :class="$style.TokenSelectButton"
     type="button"
     @click.stop="open"
   >
-    <span
+    <BaseAvatar
       v-if="model"
-      :class="$style.icon"
-      class="icon"
-      :style="{ backgroundImage: `url(${model.logo})` }"
+      :src="model.logo"
     />
+
     <div class="mx-auto">
-      <p class=" weight-700">
+      <p class="weight-700">
         {{ model?.symbol || 'Select' }}
       </p>
       <p
@@ -48,7 +47,7 @@ const open = () => {
 </template>
 
 <style lang="scss" module>
-.TokenButton {
+.TokenSelectButton {
   display: flex;
   align-items: center;
   background-color: #F8F8F9;
@@ -63,10 +62,5 @@ const open = () => {
   &:active {
     box-shadow: 1px 0 0 0 #484D56 inset, 0 1px 0 0 #484D56 inset, -2px 0 0 0 #D9D9D9 inset, 0 -2px 0 0 #D9D9D9 inset;
   }
-}
-
-.icon {
-  background-position: center;
-  background-size: contain;
 }
 </style>

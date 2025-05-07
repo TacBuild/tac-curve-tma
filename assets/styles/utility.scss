@@ -8,12 +8,24 @@
   margin-right: 8px;
 }
 
+.mr-12 {
+  margin-right: 12px;
+}
+
 .mt-4 {
   margin-top: 4px;
 }
 
 .mt-8 {
   margin-top: 8px;
+}
+
+.mt-12 {
+  margin-top: 12px;
+}
+
+.mt-16 {
+  margin-top: 16px;
 }
 
 .mt-24 {
@@ -44,6 +56,10 @@
   margin-bottom: 24px;
 }
 
+.mb-32 {
+  margin-bottom: 32px;
+}
+
 .mx-auto {
   margin-left: auto;
   margin-right: auto;
@@ -63,6 +79,10 @@
 
 .c-orange {
   color: var(--c-orange);
+}
+
+.c-red {
+  color: var(--c-red);
 }
 
 .c-disabled {

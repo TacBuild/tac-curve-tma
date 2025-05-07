@@ -1,23 +1,24 @@
 <script setup lang="ts">
 import type { Token } from '~/entities/token'
 
-const props = defineProps<{
+defineProps<{
   token: Token
-  amount: number | string
+  amount: number | string | undefined
 }>()
 </script>
 
 <template>
-  <div :class="$style.TokenPairSwapInfoItem">
+  <div :class="$style.TransactionAssetsInfoToken">
     <div :class="$style.left">
-      <div :class="$style.img">
-        <img
-          :src="props.token.logo"
-          :alt="props.token.symbol"
-        >
-      </div>
+      <BaseAvatar
+        :class="$style.img"
+        :src="token.logo"
+      />
 
-      <p class="p2 weight-700">
+      <p
+        v-if="amount !== undefined"
+        class="p2 weight-700"
+      >
         {{ amount }} {{ token.symbol }}
       </p>
     </div>
@@ -31,7 +32,7 @@ const props = defineProps<{
 </template>
 
 <style module lang="scss">
-.TokenPairSwapInfoItem {
+.TransactionAssetsInfoToken {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -41,17 +42,5 @@ const props = defineProps<{
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.img {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
 }
 </style>

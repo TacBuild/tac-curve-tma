@@ -11,11 +11,11 @@
   --ui-secondary-text-color: var(--c-secondary-text);
   --ui-disabled-text-color: var(--c-disabled);
   --ui-transition: var(--trs-fast);
-  --ui-danger-color: red;
+  --ui-danger-color: var(--c-red);
 
   --ui-button-font-size: 18px;
   --ui-button-small-font-size: 15px;
-  --ui-button-font-weight: 600;
+  --ui-button-font-weight: 700;
   --ui-button-line-height: 21px;
   --ui-button-letter-spacing: 0;
 
@@ -29,30 +29,47 @@
   --ui-button-primary-disabled-text-color: var(--c-secondary-text);
   --ui-button-primary-disabled-box-shadow: 1px 0 0 0 var(--c-secondary-text) inset, 0 1px 0 0 var(--c-secondary-text) inset, -4px 0 0 0 var(--c-secondary-text) inset, 0 -4px 0 0 var(--c-secondary-text) inset;
 
-  --ui-button-secondary-bg-color: transparent;
-  --ui-button-secondary-box-shadow: none;
-  --ui-button-secondary-text-color: #6B6B71;
-  --ui-button-secondary-hover-bg-color: transparent;
-  --ui-button-secondary-active-bg-color: transparent;
-  --ui-button-secondary-active-box-shadow: none;
-  --ui-button-secondary-disable-bg-color: transparent;
+  --ui-button-secondary-bg-color: var(--c-body-bg);
+  --ui-button-secondary-box-shadow: 1px 0 0 0 #D9D9D9 inset, 0 1px 0 0 #D9D9D9 inset, -4px 0 0 0 #484D56 inset, 0 -4px 0 0 #484D56 inset;
+  --ui-button-secondary-text-color: #484D56;
+  --ui-button-secondary-hover-bg-color: var(--c-body-bg);
+  --ui-button-secondary-active-bg-color: var(--c-body-bg);;
+  --ui-button-secondary-active-box-shadow: 4px 0 0 0 #484D56 inset, 0 4px 0 0 #484D56 inset, -1px 0 0 0 #D9D9D9 inset, 0 -1px 0 0 #D9D9D9 inset;
+  --ui-button-secondary-disable-bg-color: var(--c-disabled);
   --ui-button-secondary-disable-text-color: var(--c-disabled);
 
   --ui-radio-font-size: 15px;
   --ui-radio-line-height: 17px;
   --ui-radio-gap-x: 8px;
-  --ui-radio-gap-y: 24px;
+  --ui-radio-gap-y: 8px;
   --ui-radio-circle-size: 20px;
   --ui-radio-point-size: 15px;
+  --ui-radio-horizontal-gap: 24px;
 
   --ui-tabs-font-size: 18px;
   --ui-tabs-line-height: 21px;
   --ui-tabs-font-weight: 600;
+  --ui-tabs-small-font-size: 14px;
 
   --ui-input-box-shadow: 2px 0 0 0 #484D56 inset, 0 2px 0 0 #484D56 inset, -1px 0 0 0 #484D56 inset, 0 -1px 0 0 #484D56 inset;
   --ui-input-focus-box-shadow: -2px 0 0 0 #484D56 inset, 0 -2px 0 0 #484D56 inset, 1px 0 0 0 #484D56 inset, 0 1px 0 0 #484D56 inset;
   --ui-input-warning-box-shadow: 2px 0 0 0 var(--c-orange) inset, 0 2px 0 0 var(--c-orange) inset, -1px 0 0 0 var(--c-orange) inset, 0 -1px 0 0 var(--c-orange) inset;
   --ui-input-warning-focus-box-shadow: -2px 0 0 0 var(--c-orange) inset, 0 -2px 0 0 var(--c-orange) inset, 1px 0 0 0 var(--c-orange) inset, 0 1px 0 0 var(--c-orange) inset;
+}
+
+.ui-loader {
+  &:before {
+    content: '/';
+    display: inline-block;
+    animation: loading 0.5s infinite linear;
+    width: 24px;
+    height: 24px;
+    text-align: center;
+  }
+}
+
+.ui-separator {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 

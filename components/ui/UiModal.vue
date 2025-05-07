@@ -1,35 +1,20 @@
 <script setup lang="ts">
-import { useModal } from './composables/useModal'
+import type { Component } from 'vue'
+import { type ModalData, useModal } from './composables/useModal'
 
 const modal = useModal()
-const props = defineProps({
-  id: {
-    type: Number,
-    default: 0,
-  },
-
-  component: {
-    type: Object,
-    default: () => ({}),
-    required: true,
-  },
-
-  data: {
-    type: Object,
-    default: () => {},
-  },
-})
+const { id = 0, data } = defineProps<{ id: number, component: Component, data: ModalData }>()
 
 const isComponentVisible = ref(false)
 const isPreventClose = ref(false)
 
 const styles = computed(() => {
   return {
-    zIndex: props.data.zIndex,
-    top: props.data.top || 0,
-    bottom: props.data.top || 0,
-    height: props.data.height || 'auto',
-    position: props.data.position || 'fixed',
+    zIndex: data.zIndex,
+    top: data.top || 0,
+    bottom: data.top || 0,
+    height: data.height || 'auto',
+    position: data.position || 'fixed',
   }
 })
 
@@ -38,25 +23,25 @@ const close = () => {
     return
   }
 
-  if (props.data.onClose) {
-    props.data.onClose()
+  if (data.onClose) {
+    data.onClose()
   }
-  else if (props.data.props?.onClose) {
-    props.data.props.onClose()
+  else if (data.props?.onClose) {
+    data.props.onClose()
   }
 
   isComponentVisible.value = false
 }
 const onClickWrapper = () => {
-  if (!props.data.isNotClosable) {
+  if (!data.isNotClosable) {
     close()
   }
 }
 const beforeComponentLeave = () => {
-  modal.close(props.id)
+  modal.close(id)
 
-  if (props.data.beforeComponentLeave) {
-    props.data.beforeComponentLeave()
+  if (data.beforeComponentLeave) {
+    data.beforeComponentLeave()
   }
 }
 const handlePreventClose = (value: boolean) => {
@@ -78,7 +63,7 @@ onBeforeUnmount(() => {
     :style="styles"
   >
     <transition
-      :name="data.transition || 'modal'"
+      :name="data?.transition || 'modal'"
       mode="out-in"
       appear
       @after-leave="beforeComponentLeave"

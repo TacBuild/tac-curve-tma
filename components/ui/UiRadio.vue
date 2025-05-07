@@ -1,40 +1,32 @@
 <script setup lang="ts">
 type RadioOption = {
-  id: string;
-  label: string;
-  value: unknown;
-  disabled?: boolean;
+  id: string | number
+  label?: string
+  value: unknown
+  disabled?: boolean
 }
-const props = defineProps({
-  name: {
-    type: String,
-    default: ''
-  },
-
-  options: {
-    type: Array as PropType<RadioOption[]>,
-    default: () => []
-  }
-});
-const model = defineModel<unknown>({ default: undefined });
+const { name = 'radio', direction = 'vertical' } = defineProps<{ name?: string, options: RadioOption[], direction?: 'vertical' | 'horizontal' }>()
+const model = defineModel<unknown>({ default: undefined })
 </script>
 
 <template>
-  <div class="v-radio">
+  <div
+    class="v-radio"
+    :class="[`v-radio--${direction}`]"
+  >
     <label
-      v-for="option in (props.options as RadioOption[])"
+      v-for="option in (options as RadioOption[])"
       :key="option.id"
     >
       <input
-        :id="option.id"
         :value="option.value"
         type="radio"
-        :name="props.name"
+        :name="name"
         :checked="model === option.value"
         :disabled="option.disabled"
         @input="model = option.value"
       >
-      <slot :name="`slot-${option.id}`" :option="option">
+      <slot :option="option">
         {{ option.label }}
       </slot>
     </label>
@@ -91,6 +83,11 @@ const model = defineModel<unknown>({ default: undefined });
     &[checked]:before {
       display: block;
     }
+  }
+
+  &--horizontal {
+    flex-direction: row;
+    gap: var(--ui-radio-horizontal-gap)
   }
 }
 </style>

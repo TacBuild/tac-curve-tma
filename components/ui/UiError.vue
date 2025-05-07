@@ -1,11 +1,5 @@
 <script setup lang="ts">
-defineProps({
-  error: {
-    type: String,
-    default: '',
-  },
-  noPadding: Boolean,
-})
+defineProps<{ error?: string, noPadding?: boolean }>()
 </script>
 
 <template>
@@ -14,10 +8,9 @@ defineProps({
     class="v-error"
   >
     <div :class="['v-error__wrap', '_noPadding']">
-      <span
-        role="alert"
-        v-html="error"
-      />
+      <span role="alert">
+        {{ error }}
+      </span>
     </div>
   </div>
 </template>
