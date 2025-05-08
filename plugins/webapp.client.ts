@@ -4,12 +4,19 @@ export default defineNuxtPlugin(() => {
   const route = useRoute()
 
   const onBack = () => {
-    if (window.history.length > 1) {
-      router.go(-1)
+    const path = route.path
+    const pathsToIndex = ['/pools']
+    if (pathsToIndex.includes(path)) {
+      router.push('/')
       return
     }
 
-    router.push('/')
+    if (window.history.length > 1) {
+      router.go(-1)
+    }
+    else {
+      router.push('/')
+    }
   }
 
   if (!webapp) {
@@ -47,11 +54,7 @@ export default defineNuxtPlugin(() => {
       return
     }
 
-    if (value === 'new' || value === 'update') {
-      webapp.SettingsButton.hide()
-    }
-
-    if (value === 'index' || value === 'new' || value === 'update') {
+    if (value === 'index') {
       webapp.BackButton.hide()
       return
     }

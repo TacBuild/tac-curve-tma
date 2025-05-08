@@ -4,7 +4,7 @@ const router = useRouter()
 const { init } = useTac()
 
 const onChangeNav = (name: string) => {
-  router.replace({ name })
+  router.push({ name })
 }
 
 const activeRoute = computed(() => {
