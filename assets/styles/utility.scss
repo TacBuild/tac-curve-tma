@@ -173,9 +173,13 @@
 }
 
 .submit-button-sticky-wrap {
-  position: sticky;
-  margin-top: auto;
+  position: static;
+  margin-top: 0;
   width: 100%;
   bottom: var(--container-padding-side);
 
+  @include respond-to(mobile) {
+    position: sticky;
+    margin-top: auto;
+  }
 }

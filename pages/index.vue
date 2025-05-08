@@ -9,6 +9,6 @@
 
 <style module lang='scss'>
 .form {
-  min-height: calc(100dvh - 172px);
+  min-height: calc(100dvh - 174px);
 }
 </style>
