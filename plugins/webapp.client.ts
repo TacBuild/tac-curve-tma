@@ -4,13 +4,6 @@ export default defineNuxtPlugin(() => {
   const route = useRoute()
 
   const onBack = () => {
-    const path = route.path
-    const pathsToIndex = ['/pools']
-    if (pathsToIndex.includes(path)) {
-      router.push('/')
-      return
-    }
-
     if (window.history.length > 1) {
       router.go(-1)
     }
