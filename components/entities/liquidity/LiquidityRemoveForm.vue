@@ -273,7 +273,7 @@ watch(type, (val) => {
       <UiRadio
         v-model="type"
         class="mb-24"
-        :options="[{ id: 1, label: 'Balanced', value: 'balanced' }, { id: 2, label: 'Custom', value: 'custom' }]"
+        :options="[{ id: 1, label: 'Balanced', value: 'balanced' }]"
         direction="horizontal"
       />
 

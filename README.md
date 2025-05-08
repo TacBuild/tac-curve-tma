@@ -41,7 +41,7 @@ npm run build
 ### 2. Liquidity Management
 - Check amounts of liquid pool tokens
 - Add liquidity with rate calculation
-- Remove liquidity with balanced or custom token amounts
+- Remove liquidity with balanced token amounts (one coin and custom token amounts are in development)
 - Follow progress of a transaction in realtime
 
 ### 3. Telegram Mini App ready
