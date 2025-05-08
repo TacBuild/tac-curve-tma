@@ -5,7 +5,7 @@ import { useDebounceFn } from '@vueuse/core'
 import { poolsWithTokens } from '~/entities/pool'
 import { useTonConnect } from '~/composables/useTonConnect'
 import { useModal } from '~/components/ui/composables/useModal'
-import { TransactionDetailsModal, SwapStatusModal, TransactionConfirmModal } from '#components'
+import { TransactionDetailsModal, SwapStatusModal } from '#components'
 import { useSwap } from '~/composables/useSwap'
 import { formatNumber } from '~/utils/string-utils'
 import { type Token, tokens } from '~/entities/token'
@@ -65,9 +65,7 @@ const load = async () => {
     Object.assign(pair[1].token, pool!.tokens[1])
     const res = await Promise.all([getTotalSupply(poolAddress), getPoolTokenBalances(poolAddress, 0), getPoolTokenBalances(poolAddress, 1)])
     totalSupply.value = res[0]
-    console.log(totalSupply.value)
     poolTokenBalances.value = [res[1], res[2]]
-    console.log(poolTokenBalances.value)
     await calcRatesByAmount()
   }
   catch (e) {
@@ -236,7 +234,7 @@ watch(type, (val) => {
 
 <template>
   <form
-    :class="$style.RemoveLiquidityBalancedForm"
+    :class="$style.LiquidityRemoveForm"
     @submit.prevent="onSubmit"
   >
     <template v-if="isLoaded">
@@ -394,14 +392,16 @@ watch(type, (val) => {
         </p>
       </div>
 
-      <UiButton
-        type="submit"
-        :loading="isSubmitting || isLoadingBalance || !isTacLoaded"
-        :disabled="isSubmitDisabled"
-        wide
-      >
-        {{ !isConnected ? 'Connect wallet' : isSubmitting ? `Check ${walletName}` : 'Withdraw' }}
-      </UiButton>
+      <div class="submit-button-sticky-wrap">
+        <UiButton
+          type="submit"
+          :loading="isSubmitting || isLoadingBalance || !isTacLoaded"
+          :disabled="isSubmitDisabled"
+          wide
+        >
+          {{ !isConnected ? 'Connect wallet' : isSubmitting ? `Check ${walletName}` : 'Withdraw' }}
+        </UiButton>
+      </div>
     </template>
     <template v-else>
       <div class="mx-auto">
@@ -412,7 +412,7 @@ watch(type, (val) => {
 </template>
 
 <style module lang="scss">
-.RemoveLiquidityBalancedForm {
+.LiquidityRemoveForm {
   display: flex;
   flex-direction: column;
 }

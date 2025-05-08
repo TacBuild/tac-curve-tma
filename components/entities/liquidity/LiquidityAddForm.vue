@@ -5,7 +5,7 @@ import { useDebounceFn } from '@vueuse/core'
 import { type Token, tokens } from '~/entities/token'
 import { useTonConnect } from '~/composables/useTonConnect'
 import { useModal } from '~/components/ui/composables/useModal'
-import { TransactionDetailsModal, SwapStatusModal, TransactionConfirmModal } from '#components'
+import { TransactionDetailsModal, SwapStatusModal } from '#components'
 import { fetchTonBalance, valueToNano } from '~/utils/ton-utils'
 import { useSwap } from '~/composables/useSwap'
 import { formatNumber } from '~/utils/string-utils'
@@ -174,7 +174,7 @@ watch(isReady, (val) => {
 
 <template>
   <form
-    :class="$style.SwapForm"
+    :class="$style.LiquidityAddForm"
     @submit.prevent="onSubmit"
   >
     <template v-if="isLoaded">
@@ -287,16 +287,18 @@ watch(isReady, (val) => {
         </p>
       </div>
 
-      <UiButton
-        type="submit"
-        :loading="isSubmitting || isLoadingBalances || !isTacLoaded"
-        :disabled="isSubmitDisabled"
-        wide
-      >
-        {{
-          !isConnected ? 'Connect wallet' : isSubmitting ? `Check ${walletName}` : 'Deposit'
-        }}
-      </UiButton>
+      <div class="submit-button-sticky-wrap">
+        <UiButton
+          type="submit"
+          :loading="isSubmitting || isLoadingBalances || !isTacLoaded"
+          :disabled="isSubmitDisabled"
+          wide
+        >
+          {{
+            !isConnected ? 'Connect wallet' : isSubmitting ? `Check ${walletName}` : 'Deposit'
+          }}
+        </UiButton>
+      </div>
     </template>
     <template v-else-if="error">
       <div class="mx-auto">
@@ -312,7 +314,7 @@ watch(isReady, (val) => {
 </template>
 
 <style module lang="scss">
-.SwapForm {
+.LiquidityAddForm {
   display: flex;
   flex-direction: column;
 }

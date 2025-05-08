@@ -149,7 +149,6 @@ export const useSwap = () => {
   }
   const getLiquidityRates = async (poolAddress: string, amounts: bigint[], isDeposit: boolean): Promise<bigint> => {
     const contract = await getContract(poolAddress)
-    console.log(poolAddress, amounts, isDeposit)
     return contract.calc_token_amount(amounts, isDeposit)
   }
   const getSwapRates = async (method: 'get_dx' | 'get_dy', poolAddress: string, amount: bigint, swapKeys: number[]): Promise<bigint> => {

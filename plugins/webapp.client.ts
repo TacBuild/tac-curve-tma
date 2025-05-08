@@ -1,5 +1,4 @@
 export default defineNuxtPlugin(() => {
-  const config = useRuntimeConfig().public
   const webapp = window.Telegram?.WebApp
   const router = useRouter()
   const route = useRoute()
@@ -11,10 +10,6 @@ export default defineNuxtPlugin(() => {
     }
 
     router.push('/')
-  }
-
-  const onSettingsClick = () => {
-    router.push('/profile/settings')
   }
 
   if (!webapp) {
@@ -38,8 +33,6 @@ export default defineNuxtPlugin(() => {
     console.warn('[TGA]:', e)
   }
   try {
-    webapp.SettingsButton.show()
-    webapp.SettingsButton?.onClick(onSettingsClick)
     webapp.BackButton.onClick(onBack)
     webapp.enableClosingConfirmation()
     webapp.expand()

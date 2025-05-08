@@ -23,10 +23,7 @@ init()
     <TheHeader />
 
     <section class="page-wrapper">
-      <div
-        class="container"
-        :class="$style.container"
-      >
+      <div class="container">
         <UiTabs
           v-if="route.name === 'index' || route.name === 'pools'"
           class="mb-32"
@@ -43,7 +40,4 @@ init()
 </template>
 
 <style module lang="scss">
-.container {
-  max-width: 500px !important;
-}
 </style>

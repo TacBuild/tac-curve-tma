@@ -32,6 +32,7 @@ const poolAddress = pool?.[1]
 
     <LiquidityAddForm
       v-if="poolAddress"
+      :class="$style.form"
       :pool-address="poolAddress"
     />
   </div>
@@ -42,5 +43,9 @@ const poolAddress = pool?.[1]
   padding-top: 12px;
   padding-bottom: 12px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.form {
+  min-height: calc(100dvh - 172px);
 }
 </style>

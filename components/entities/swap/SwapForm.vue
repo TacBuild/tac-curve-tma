@@ -379,14 +379,16 @@ watch(isReady, (val) => {
         <span class="c-secondary-text">~0.14 TON</span>
       </p>
 
-      <UiButton
-        type="submit"
-        :loading="isSwapping || isLoadingBalances || !isTacLoaded || isPreparing"
-        :disabled="isSubmitDisabled"
-        wide
-      >
-        {{ !isConnected ? 'Connect wallet' : isSwapping ? `Check ${walletName}` : 'Swap' }}
-      </UiButton>
+      <div class="submit-button-sticky-wrap">
+        <UiButton
+          type="submit"
+          :loading="isSwapping || isLoadingBalances || !isTacLoaded || isPreparing"
+          :disabled="isSubmitDisabled"
+          wide
+        >
+          {{ !isConnected ? 'Connect wallet' : isSwapping ? `Check ${walletName}` : 'Swap' }}
+        </UiButton>
+      </div>
     </template>
     <template v-else>
       <div class="mx-auto">
