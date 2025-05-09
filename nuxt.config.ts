@@ -120,14 +120,14 @@ export default defineNuxtConfig({
       },
     },
 
-    // build: {
-    //   target: 'modules',
-    //   rollupOptions: {
-    //     output: {
-    //       inlineDynamicImports: true,
-    //     },
-    //   },
-    // },
+    build: {
+      target: 'modules',
+      rollupOptions: {
+        output: {
+          inlineDynamicImports: true,
+        },
+      },
+    },
   },
 
   telemetry: {

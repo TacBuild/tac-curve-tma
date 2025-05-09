@@ -28,12 +28,12 @@ const pair: { id: number, token: Token, inputValue: string, balance: number }[]
   = reactive([{
     id: 1,
     token: tokens[0],
-    inputValue: '0',
+    inputValue: '1',
     balance: 0,
   }, {
     id: 2,
     token: tokens[1],
-    inputValue: '0',
+    inputValue: '1',
     balance: 0,
   },
   ])
