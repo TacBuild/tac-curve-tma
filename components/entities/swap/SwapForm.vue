@@ -10,9 +10,9 @@ import { useSwap } from '~/composables/useSwap'
 import { formatNumber } from '~/utils/string-utils'
 
 const modal = useModal()
-const { isLoaded, isConnected, address, walletName, fetchTonBalance, getTonConnectUI } = useTonConnect()
+const { isLoaded, isConnected, walletName, fetchTonBalance, getTonConnectUI } = useTonConnect()
 const { swap, getSwapRates, slippagePercent } = useSwap()
-const { tacSdk, isLoaded: isTacLoaded } = useTac()
+const { fetchJettonBalanceByEvmAddress, isLoaded: isTacLoaded } = useTac()
 
 const pool = ref(pools[0])
 
@@ -55,27 +55,20 @@ const getRate = async (value: number, keys: Array<number>, inputIndex: number) =
   const rate = await getSwapRates(method, pool.value[1], BigInt(Math.floor(value * 10 ** decimals)), keys)
   return nanoToValue(rate, pair[inputIndex === 0 ? 1 : 0].token.decimals)
 }
-const loadBalances = async () => {
+const updateBalances = async () => {
   try {
     isLoadingBalances.value = true
 
-    pair[0].balance = !pair[0].token.evmTokenAddress
-      ? await fetchTonBalance()
-      : nanoToValue(
-          await tacSdk.value?.getUserJettonBalance(
-            address.value,
-            await tacSdk.value?.getTVMTokenAddress(pair[0].token.evmTokenAddress)).catch(() => 0) || 0,
-          pair[0].token.decimals,
-        )
-
-    pair[1].balance = !pair[1].token.evmTokenAddress
-      ? await fetchTonBalance()
-      : nanoToValue(
-          await tacSdk.value?.getUserJettonBalance(
-            address.value,
-            await tacSdk.value?.getTVMTokenAddress(pair[1].token.evmTokenAddress)).catch(() => 0) || 0,
-          pair[1].token.decimals,
-        )
+    const res = await Promise.all([
+      !pair[0].token.evmTokenAddress
+        ? fetchTonBalance()
+        : fetchJettonBalanceByEvmAddress(pair[0].token.evmTokenAddress),
+      !pair[1].token.evmTokenAddress
+        ? fetchTonBalance()
+        : fetchJettonBalanceByEvmAddress(pair[1].token.evmTokenAddress),
+    ])
+    pair[0].balance = res[0]
+    pair[1].balance = res[1]
   }
   catch (e) {
     console.warn(e)
@@ -174,7 +167,7 @@ const handleSwap = async () => {
               transactionLinker: txLinker,
             },
             onClose: () => {
-              loadBalances()
+              updateBalances()
             },
           })
         }, 300)
@@ -238,7 +231,7 @@ const onTokenChange = (token: Token, index: number) => {
   pair[0].swapKey = (keys.findIndex(key => key === pair[0].token.symbol) || 0) as 0 | 1
   pair[1].swapKey = (keys.findIndex(key => key === pair[1].token.symbol) || 0) as 0 | 1
   if (isReady.value) {
-    loadBalances()
+    updateBalances()
   }
 
   calcRate(0)
@@ -264,7 +257,7 @@ watch(() => pair[0].token, () => {
 }, { immediate: true })
 watch(isReady, (val) => {
   if (val) {
-    loadBalances()
+    updateBalances()
   }
 }, { immediate: true })
 </script>

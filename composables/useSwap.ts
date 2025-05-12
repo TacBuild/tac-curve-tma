@@ -3,7 +3,7 @@ import { type AssetBridgingData, SenderFactory } from '@tonappchain/sdk'
 import { DEFAULT_SLIPPAGE_PERCENT_VALUE } from '~/utils/ton-utils'
 
 export const useSwap = () => {
-  const { tacSdk } = useTac()
+  const { getTacSdk } = useTac()
   const { getTonConnectUI } = useTonConnect()
   const proxyAddress = '0x51b7C14f2Db9C9bA2AE4729622Abb0B9831f38f1'
   const evmProviderUrl = 'https://newyork-inap-72-251-230-233.ankr.com/tac_tacd_testnet_full_rpc_1'
@@ -12,6 +12,7 @@ export const useSwap = () => {
   const slippagePercentBigInt = 100n / 2n
 
   const swap = async (poolAddress: string, swapKeys: Array<0 | 1>, addressA: string, amountA: bigint, minAmountB: bigint) => {
+    const sdk = getTacSdk()
     const evmProxyMsg = {
       evmTargetAddress: proxyAddress,
       methodName: 'exchange(bytes,bytes)',
@@ -24,10 +25,10 @@ export const useSwap = () => {
     const sender = await SenderFactory.getSender({ tonConnect: getTonConnectUI() })
     const assets: AssetBridgingData[] = [{
       rawAmount: amountA,
-      address: addressA ? await tacSdk.value?.getTVMTokenAddress(addressA) : undefined,
+      address: addressA ? await sdk.getTVMTokenAddress(addressA) : undefined,
     }]
-    const res = tacSdk.value?.sendCrossChainTransaction(evmProxyMsg, sender, assets)
-    tacSdk.value?.closeConnections()
+    const res = sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets)
+    sdk.closeConnections()
     return res
   }
   const addLiquidity = async (
@@ -36,6 +37,7 @@ export const useSwap = () => {
     amountA: bigint, amountB: bigint,
     minAmountLP: bigint = 0n,
   ) => {
+    const sdk = getTacSdk()
     const evmProxyMsg = {
       evmTargetAddress: proxyAddress,
       methodName: 'addLiquidity(bytes,bytes)',
@@ -47,19 +49,20 @@ export const useSwap = () => {
     const sender = await SenderFactory.getSender({ tonConnect: getTonConnectUI() })
     const assets = [{
       rawAmount: amountA,
-      address: addressA ? await tacSdk.value?.getTVMTokenAddress(addressA) : undefined,
+      address: addressA ? await sdk.getTVMTokenAddress(addressA) : undefined,
     }, {
       rawAmount: amountB,
-      address: addressB ? await tacSdk.value?.getTVMTokenAddress(addressB) : undefined,
+      address: addressB ? await sdk.getTVMTokenAddress(addressB) : undefined,
     }]
-    const res = tacSdk.value?.sendCrossChainTransaction(evmProxyMsg, sender, assets)
-    tacSdk.value?.closeConnections()
+    const res = sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets)
+    sdk.closeConnections()
     return res
   }
   const removeLiquidity = async (
     poolAddress: string, amount: bigint,
     minAmountA: bigint = 0n, minAmountB: bigint = 0n,
   ) => {
+    const sdk = getTacSdk()
     const evmProxyMsg = {
       evmTargetAddress: proxyAddress,
       methodName: 'removeLiquidity(bytes,bytes)',
@@ -71,10 +74,10 @@ export const useSwap = () => {
     const sender = await SenderFactory.getSender({ tonConnect: getTonConnectUI() })
     const assets = [{
       rawAmount: amount,
-      address: await tacSdk.value?.getTVMTokenAddress(poolAddress),
+      address: await sdk.getTVMTokenAddress(poolAddress),
     }]
-    const res = tacSdk.value?.sendCrossChainTransaction(evmProxyMsg, sender, assets)
-    tacSdk.value?.closeConnections()
+    const res = sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets)
+    sdk.closeConnections()
     return res
   }
   const getContract = async (poolAddress: string) => {

@@ -75,15 +75,17 @@ const copyOperationId = () => {
         :status="item.status"
       >
         <template v-if="idx === 0">
-          <UiButton
+          <div
             v-if="operationId && isSupported"
-            size="smaller"
-            class="p3"
             :class="$style.copy"
+            class="c-secondary-text"
             @click="copyOperationId"
           >
-            {{ copied ? 'Copied' : 'Copy ID' }}
-          </UiButton>
+            <UiIcon
+              class="icon"
+              name="copy"
+            />
+          </div>
         </template>
       </HistoryTransactionProgressItem>
     </li>
@@ -111,9 +113,20 @@ const copyOperationId = () => {
 }
 
 .copy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: -7px;
   margin-left: auto;
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
 }
 </style>

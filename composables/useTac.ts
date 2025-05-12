@@ -1,15 +1,15 @@
 import { Network, TacSdk } from '@tonappchain/sdk'
-import type { ShallowRef } from 'vue'
 import { TonClient } from '@ton/ton'
 
-const tacSdk: ShallowRef<TacSdk | undefined> = shallowRef()
+let tacSdk: TacSdk
 const isLoaded = ref(false)
 
 export const useTac = () => {
+  const { address } = useTonConnect()
   const config = useRuntimeConfig().public
 
   const init = async () => {
-    tacSdk.value = await TacSdk.create({
+    tacSdk = await TacSdk.create({
       network: Network.TESTNET,
       TONParams: config.toncenterApiKey
         ? {
@@ -22,10 +22,29 @@ export const useTac = () => {
     })
     isLoaded.value = true
   }
+  const getTacSdk = () => {
+    return tacSdk
+  }
+  const fetchJettonBalanceByEvmAddress = async (evmAddress: string) => {
+    try {
+      const sdk = getTacSdk()
+      const res = await sdk.getUserJettonBalanceExtended(
+        address.value,
+        await sdk.getTVMTokenAddress(evmAddress),
+      )
+      return res?.exists ? res.amount : 0
+    }
+    catch (e) {
+      console.warn(e)
+      return 0
+    }
+  }
 
   return {
     tacSdk,
     isLoaded,
     init,
+    getTacSdk,
+    fetchJettonBalanceByEvmAddress,
   }
 }

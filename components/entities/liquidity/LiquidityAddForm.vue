@@ -11,9 +11,9 @@ import { formatNumber } from '~/utils/string-utils'
 import { poolsWithTokens } from '~/entities/pool'
 
 const modal = useModal()
-const { isLoaded: isTonLoaded, isConnected, address, walletName, fetchTonBalance, getTonConnectUI } = useTonConnect()
+const { isLoaded: isTonLoaded, isConnected, walletName, fetchTonBalance, getTonConnectUI } = useTonConnect()
 const { addLiquidity, getLiquidityRates, slippagePercent } = useSwap()
-const { tacSdk, isLoaded: isTacLoaded } = useTac()
+const { fetchJettonBalanceByEvmAddress, isLoaded: isTacLoaded } = useTac()
 
 const { poolAddress } = defineProps<{ poolAddress: string }>()
 
@@ -26,12 +26,12 @@ const isLoaded = ref(false)
 const pair: { id: number, token: Token, inputValue: string, balance: number }[]
   = reactive([{
     id: 1,
-    token: tokens[0],
+    token: JSON.parse(JSON.stringify(tokens[0])),
     inputValue: '1',
     balance: 0,
   }, {
     id: 2,
-    token: tokens[1],
+    token: JSON.parse(JSON.stringify(tokens[1])),
     inputValue: '1',
     balance: 0,
   },
@@ -77,22 +77,17 @@ const calcRates = useDebounceFn(async () => {
 const updateBalances = async () => {
   try {
     isLoadingBalances.value = true
-    pair[0].balance = !pair[0].token.evmTokenAddress
-      ? await fetchTonBalance()
-      : nanoToValue(
-          await tacSdk.value?.getUserJettonBalance(
-            address.value,
-            await tacSdk.value?.getTVMTokenAddress(pair[0].token.evmTokenAddress)).catch(() => 0) || 0,
-          pair[0].token.decimals,
-        )
-    pair[1].balance = !pair[1].token.evmTokenAddress
-      ? await fetchTonBalance()
-      : nanoToValue(
-          await tacSdk.value?.getUserJettonBalance(
-            address.value,
-            await tacSdk.value?.getTVMTokenAddress(pair[1].token.evmTokenAddress)).catch(() => 0) || 0,
-          pair[1].token.decimals,
-        )
+
+    const res = await Promise.all([
+      !pair[0].token.evmTokenAddress
+        ? fetchTonBalance()
+        : fetchJettonBalanceByEvmAddress(pair[0].token.evmTokenAddress),
+      !pair[1].token.evmTokenAddress
+        ? fetchTonBalance()
+        : fetchJettonBalanceByEvmAddress(pair[1].token.evmTokenAddress),
+    ])
+    pair[0].balance = res[0]
+    pair[1].balance = res[1]
   }
   catch (e) {
     console.warn(e)

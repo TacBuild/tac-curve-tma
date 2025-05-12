@@ -11,9 +11,9 @@ import { type Token, tokens } from '~/entities/token'
 import { valueToNano } from '~/utils/ton-utils'
 
 const modal = useModal()
-const { isLoaded, isConnected, walletName, address, fetchTonBalance, getTonConnectUI } = useTonConnect()
+const { isLoaded, isConnected, walletName, address, getTonConnectUI } = useTonConnect()
 const { removeLiquidity, getLiquidityRates, getTotalSupply, getPoolTokenBalances, calcUnstakeBalancedTokenValues, slippagePercent } = useSwap()
-const { tacSdk, isLoaded: isTacLoaded } = useTac()
+const { getTacSdk, isLoaded: isTacLoaded } = useTac()
 
 const { poolAddress } = defineProps<{ poolAddress: string }>()
 
@@ -24,23 +24,20 @@ const amount = ref('1')
 const errorRate = ref('')
 const totalSupply = ref(0n)
 const poolTokenBalances: Ref<[bigint, bigint]> = ref([0n, 0n])
-const pair: { id: number, token: Token, inputValue: string, balance: number }[]
+const pair: { id: number, token: Token, inputValue: string }[]
   = reactive([{
     id: 1,
-    token: tokens[0],
+    token: JSON.parse(JSON.stringify(tokens[0])),
     inputValue: '0',
-    balance: 0,
   }, {
     id: 2,
-    token: tokens[1],
+    token: JSON.parse(JSON.stringify(tokens[1])),
     inputValue: '0',
-    balance: 0,
   },
   ])
 
 const isSubmitting = ref(false)
 const isLoadingBalance = ref(false)
-const isLoadingTokenBalances = ref(false)
 const isRatesLoading = ref(false)
 
 const isSubmitDisabled = computed(() => {
@@ -77,6 +74,7 @@ const load = async () => {
 }
 
 const updateBalance = async () => {
+  const sdk = getTacSdk()
   balance.value = 0
   decimals.value = 18
 
@@ -85,11 +83,11 @@ const updateBalance = async () => {
       return
     }
     isLoadingBalance.value = true
-    const tvmAddress = await tacSdk.value?.getTVMTokenAddress(poolAddress)
+    const tvmAddress = await sdk.getTVMTokenAddress(poolAddress)
     if (!tvmAddress) {
       return
     }
-    const obj = await tacSdk.value?.getUserJettonBalanceExtended(address.value, tvmAddress)
+    const obj = await sdk.getUserJettonBalanceExtended(address.value, tvmAddress)
     if (obj?.exists) {
       balance.value = obj.amount
       decimals.value = obj.decimals
@@ -100,33 +98,6 @@ const updateBalance = async () => {
   }
   finally {
     isLoadingBalance.value = false
-  }
-}
-const updateTokenBalances = async () => {
-  try {
-    isLoadingTokenBalances.value = true
-    pair[0].balance = !pair[0].token.evmTokenAddress
-      ? await fetchTonBalance()
-      : nanoToValue(
-          await tacSdk.value?.getUserJettonBalance(
-            address.value,
-            await tacSdk.value?.getTVMTokenAddress(pair[0].token.evmTokenAddress)).catch(() => 0) || 0,
-          pair[0].token.decimals,
-        )
-    pair[1].balance = !pair[1].token.evmTokenAddress
-      ? await fetchTonBalance()
-      : nanoToValue(
-          await tacSdk.value?.getUserJettonBalance(
-            address.value,
-            await tacSdk.value?.getTVMTokenAddress(pair[1].token.evmTokenAddress)).catch(() => 0) || 0,
-          pair[1].token.decimals,
-        )
-  }
-  catch (e) {
-    console.warn(e)
-  }
-  finally {
-    isLoadingTokenBalances.value = false
   }
 }
 const calcRatesByAmount = useDebounceFn(async () => {
@@ -219,7 +190,6 @@ load()
 
 watch(isReady, () => {
   updateBalance()
-  updateTokenBalances()
 }, { immediate: true })
 
 watch(type, (val) => {

@@ -57,7 +57,7 @@ const init = () => {
 const fetchTonBalance = async () => {
   try {
     const v = await client.getBalance(Address.parse(address.value))
-    return +Number(fromNano(v)).toFixed(2)
+    return +fromNano(v)
   }
   catch (e) {
     console.warn('Failed to fetchTonBalance: ' + e)

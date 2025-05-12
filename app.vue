@@ -34,7 +34,7 @@ initTonConnect()
           @update:model-value="onChangeNav($event as string)"
         />
 
-        <NuxtPage keepalive />
+        <NuxtPage />
       </div>
     </section>
     <UiModals />

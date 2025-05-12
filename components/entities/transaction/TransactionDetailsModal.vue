@@ -43,6 +43,7 @@ onUnmounted(() => {
     >
       <TransactionAssetsInfo
         class="mb-16"
+        :type="type"
         :token-a="tokenA"
         :token-b="tokenB"
         :value-a="valueA"

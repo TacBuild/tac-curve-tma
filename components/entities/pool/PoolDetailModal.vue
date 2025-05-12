@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import type { PoolWithTokens } from '~/entities/pool'
+import { formatNumber } from '~/utils/string-utils'
 
 const emits = defineEmits(['close'])
 const { pool } = defineProps<{ pool: PoolWithTokens }>()
 
-const { address } = useTonConnect()
-const { tacSdk } = useTac()
+const { fetchJettonBalanceByEvmAddress } = useTac()
 
 const isLoading = ref(false)
 const balance = ref(0)
@@ -13,14 +13,7 @@ const balance = ref(0)
 const load = async () => {
   try {
     isLoading.value = true
-
-    const jettonAddress = await tacSdk.value?.getTVMTokenAddress(pool.address)
-    if (!jettonAddress) {
-      return
-    }
-
-    const balanceRaw = await tacSdk.value?.getUserJettonBalance(address.value, jettonAddress)
-    balance.value = nanoToValue(balanceRaw || 0n, 18)
+    balance.value = await fetchJettonBalanceByEvmAddress(pool.address)
   }
   catch (e) {
     console.warn(e)
@@ -78,7 +71,7 @@ load()
             class="ui-loader"
           />
           <span v-else>
-            {{ balance }} LP
+            {{ formatNumber(balance, 9) }} LP
           </span>
         </p>
       </div>
