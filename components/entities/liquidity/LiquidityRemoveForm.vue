@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { UserRejectsError } from '@tonconnect/ui'
-import { Address } from '@ton/ton'
 import { useDebounceFn } from '@vueuse/core'
 import { poolsWithTokens } from '~/entities/pool'
 import { useTonConnect } from '~/composables/useTonConnect'
@@ -9,10 +8,10 @@ import { TransactionDetailsModal, SwapStatusModal } from '#components'
 import { useSwap } from '~/composables/useSwap'
 import { formatNumber } from '~/utils/string-utils'
 import { type Token, tokens } from '~/entities/token'
-import { fetchTonBalance, valueToNano } from '~/utils/ton-utils'
+import { valueToNano } from '~/utils/ton-utils'
 
 const modal = useModal()
-const { isLoaded, isConnected, walletName, address, getTonConnectUI } = useTonConnect()
+const { isLoaded, isConnected, walletName, address, fetchTonBalance, getTonConnectUI } = useTonConnect()
 const { removeLiquidity, getLiquidityRates, getTotalSupply, getPoolTokenBalances, calcUnstakeBalancedTokenValues, slippagePercent } = useSwap()
 const { tacSdk, isLoaded: isTacLoaded } = useTac()
 
@@ -107,7 +106,7 @@ const updateTokenBalances = async () => {
   try {
     isLoadingTokenBalances.value = true
     pair[0].balance = !pair[0].token.evmTokenAddress
-      ? await fetchTonBalance(Address.parse(address.value))
+      ? await fetchTonBalance()
       : nanoToValue(
           await tacSdk.value?.getUserJettonBalance(
             address.value,
@@ -115,7 +114,7 @@ const updateTokenBalances = async () => {
           pair[0].token.decimals,
         )
     pair[1].balance = !pair[1].token.evmTokenAddress
-      ? await fetchTonBalance(Address.parse(address.value))
+      ? await fetchTonBalance()
       : nanoToValue(
           await tacSdk.value?.getUserJettonBalance(
             address.value,

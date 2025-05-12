@@ -1,7 +1,8 @@
 <script setup lang="ts">
 const route = useRoute()
 const router = useRouter()
-const { init } = useTac()
+const { init: initTac } = useTac()
+const { init: initTonConnect } = useTonConnect()
 
 const onChangeNav = (name: string) => {
   router.push({ name })
@@ -15,7 +16,8 @@ const activeRoute = computed(() => {
   return route.name
 })
 
-init()
+initTac()
+initTonConnect()
 </script>
 
 <template>
