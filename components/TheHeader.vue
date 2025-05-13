@@ -1,19 +1,11 @@
-<script setup lang="ts">
-
-</script>
+<script setup lang="ts"></script>
 
 <template>
   <header :class="$style.header">
     <div :class="$style.wrap">
       <h1 :class="$style.logo">
-        <a
-          href="https://curve.fi"
-          target="_blank"
-        >
-          <img
-            src="/logo.webp"
-            alt="Curve"
-          >
+        <a href="https://curve.finance" target="_blank">
+          <img src="/logo.webp" alt="Curve" />
         </a>
       </h1>
 
