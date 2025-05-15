@@ -17,8 +17,9 @@ defineProps<{ error?: string, noPadding?: boolean }>()
 
 <style lang='scss'>
   .v-error {
-    font-size: 14px;
-    margin-top: 2px;
+    font-size: 16px;
+    margin-top: 8px;
+    font-weight: 600;
     color: var(--ui-danger-color);
 
     &__wrap {

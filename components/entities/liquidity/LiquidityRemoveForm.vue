@@ -40,6 +40,17 @@ const isSubmitting = ref(false)
 const isLoadingBalance = ref(false)
 const isRatesLoading = ref(false)
 
+const errorInput = computed(() => {
+  if (isLoadingBalance.value || !isReady.value) {
+    return ''
+  }
+
+  if (balance.value < +amount.value) {
+    return `Insufficient LP balance`
+  }
+
+  return ''
+})
 const isSubmitDisabled = computed(() => {
   if (!isConnected.value) {
     return !isLoaded.value
@@ -216,7 +227,7 @@ watch(type, (val) => {
           step="0.1"
           inputmode="decimal"
           only-number
-          :error="errorRate"
+          :error="errorInput || errorRate"
           :disabled="isSubmitting"
           @input="() => { isRatesLoading = true; calcRatesByAmount() }"
         >

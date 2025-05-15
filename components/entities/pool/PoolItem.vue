@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { PoolWithTokens } from '~/entities/pool'
 
-const { pool } = defineProps<{ pool: PoolWithTokens }>()
+const { pool, balance, balanceLoading } = defineProps<{ pool: PoolWithTokens, balance?: bigint, balanceLoading?: boolean }>()
 </script>
 
 <template>
@@ -16,6 +16,19 @@ const { pool } = defineProps<{ pool: PoolWithTokens }>()
 
     <p class="weight-700 p2">
       {{ pool.name }}
+    </p>
+
+    <p class="right ml-auto">
+      <span
+        v-if="balance"
+        class="weight-700"
+      >
+        {{ formatNumber(nanoToValue(balance || 0n, 18), 2, 2) }} LP
+      </span>
+      <span
+        v-else-if="balanceLoading"
+        class="ui-loader"
+      />
     </p>
   </div>
 </template>

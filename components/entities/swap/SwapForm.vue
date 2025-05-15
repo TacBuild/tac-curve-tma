@@ -22,6 +22,7 @@ const isLoadingBalances = ref(false)
 const isLoadingRates = ref(false)
 const isSwapping = ref(false)
 const errorRate = ref('')
+const transitionName = ref('')
 const pair: { id: number, token: Token, inputValue: string, balance: number, swapKey: 0 | 1 }[]
   = reactive([{
     id: 1,
@@ -37,6 +38,17 @@ const pair: { id: number, token: Token, inputValue: string, balance: number, swa
     swapKey: 1 },
   ])
 
+const errorInput = computed(() => {
+  if (isLoadingBalances.value) {
+    return ''
+  }
+
+  if (pair[0].balance < +pair[0].inputValue) {
+    return `Insufficient ${pair[0].token.symbol} balance`
+  }
+
+  return ''
+})
 const isSubmitDisabled = computed(() => {
   if (!isConnected.value) {
     return !isLoaded.value
@@ -78,8 +90,17 @@ const updateBalances = async () => {
   }
 }
 const swapPair = () => {
+  if (transitionName.value === 'swap') {
+    return
+  }
+
+  transitionName.value = 'swap'
   pair.reverse()
   calcRate(0)
+
+  setTimeout(() => {
+    transitionName.value = ''
+  }, 300)
 }
 const calcRate = useDebounceFn(async (inputIndex: number) => {
   errorRate.value = ''
@@ -270,7 +291,7 @@ watch(isReady, (val) => {
     <template v-if="isTacLoaded">
       <TransitionGroup
         tag="div"
-        name="swap"
+        :name="transitionName"
         :class="$style.inputs"
         class="mb-16"
       >
@@ -284,6 +305,7 @@ watch(isReady, (val) => {
           inputmode="decimal"
           only-number
           :disabled="isSwapping || isLoadingRates"
+          :error="errorInput"
           @input="calcRate(0)"
         >
           <template #label>
