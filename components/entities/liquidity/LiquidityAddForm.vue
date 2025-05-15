@@ -39,13 +39,13 @@ const pair: Reactive<{ id: number, token: Token, inputValue: string, balance: nu
     token: JSON.parse(JSON.stringify(tokens[0])),
     inputValue: '1',
     balance: 0,
-    error: computed(() => !isReady.value || isLoadingBalances.value ? '' : getErrorForToken(pair[0])),
+    error: computed(() => !isConnected.value || !isReady.value || isLoadingBalances.value ? '' : getErrorForToken(pair[0])),
   }, {
     id: 2,
     token: JSON.parse(JSON.stringify(tokens[1])),
     inputValue: '1',
     balance: 0,
-    error: computed(() => !isReady.value || isLoadingBalances.value ? '' : getErrorForToken(pair[1])),
+    error: computed(() => !isConnected.value || !isReady.value || isLoadingBalances.value ? '' : getErrorForToken(pair[1])),
   },
   ])
 

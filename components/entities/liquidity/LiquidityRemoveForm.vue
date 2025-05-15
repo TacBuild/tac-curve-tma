@@ -41,7 +41,7 @@ const isLoadingBalance = ref(false)
 const isRatesLoading = ref(false)
 
 const errorInput = computed(() => {
-  if (isLoadingBalance.value || !isReady.value) {
+  if (isLoadingBalance.value || !isReady.value || !isConnected.value) {
     return ''
   }
 

@@ -39,7 +39,7 @@ const pair: { id: number, token: Token, inputValue: string, balance: number, swa
   ])
 
 const errorInput = computed(() => {
-  if (isLoadingBalances.value) {
+  if (isLoadingBalances.value || !isConnected.value) {
     return ''
   }
 
