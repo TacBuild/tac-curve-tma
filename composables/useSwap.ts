@@ -5,8 +5,8 @@ import { DEFAULT_SLIPPAGE_PERCENT_VALUE } from '~/utils/ton-utils'
 export const useSwap = () => {
   const { getTacSdk } = useTac()
   const { getTonConnectUI } = useTonConnect()
-  const proxyAddress = '0x51b7C14f2Db9C9bA2AE4729622Abb0B9831f38f1'
-  const evmProviderUrl = 'https://newyork-inap-72-251-230-233.ankr.com/tac_tacd_testnet_full_rpc_1'
+  const proxyAddress = '0xF9b8Ea1EDcf399322fDD39090a0284D97B211505'
+  const evmProviderUrl = 'https://rpc.ankr.com/tac_turin'
   // const slippagePercent = useLocalStorage('swap-slippage-percent', DEFAULT_SLIPPAGE_PERCENT_VALUE)
   const slippagePercent = DEFAULT_SLIPPAGE_PERCENT_VALUE
   const slippagePercentBigInt = 100n / 2n
@@ -69,6 +69,28 @@ export const useSwap = () => {
       encodedParameters: ethers.AbiCoder.defaultAbiCoder().encode(
         ['tuple(address, uint256, uint256[2])'],
         [[poolAddress, amount, [minAmountA - (minAmountA / slippagePercentBigInt), minAmountB - (minAmountB / slippagePercentBigInt)]]],
+      ),
+    }
+    const sender = await SenderFactory.getSender({ tonConnect: getTonConnectUI() })
+    const assets = [{
+      rawAmount: amount,
+      address: await sdk.getTVMTokenAddress(poolAddress),
+    }]
+    const res = sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets)
+    sdk.closeConnections()
+    return res
+  }
+  const removeLiquidityOneCoin = async (
+    poolAddress: string, amount: bigint,
+    tokenIndex: 0 | 1, minTokenAmount: bigint = 0n,
+  ) => {
+    const sdk = getTacSdk()
+    const evmProxyMsg = {
+      evmTargetAddress: proxyAddress,
+      methodName: 'removeLiquidityOneCoin(bytes,bytes)',
+      encodedParameters: ethers.AbiCoder.defaultAbiCoder().encode(
+        ['tuple(address, uint256, uint256, uint256)'],
+        [[poolAddress, amount, tokenIndex, [minTokenAmount - (minTokenAmount / slippagePercentBigInt)]]],
       ),
     }
     const sender = await SenderFactory.getSender({ tonConnect: getTonConnectUI() })
@@ -146,6 +168,27 @@ export const useSwap = () => {
           },
         ],
       },
+      {
+        stateMutability: 'view',
+        type: 'function',
+        name: 'calc_withdraw_one_coin',
+        inputs: [
+          {
+            name: 'token_amount',
+            type: 'uint256',
+          },
+          {
+            name: 'i',
+            type: 'uint256',
+          },
+        ],
+        outputs: [
+          {
+            name: '',
+            type: 'uint256',
+          },
+        ],
+      },
     ]
     const provider = ethers.getDefaultProvider(evmProviderUrl)
     return new ethers.Contract(poolAddress, abi, provider)
@@ -166,6 +209,10 @@ export const useSwap = () => {
     const contract = await getContract(poolAddress)
     return contract['balances'](tokenIndex)
   }
+  const getOneCoinWithdrawRate = async (poolAddress: string, amount: bigint, tokenIndex: 0 | 1): Promise<bigint> => {
+    const contract = await getContract(poolAddress)
+    return contract['calc_withdraw_one_coin'](amount, tokenIndex)
+  }
   const calcUnstakeBalancedTokenValues = (amount: bigint, totalSupply: bigint, poolTokenBalances: [bigint, bigint]) => {
     return [poolTokenBalances[0] * amount / totalSupply, poolTokenBalances[1] * amount / totalSupply]
   }
@@ -175,10 +222,12 @@ export const useSwap = () => {
     swap,
     addLiquidity,
     removeLiquidity,
+    removeLiquidityOneCoin,
     getSwapRates,
     getLiquidityRates,
     getTotalSupply,
     getPoolTokenBalances,
+    getOneCoinWithdrawRate,
     calcUnstakeBalancedTokenValues,
   }
 }

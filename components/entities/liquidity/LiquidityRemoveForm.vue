@@ -12,7 +12,11 @@ import { valueToNano } from '~/utils/ton-utils'
 
 const modal = useModal()
 const { isLoaded, isConnected, walletName, address, getTonConnectUI } = useTonConnect()
-const { removeLiquidity, getLiquidityRates, getTotalSupply, getPoolTokenBalances, calcUnstakeBalancedTokenValues, slippagePercent } = useSwap()
+const {
+  removeLiquidity, removeLiquidityOneCoin,
+  getLiquidityRates, getTotalSupply, getPoolTokenBalances, getOneCoinWithdrawRate,
+  calcUnstakeBalancedTokenValues, slippagePercent,
+} = useSwap()
 const { getTacSdk, isLoaded: isTacLoaded } = useTac()
 
 const { poolAddress } = defineProps<{ poolAddress: string }>()
@@ -23,6 +27,7 @@ const decimals = ref(18)
 const amount = ref('1')
 const errorRate = ref('')
 const totalSupply = ref(0n)
+const oneCoinKey: Ref<0 | 1> = ref(0)
 const poolTokenBalances: Ref<[bigint, bigint]> = ref([0n, 0n])
 const pair: { id: number, token: Token, inputValue: string }[]
   = reactive([{
@@ -62,7 +67,7 @@ const load = async () => {
     const res = await Promise.all([getTotalSupply(poolAddress), getPoolTokenBalances(poolAddress, 0), getPoolTokenBalances(poolAddress, 1)])
     totalSupply.value = res[0]
     poolTokenBalances.value = [res[1], res[2]]
-    await calcRatesByAmount()
+    await calcRates()
   }
   catch (e) {
     console.warn(e)
@@ -100,20 +105,38 @@ const updateBalance = async () => {
     isLoadingBalance.value = false
   }
 }
-const calcRatesByAmount = useDebounceFn(async () => {
+// const calcRatesByTokens = useDebounceFn(async () => {
+//   errorRate.value = ''
+//   const amounts = [valueToNano(pair[0].inputValue, pair[0].token.decimals), valueToNano(pair[1].inputValue, pair[1].token.decimals)]
+//   try {
+//     isRatesLoading.value = true
+//     amount.value = (Number(await getLiquidityRates(poolAddress, amounts, false)) / 10 ** 18).toFixed(9)
+//   }
+//   catch (e) {
+//     amount.value = ''
+//     errorRate.value = 'Unable to calculate rate. Price impact may be very high.'
+//     console.warn(e)
+//   }
+//   finally {
+//     isRatesLoading.value = false
+//   }
+// }, 200)
+const calcRatesByBalanced = () => {
   errorRate.value = ''
   const arr = calcUnstakeBalancedTokenValues(BigInt(Number(amount.value) * 10 ** 18), totalSupply.value, poolTokenBalances.value)
   pair[0].inputValue = String(nanoToValue(arr[0] || 0n, pair[0].token.decimals))
   pair[1].inputValue = String(nanoToValue(arr[1] || 0n, pair[1].token.decimals))
   isRatesLoading.value = false
-}, 200)
-const calcRatesByTokens = useDebounceFn(async () => {
+}
+const calcRatesByOneCoin = async () => {
   errorRate.value = ''
-  const amounts = [valueToNano(pair[0].inputValue, pair[0].token.decimals), valueToNano(pair[1].inputValue, pair[1].token.decimals)]
-  errorRate.value = ''
+  pair[oneCoinKey.value].inputValue = ''
   try {
     isRatesLoading.value = true
-    amount.value = (Number(await getLiquidityRates(poolAddress, amounts, false)) / 10 ** 18).toFixed(9)
+    pair[oneCoinKey.value].inputValue = nanoToValue(
+      await getOneCoinWithdrawRate(poolAddress, valueToNano(amount.value, decimals.value), oneCoinKey.value),
+      decimals.value,
+    ).toString()
   }
   catch (e) {
     amount.value = ''
@@ -123,10 +146,18 @@ const calcRatesByTokens = useDebounceFn(async () => {
   finally {
     isRatesLoading.value = false
   }
+}
+const calcRates = useDebounceFn(async () => {
+  switch (type.value) {
+    case 'balanced':
+      return calcRatesByBalanced()
+    case 'one':
+      return calcRatesByOneCoin()
+  }
 }, 200)
 const setMax = () => {
   amount.value = String(balance.value)
-  calcRatesByAmount()
+  calcRates()
 }
 const onSubmit = async () => {
   if (!amount.value) {
@@ -193,11 +224,7 @@ watch(isReady, () => {
 }, { immediate: true })
 
 watch(type, (val) => {
-  if (val === 'balanced') {
-    pair[0].inputValue = '0'
-    pair[1].inputValue = '0'
-    calcRatesByAmount()
-  }
+  calcRates()
 })
 </script>
 
@@ -218,7 +245,7 @@ watch(type, (val) => {
           only-number
           :error="errorRate"
           :disabled="isSubmitting"
-          @input="() => { isRatesLoading = true; calcRatesByAmount() }"
+          @input="() => { isRatesLoading = true; calcRates() }"
         >
           <template #label>
             {{
@@ -242,7 +269,7 @@ watch(type, (val) => {
       <UiRadio
         v-model="type"
         class="mb-24"
-        :options="[{ id: 1, label: 'Balanced', value: 'balanced' }]"
+        :options="[{ id: 0, label: 'One coin', value: 'one' }, { id: 1, label: 'Balanced', value: 'balanced' }]"
         direction="horizontal"
       />
 
@@ -295,54 +322,39 @@ watch(type, (val) => {
           </div>
         </template>
         <template v-else>
-          <UiInput
-            :key="pair[0].id"
-            v-model="pair[0].inputValue"
-            name="swap-from"
-            maxlength="12"
-            autocomplete="off"
-            step="0.1"
-            inputmode="decimal"
-            only-number
-            :disabled="isSubmitting"
-            @input="calcRatesByTokens"
+          <UiRadio
+            v-model="oneCoinKey"
+            :options="[
+              { id: 0, value: 0, label: pair[0].token.symbol },
+              { id: 1, value: 1, label: pair[1].token.symbol },
+            ]"
+            @update:model-value="calcRatesByOneCoin($event as 0 | 1)"
           >
-            <template #label>
-              {{ pair[0].token.symbol }}
-            </template>
-            <template #append>
-              <div class="flex-center">
-                <BaseAvatar
-                  class="icon--32"
-                  :src="pair[0].token.logo"
-                />
+            <template #default="{ option }">
+              <div
+                :class="$style.token"
+                class="flex-between flex-center"
+                style="flex-grow: 1"
+              >
+                <div
+                  :class="$style.tokenName"
+                  class="flex-center weight-600 p1"
+                >
+                  <BaseAvatar
+                    class="icon--32"
+                    :src="pair[option.value as 0 | 1].token.logo"
+                  />
+                  {{ pair[option.value as 0 | 1].token.symbol }}
+                </div>
+                <span
+                  class="weight-600 p1"
+                  :style="{ opacity: isRatesLoading ? '0.5' : '1' }"
+                >
+                  {{ pair[option.value as 0 | 1].inputValue }}
+                </span>
               </div>
             </template>
-          </UiInput>
-          <UiInput
-            :key="pair[1].id"
-            v-model="pair[1].inputValue"
-            name="swap-to"
-            maxlength="12"
-            autocomplete="off"
-            step="0.1"
-            inputmode="decimal"
-            only-number
-            :disabled="isSubmitting"
-            @input="calcRatesByTokens"
-          >
-            <template #label>
-              {{ pair[1].token.symbol }}
-            </template>
-            <template #append>
-              <div class="flex-center">
-                <BaseAvatar
-                  class="icon--32"
-                  :src="pair[1].token.logo"
-                />
-              </div>
-            </template>
-          </UiInput>
+          </UiRadio>
         </template>
       </div>
 

@@ -4,6 +4,7 @@ type RadioOption = {
   label?: string
   value: unknown
   disabled?: boolean
+  [key: string]: unknown
 }
 const { name = 'radio', direction = 'vertical' } = defineProps<{ name?: string, options: RadioOption[], direction?: 'vertical' | 'horizontal' }>()
 const model = defineModel<unknown>({ default: undefined })
@@ -15,7 +16,7 @@ const model = defineModel<unknown>({ default: undefined })
     :class="[`v-radio--${direction}`]"
   >
     <label
-      v-for="option in (options as RadioOption[])"
+      v-for="option in options"
       :key="option.id"
     >
       <input
