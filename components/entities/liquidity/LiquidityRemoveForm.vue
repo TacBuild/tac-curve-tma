@@ -13,8 +13,9 @@ import { valueToNano } from '~/utils/ton-utils'
 const modal = useModal()
 const { isLoaded, isConnected, walletName, address, getTonConnectUI } = useTonConnect()
 const {
-  removeLiquidity, removeLiquidityOneCoin,
-  getLiquidityRates, getTotalSupply, getPoolTokenBalances, getOneCoinWithdrawRate,
+  removeLiquidity,
+  // removeLiquidityOneCoin, getLiquidityRates,
+  getTotalSupply, getPoolTokenBalances, getOneCoinWithdrawRate,
   calcUnstakeBalancedTokenValues, slippagePercent,
 } = useSwap()
 const { getTacSdk, isLoaded: isTacLoaded } = useTac()
@@ -234,7 +235,7 @@ watch(isReady, () => {
   updateBalance()
 }, { immediate: true })
 
-watch(type, (val) => {
+watch(type, () => {
   calcRates()
 })
 </script>
@@ -280,7 +281,7 @@ watch(type, (val) => {
       <UiRadio
         v-model="type"
         class="mb-24"
-        :options="[{ id: 0, label: 'One coin', value: 'one' }, { id: 1, label: 'Balanced', value: 'balanced' }]"
+        :options="[{ id: 1, label: 'Balanced', value: 'balanced' }]"
         direction="horizontal"
       />
 
@@ -339,7 +340,7 @@ watch(type, (val) => {
               { id: 0, value: 0, label: pair[0].token.symbol },
               { id: 1, value: 1, label: pair[1].token.symbol },
             ]"
-            @update:model-value="calcRatesByOneCoin($event as 0 | 1)"
+            @update:model-value="calcRatesByOneCoin()"
           >
             <template #default="{ option }">
               <div

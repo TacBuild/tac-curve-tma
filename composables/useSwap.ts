@@ -1,5 +1,5 @@
 import { ethers } from 'ethers'
-import { type AssetBridgingData, SenderFactory } from '@tonappchain/sdk'
+import { type AssetBridgingData, AssetType, SenderFactory } from '@tonappchain/sdk'
 import { DEFAULT_SLIPPAGE_PERCENT_VALUE } from '~/utils/ton-utils'
 
 export const useSwap = () => {
@@ -24,6 +24,7 @@ export const useSwap = () => {
 
     const sender = await SenderFactory.getSender({ tonConnect: getTonConnectUI() })
     const assets: AssetBridgingData[] = [{
+      type: AssetType.FT,
       rawAmount: amountA,
       address: addressA ? await sdk.getTVMTokenAddress(addressA) : undefined,
     }]
@@ -47,10 +48,12 @@ export const useSwap = () => {
       ),
     }
     const sender = await SenderFactory.getSender({ tonConnect: getTonConnectUI() })
-    const assets = [{
+    const assets: AssetBridgingData[] = [{
+      type: AssetType.FT,
       rawAmount: amountA,
       address: addressA ? await sdk.getTVMTokenAddress(addressA) : undefined,
     }, {
+      type: AssetType.FT,
       rawAmount: amountB,
       address: addressB ? await sdk.getTVMTokenAddress(addressB) : undefined,
     }]
@@ -72,7 +75,8 @@ export const useSwap = () => {
       ),
     }
     const sender = await SenderFactory.getSender({ tonConnect: getTonConnectUI() })
-    const assets = [{
+    const assets: AssetBridgingData[] = [{
+      type: AssetType.FT,
       rawAmount: amount,
       address: await sdk.getTVMTokenAddress(poolAddress),
     }]
@@ -94,7 +98,8 @@ export const useSwap = () => {
       ),
     }
     const sender = await SenderFactory.getSender({ tonConnect: getTonConnectUI() })
-    const assets = [{
+    const assets: AssetBridgingData[] = [{
+      type: AssetType.FT,
       rawAmount: amount,
       address: await sdk.getTVMTokenAddress(poolAddress),
     }]
