@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { UserRejectsError } from '@tonconnect/ui'
 import { useDebounceFn } from '@vueuse/core'
+import type { Reactive } from 'vue'
 import { type Token, tokens } from '~/entities/token'
 import { useTonConnect } from '~/composables/useTonConnect'
 import { useModal } from '~/components/ui/composables/useModal'
@@ -23,17 +24,28 @@ const errorRate = ref('')
 const isLoadingBalances = ref(false)
 const isSubmitting = ref(false)
 const isLoaded = ref(false)
-const pair: { id: number, token: Token, inputValue: string, balance: number }[]
+
+const getErrorForToken = (item: typeof pair[number]) => {
+  if (item.balance < +item.inputValue) {
+    return `Insufficient ${item.token.symbol} balance`
+  }
+
+  return ''
+}
+
+const pair: Reactive<{ id: number, token: Token, inputValue: string, balance: number, error: ComputedRef<string> }[]>
   = reactive([{
     id: 1,
     token: JSON.parse(JSON.stringify(tokens[0])),
     inputValue: '1',
     balance: 0,
+    error: computed(() => !isConnected.value || !isReady.value || isLoadingBalances.value ? '' : getErrorForToken(pair[0])),
   }, {
     id: 2,
     token: JSON.parse(JSON.stringify(tokens[1])),
     inputValue: '1',
     balance: 0,
+    error: computed(() => !isConnected.value || !isReady.value || isLoadingBalances.value ? '' : getErrorForToken(pair[1])),
   },
   ])
 
@@ -185,6 +197,7 @@ watch(isReady, (val) => {
           step="0.1"
           inputmode="decimal"
           only-number
+          :error="pair[0].error"
           :disabled="isSubmitting"
           @input="calcRates"
         >
@@ -222,6 +235,7 @@ watch(isReady, (val) => {
           step="0.1"
           inputmode="decimal"
           only-number
+          :error="pair[1].error"
           :disabled="isSubmitting"
           @input="calcRates"
         >
@@ -265,7 +279,7 @@ watch(isReady, (val) => {
 
         <p
           v-if="errorRate"
-          class="c-red"
+          class="c-red weight-600"
         >
           {{ errorRate }}
         </p>
