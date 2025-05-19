@@ -5,7 +5,7 @@ import { DEFAULT_SLIPPAGE_PERCENT_VALUE } from '~/utils/ton-utils'
 export const useSwap = () => {
   const { getTacSdk } = useTac()
   const { getTonConnectUI } = useTonConnect()
-  const proxyAddress = '0xF9b8Ea1EDcf399322fDD39090a0284D97B211505'
+  const proxyAddress = '0xDB9693c5E1b59188e8B6267B2243e08D4e4AC31a'
   const evmProviderUrl = 'https://rpc.ankr.com/tac_turin'
   // const slippagePercent = useLocalStorage('swap-slippage-percent', DEFAULT_SLIPPAGE_PERCENT_VALUE)
   const slippagePercent = DEFAULT_SLIPPAGE_PERCENT_VALUE
