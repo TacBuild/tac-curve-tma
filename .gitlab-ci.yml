@@ -1,167 +1,122 @@
+image: docker:dind
+
+default:
+  tags:
+    - eks
+    - linux
+    - cicd
+
+services:
+  - name: docker:24.0.2-dind
+    command: ["--tls=false"]
+
+variables:
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_HOST: tcp://docker:2375
+  ROLE_ARN: arn:aws:iam::863518434589:role/aws-oidc-gitlab
+  ECR_REGISTRY: 863518434589.dkr.ecr.us-east-1.amazonaws.com
+  AWS_DEFAULT_REGION: us-east-1
+  ECR_REPOSITORY: curve
+  NAMESPACE: curve
+  APP: curve
+
 stages:
-  - deploy to registry
-  - proxy check
+  - build
+  - push
   - deploy
-  - grafana check
-  - redirect
-  - cleanup
-  
 
-docker_deploy_to_registry:
-  stage: deploy to registry
-  image: docker:latest
-  tags:
-    - docker
-  services:
-    - docker:dind
-  before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-  script:
-    - build_env=$(env |grep "ENV_" |awk -F "ENV_" '{print "--build-arg ",$2}' | xargs)
-    - docker build --pull -t "$CI_REGISTRY_IMAGE:$TAG" . $build_env 
-    - docker push "$CI_REGISTRY_IMAGE:$TAG"
-  after_script:
-    - docker logout $CI_REGISTRY  
-  environment:
-    name: $ENVIRONMENT
+# ---------------------
+# 1) BUILD JOB
+# ---------------------
+
+build_job:
+  stage: build
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
-      variables:
-        TAG: "latest"
-        ENVIRONMENT: "production"
-    - if: $CI_COMMIT_BRANCH == "development" && $CI_PIPELINE_SOURCE == "push"
-      variables:
-        TAG: "development"
-        ENVIRONMENT: "development"
-
-
-proxy_check:
-  stage: proxy check
-  image: ubuntu
-  before_script:
-  - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client git -y )'
-  - eval $(ssh-agent -s)
-  - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-  - mkdir -p ~/.ssh
-  - chmod 700 ~/.ssh
-  - ssh-keyscan $SERVICE_IP >> ~/.ssh/known_hosts
-  - chmod 644 ~/.ssh/known_hosts
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
+    - when: never
   script:
-    - scp -r ./.gitlab/proxy_check.sh $SERVICE_USER@$SERVICE_IP:./proxy_check.sh
-    - ssh -o StrictHostKeyChecking=no $SERVICE_USER@$SERVICE_IP "sudo bash /home/cicd/proxy_check.sh"
-  environment:
-    name: $ENVIRONMENT
-    url: $SERVICE_URL
-  tags:
-    - docker
+    - echo "Building a docker image..."
+    - docker build -t $ECR_REPOSITORY:latest .
+    - docker tag $ECR_REPOSITORY:latest $ECR_REPOSITORY:"${CI_COMMIT_SHA}"
+
+# ---------------------
+# 2) PUSH JOB
+# ---------------------
+
+push_to_ecr:
+  stage: push
+  id_tokens:
+    OIDC_TOKEN:
+      aud: https://gitlab.com
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
-      variables:
-        ENVIRONMENT: "production"
-    - if: $CI_COMMIT_BRANCH == "development" && $CI_PIPELINE_SOURCE == "push"
-      variables:
-        ENVIRONMENT: "development"  
-  needs:
-    - job: docker_deploy_to_registry
-
-
-proxy_stop:
-  stage: proxy check
-  image: ubuntu
+    - if: $CI_COMMIT_BRANCH == "v3" && $CI_PIPELINE_SOURCE == "push"
+      when: always
+    - when: never
+  variables:
+    AWS_PROFILE: oidc
   before_script:
-  - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client git -y )'
-  - eval $(ssh-agent -s)
-  - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-  - mkdir -p ~/.ssh
-  - chmod 700 ~/.ssh
-  - ssh-keyscan $SERVICE_IP >> ~/.ssh/known_hosts
-  - chmod 644 ~/.ssh/known_hosts
+    - apk add --no-cache python3 py3-pip
+    - pip3 install awscli --break-system-packages
+    - mkdir -p ~/.aws
+    - echo "${OIDC_TOKEN}" > /tmp/web_identity_token
+    - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" > ~/.aws/config
+    - >
+      aws ecr get-login-password --region "$AWS_DEFAULT_REGION" \
+        | docker login --username AWS --password-stdin "$ECR_REGISTRY"
   script:
-    - scp -r ./.gitlab/proxy_stop.sh $SERVICE_USER@$SERVICE_IP:./proxy_stop.sh
-    - ssh -o StrictHostKeyChecking=no $SERVICE_USER@$SERVICE_IP "sudo bash /home/cicd/proxy_stop.sh"
-  environment:
-    name: $ENVIRONMENT
-    url: $SERVICE_URL
-  tags:
-    - docker
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
-      when: manual
-      variables:
-        ENVIRONMENT: "production"
-    - if: $CI_COMMIT_BRANCH == "development" && $CI_PIPELINE_SOURCE == "push"
-      when: manual
-      variables:
-        ENVIRONMENT: "development"
-  needs:
-    - job: docker_deploy_to_registry
+    - echo "Building a docker image..."
+    - docker build -t $ECR_REPOSITORY:latest .
+    - docker tag $ECR_REPOSITORY:latest $ECR_REPOSITORY:"${CI_COMMIT_SHA}"
+    - echo "Preparing an image to push to AWS ECR..."
+    - docker tag $ECR_REPOSITORY:latest "$ECR_REGISTRY/$ECR_REPOSITORY:latest"
+    - docker tag $ECR_REPOSITORY:"$CI_COMMIT_SHA" "$ECR_REGISTRY/$ECR_REPOSITORY:${CI_COMMIT_SHA}"
+    - echo "Pushing the image to ECR..."
+    - docker push "$ECR_REGISTRY/$ECR_REPOSITORY:latest"
+    - docker push "$ECR_REGISTRY/$ECR_REPOSITORY:${CI_COMMIT_SHA}"
 
+# ---------------------
+# 3) DEPLOY JOB
+# ---------------------
 
-deploy:
+deploy_to_k8s:
   stage: deploy
-  image: ubuntu
+  id_tokens:
+    OIDC_TOKEN:
+      aud: https://gitlab.com
+  needs:
+    - job: push_to_ecr
+      optional: true
+  rules:
+    - if: $CI_COMMIT_BRANCH == "v3" && $CI_PIPELINE_SOURCE == "push"
+      when: always
+    - when: never
+  image: alpine:3.21
+  variables:
+    AWS_PROFILE: oidc
+    EKS_CLUSTER: tac-testnet-use1-eks
+    ENVIRONMENT: testnet
   before_script:
-  - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client git -y )'
-  - eval $(ssh-agent -s)
-  - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-  - mkdir -p ~/.ssh
-  - chmod 700 ~/.ssh
-  - ssh-keyscan $SERVICE_IP >> ~/.ssh/known_hosts
-  - chmod 644 ~/.ssh/known_hosts
+    - apk add --update --no-cache bash curl python3 py3-pip openssl
+    - pip3 install awscli --break-system-packages
+    - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+    - install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+    - curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+    - mkdir -p ~/.aws
+    - echo "${OIDC_TOKEN}" > /tmp/web_identity_token
+    - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" > ~/.aws/config
+    - aws eks update-kubeconfig --name $EKS_CLUSTER --region $AWS_DEFAULT_REGION
   script:
-    - env |grep "ENV_" | awk -F "ENV_" '{print $2}' >> ./env.list
-    - scp ./env.list $SERVICE_USER@$SERVICE_IP:./
-    - ssh -o StrictHostKeyChecking=no $SERVICE_USER@$SERVICE_IP "sudo docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY"
-    - ssh -o StrictHostKeyChecking=no $SERVICE_USER@$SERVICE_IP "sudo docker pull $CI_REGISTRY_IMAGE:$TAG"
-    - ssh -o StrictHostKeyChecking=no $SERVICE_USER@$SERVICE_IP "sudo docker stop $CI_PROJECT_NAME || true"
-    - ssh -o StrictHostKeyChecking=no $SERVICE_USER@$SERVICE_IP "sudo docker rm $CI_PROJECT_NAME || true"
-    - ssh -o StrictHostKeyChecking=no $SERVICE_USER@$SERVICE_IP "sudo docker run
-      --env-file /home/cicd/env.list
-      --env VIRTUAL_HOST=$DOMAIN
-      --env VIRTUAL_PORT=$SERVER_PORT
-      --env LETSENCRYPT_HOST=$DOMAIN
-      --env LETSENCRYPT_EMAIL=$SSL_DEFAULT_EMAIL
-      --restart=always
-      --log-driver json-file
-      --log-opt max-size=100m
-      --log-opt max-file=3
-      --network=nginx-proxy
-      --name $CI_PROJECT_NAME
-      -d -p $SERVER_PORT:$APP_PORT $CI_REGISTRY_IMAGE:$TAG"
-    - ssh -o StrictHostKeyChecking=no $SERVICE_USER@$SERVICE_IP "sudo docker image prune --filter=dangling=true -f"
-    - ssh -o StrictHostKeyChecking=no $SERVICE_USER@$SERVICE_IP "sudo docker network connect bridge $CI_PROJECT_NAME"
-    - ssh -o StrictHostKeyChecking=no $SERVICE_USER@$SERVICE_IP "sudo docker exec nginx-proxy nginx -s reload"
-    - ssh -o StrictHostKeyChecking=no $SERVICE_USER@$SERVICE_IP "sudo docker logout $CI_REGISTRY"
-    - ssh -o StrictHostKeyChecking=no $SERVICE_USER@$SERVICE_IP "sudo rm /home/cicd/env.list"
-  environment:
-    name: $ENVIRONMENT
-    url: $SERVICE_URL
-  tags:
-    - docker  
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
-      variables:
-        TAG: "latest"
-        ENVIRONMENT: "production"
-    - if: $CI_COMMIT_BRANCH == "development" && $CI_PIPELINE_SOURCE == "push"
-      variables:
-        TAG: "development"
-        ENVIRONMENT: "development" 
-  needs:
-    - job: proxy_check
+    - echo "Deploying to Kubernetes..."
+    - cd .ci/chart
+    - >
+      helm upgrade --install --wait --debug \
+        -n $NAMESPACE \
+        -f $ENVIRONMENT.yaml \
+        -f $ENVIRONMENT-$APP.yaml \
+        --set-string nameOverride=$APP \
+        --set-string image.tag="${CI_COMMIT_SHA}" \
+        $APP .
+    - echo "Deploy finished"
 
-
-docker_prune:
-  stage: cleanup
-  tags:
-    - docker
-  script:
-    - docker system prune -af --volumes
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
-    - if: $CI_COMMIT_BRANCH == "development" && $CI_PIPELINE_SOURCE == "push"
-  needs:
-    - job: deploy
-      optional: true
-    - job: docker_deploy_to_registry
-      optional: true
