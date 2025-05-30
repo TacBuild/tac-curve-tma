@@ -14,6 +14,6 @@ RUN npm i
 COPY . /usr/src/app
 # Build app
 RUN npm run build
-EXPOSE 5000
+EXPOSE 3000
 # Start server
 CMD [ "node", ".output/server/index.mjs" ]

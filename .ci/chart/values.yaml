@@ -34,7 +34,7 @@ serviceAccount:
 
 podPorts:
   - name: http
-    containerPort: 5000
+    containerPort: 3000
     protocol: TCP
 
 podProbes:
