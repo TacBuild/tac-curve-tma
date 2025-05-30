@@ -3,12 +3,6 @@ ENV MODE production
 ENV NUXT_HOST 0.0.0.0
 ENV NUXT_PORT 5000
 
-ARG TELEGRAM_MINI_APP_BOT_URL
-ENV TELEGRAM_MINI_APP_BOT_URL=${TELEGRAM_MINI_APP_BOT_URL}
-
-ARG TONCENTER_API_KEY
-ENV TONCENTER_API_KEY=${TONCENTER_API_KEY}
-
 # Create app directory
 WORKDIR /usr/src/app
 # Copy package.json for installing dependencies
@@ -20,5 +14,6 @@ RUN npm i
 COPY . /usr/src/app
 # Build app
 RUN npm run build
+EXPOSE 5000
 # Start server
 CMD [ "node", ".output/server/index.mjs" ]
