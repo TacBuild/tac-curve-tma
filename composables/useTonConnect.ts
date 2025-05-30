@@ -22,14 +22,14 @@ const shorterAddress = computed(() => friendlyAddress.value ? truncate(friendlyA
 const isConnected = computed(() => Boolean(address.value))
 
 const init = () => {
-  const config = useRuntimeConfig().public
+  const { toncenterApiKey } = useRuntimeConfig().public
 
   client = new TonClient({
     endpoint: 'https://testnet.toncenter.com/api/v2/jsonRPC',
-    apiKey: config.toncenterApiKey,
+    apiKey: toncenterApiKey,
   })
   tonConnectUI = new TonConnectUI({
-    manifestUrl: 'https://curve.tac.build/tonconnect-manifest.json',
+    manifestUrl: 'https://curve.tonappchain.fi/tonconnect-manifest.json',
   })
 
   Object.assign(account, tonConnectUI.account)
@@ -40,7 +40,7 @@ const init = () => {
       borderRadius: 'none',
     },
     actionsConfiguration: {
-      twaReturnUrl: config.telegramMiniAppBotUrl as `${string}://${string}`,
+      twaReturnUrl: 'https://t.me/tac_curve_bot',
     },
   }
 
