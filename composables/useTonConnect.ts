@@ -29,7 +29,7 @@ const init = () => {
     apiKey: toncenterApiKey,
   })
   tonConnectUI = new TonConnectUI({
-    manifestUrl: 'https://curve.tonappchain.fi/tonconnect-manifest.json',
+    manifestUrl: 'https://curve.turin.tac.build/tonconnect-manifest.json',
   })
 
   Object.assign(account, tonConnectUI.account)
