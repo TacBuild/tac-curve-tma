@@ -26,7 +26,7 @@ const init = () => {
     endpoint: 'https://rp.mainnet.tac.build/api/v2/jsonRPC',
   })
   tonConnectUI = new TonConnectUI({
-    manifestUrl: 'https://curve.turin.tac.build/tonconnect-manifest.json',
+    manifestUrl: 'https://curve.tac.build/tonconnect-manifest.json',
   })
 
   Object.assign(account, tonConnectUI.account)
