@@ -1,7 +1,7 @@
 secrets:
   external: true
   keys:
-    - tac-testnet-use1-env/mainnet/curve/all
+    - tac-mainnet-use1-env/mainnet/curve/all
 
 ingress:
   enabled: true
