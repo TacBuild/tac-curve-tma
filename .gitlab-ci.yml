@@ -196,8 +196,8 @@ deploy_to_k8s_mainnet:
   variables:
     AWS_PROFILE: oidc
     ROLE_ARN: $MAINNET_ROLE_ARN
-    EKS_CLUSTER: tac-testnet-use1-eks
-    ENVIRONMENT: testnet
+    EKS_CLUSTER: tac-mainnet-use1-eks
+    ENVIRONMENT: mainnet
   before_script:
     - apk add --update --no-cache bash curl python3 py3-pip openssl
     - pip3 install awscli --break-system-packages
