@@ -67,7 +67,7 @@ onMounted(() => {
         :class="$style.info"
       >
         <span class="weight-600">Network fee</span>
-        <span class="c-secondary-text weight-600">~0.14 TON</span>
+        <span class="c-secondary-text weight-600">~0.5 TON</span>
       </p>
     </div>
 

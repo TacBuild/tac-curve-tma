@@ -5,8 +5,8 @@ import { DEFAULT_SLIPPAGE_PERCENT_VALUE } from '~/utils/ton-utils'
 export const useSwap = () => {
   const { getTacSdk } = useTac()
   const { getTonConnectUI } = useTonConnect()
-  const proxyAddress = '0xDB9693c5E1b59188e8B6267B2243e08D4e4AC31a'
-  const evmProviderUrl = 'https://rpc.ankr.com/tac_turin'
+  const proxyAddress = '0x402879F4a18C79747177a91DDeAb1aB18f97503F'
+  const evmProviderUrl = 'https://rpc.ankr.com/tac'
   // const slippagePercent = useLocalStorage('swap-slippage-percent', DEFAULT_SLIPPAGE_PERCENT_VALUE)
   const slippagePercent = DEFAULT_SLIPPAGE_PERCENT_VALUE
   const slippagePercentBigInt = 100n / 2n
@@ -28,9 +28,16 @@ export const useSwap = () => {
       rawAmount: amountA,
       address: addressA ? await sdk.getTVMTokenAddress(addressA) : undefined,
     }]
-    const res = sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets)
+    const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets)
+    const tsResult = tx.sendTransactionResult as {
+      success: boolean
+      error: Record<string, unknown>
+    }
     sdk.closeConnections()
-    return res
+    if (!tsResult?.success) {
+      throw tsResult?.error?.info || 'Unknown error'
+    }
+    return tx
   }
   const addLiquidity = async (
     poolAddress: string,
@@ -57,9 +64,16 @@ export const useSwap = () => {
       rawAmount: amountB,
       address: addressB ? await sdk.getTVMTokenAddress(addressB) : undefined,
     }]
-    const res = sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets)
+    const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets)
+    const tsResult = tx.sendTransactionResult as {
+      success: boolean
+      error: Record<string, unknown>
+    }
     sdk.closeConnections()
-    return res
+    if (!tsResult?.success) {
+      throw tsResult?.error?.info || 'Unknown error'
+    }
+    return tx
   }
   const removeLiquidity = async (
     poolAddress: string, amount: bigint,
@@ -80,9 +94,16 @@ export const useSwap = () => {
       rawAmount: amount,
       address: await sdk.getTVMTokenAddress(poolAddress),
     }]
-    const res = sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets)
+    const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets)
+    const tsResult = tx.sendTransactionResult as {
+      success: boolean
+      error: Record<string, unknown>
+    }
     sdk.closeConnections()
-    return res
+    if (!tsResult?.success) {
+      throw tsResult?.error?.info || 'Unknown error'
+    }
+    return tx
   }
   const removeLiquidityOneCoin = async (
     poolAddress: string, amount: bigint,
@@ -103,9 +124,16 @@ export const useSwap = () => {
       rawAmount: amount,
       address: await sdk.getTVMTokenAddress(poolAddress),
     }]
-    const res = sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets)
+    const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets)
+    const tsResult = tx.sendTransactionResult as {
+      success: boolean
+      error: Record<string, unknown>
+    }
     sdk.closeConnections()
-    return res
+    if (!tsResult?.success) {
+      throw tsResult?.error?.info || 'Unknown error'
+    }
+    return tx
   }
   const getContract = async (poolAddress: string) => {
     const abi = [

@@ -11,12 +11,12 @@
   },
   "dependencies": {
     "@ton/ton": "^15.1.0",
-    "@tonappchain/sdk": "^0.6.1-v3.0.4",
-    "@tonconnect/ui": "^2.0.11",
+    "@tonappchain/sdk": "^0.6.5-mainnet-alpha",
+    "@tonconnect/ui": "^2.2.0",
     "@vueuse/core": "^12.5.0",
     "ethers": "^6.13.2",
     "modern-normalize": "^3.0.1",
-    "nuxt": "^3.15.4",
+    "nuxt": "^3.17.6",
     "vue": "latest",
     "vue-router": "latest"
   },

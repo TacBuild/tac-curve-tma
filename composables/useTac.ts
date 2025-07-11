@@ -1,24 +1,14 @@
 import { Network, TacSdk } from '@tonappchain/sdk'
-import { TonClient } from '@ton/ton'
 
 let tacSdk: TacSdk
 const isLoaded = ref(false)
 
 export const useTac = () => {
   const { address } = useTonConnect()
-  const config = useRuntimeConfig().public
 
   const init = async () => {
     tacSdk = await TacSdk.create({
-      network: Network.TESTNET,
-      TONParams: config.toncenterApiKey
-        ? {
-            contractOpener: new TonClient({
-              endpoint: 'https://testnet.toncenter.com/api/v2/jsonRPC',
-              apiKey: config.toncenterApiKey || '',
-            }),
-          }
-        : undefined,
+      network: Network.MAINNET,
     })
     isLoaded.value = true
   }

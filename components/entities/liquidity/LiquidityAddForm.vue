@@ -291,7 +291,7 @@ watch(isReady, (val) => {
 
         <p :class="$style.info">
           <span class=" weight-600">Network fee</span>
-          <span class="c-secondary-text">~0.14 TON</span>
+          <span class="c-secondary-text">~0.5 TON</span>
         </p>
       </div>
 

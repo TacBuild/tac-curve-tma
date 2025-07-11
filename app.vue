@@ -34,9 +34,13 @@ initTonConnect()
           @update:model-value="onChangeNav($event as string)"
         />
 
-        <NuxtPage :keepalive="{ include: ['IndexPage', 'PoolsPage'] }" />
+        <NuxtPage
+          :page-key="route => route.fullPath"
+          :keepalive="{ include: ['IndexPage', 'PoolsPage'] }"
+        />
       </div>
     </section>
+
     <UiModals />
   </main>
 </template>

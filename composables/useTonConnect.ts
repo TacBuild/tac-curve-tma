@@ -16,17 +16,14 @@ const account: Account = reactive({} as Account)
 
 const address = computed(() => account?.address || '')
 const chain = computed(() => account.chain)
-const friendlyAddress = computed(() => account?.address ? toUserFriendlyAddress(account.address, true) : '')
+const friendlyAddress = computed(() => account?.address ? toUserFriendlyAddress(account.address) : '')
 const shortAddress = computed(() => friendlyAddress.value ? truncate(friendlyAddress.value) : '')
 const shorterAddress = computed(() => friendlyAddress.value ? truncate(friendlyAddress.value, 3) : '')
 const isConnected = computed(() => Boolean(address.value))
 
 const init = () => {
-  const { toncenterApiKey } = useRuntimeConfig().public
-
   client = new TonClient({
-    endpoint: 'https://testnet.toncenter.com/api/v2/jsonRPC',
-    apiKey: toncenterApiKey,
+    endpoint: 'https://rp.mainnet.tac.build/api/v2/jsonRPC',
   })
   tonConnectUI = new TonConnectUI({
     manifestUrl: 'https://curve.turin.tac.build/tonconnect-manifest.json',
@@ -79,11 +76,11 @@ const disconnect = async () => {
 }
 
 watch(chain, async (val) => {
-  if (val === CHAIN.MAINNET) {
+  if (val === CHAIN.TESTNET) {
     modal.open(SwapStatusModal, {
       props: {
-        title: 'Mainnet Wallet cannot be connected',
-        text: 'Only Testnet wallets can be used in this app. Change network and try again',
+        title: 'Testnet Wallet cannot be connected',
+        text: 'Only Mainnet wallets can be used in this app. Change network and try again',
         status: 'error',
         buttonLabel: 'Close',
       },

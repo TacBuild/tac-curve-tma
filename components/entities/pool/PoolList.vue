@@ -6,7 +6,6 @@ import { useModal } from '~/components/ui/composables/useModal'
 import { PoolDetailModal } from '#components'
 
 const { address } = useTonConnect()
-const config = useRuntimeConfig().public
 const balances: Ref<Record<string, bigint>> = ref({})
 const isBalancesLoading = ref(false)
 
@@ -33,12 +32,11 @@ const updateBalances = async () => {
       tvmDict[pool.name] = await getTacSdk().getTVMTokenAddress(pool.address)
     }))
 
-    const { data } = await axios.get(`https://testnet.toncenter.com/api/v3/jetton/wallets`, {
+    const { data } = await axios.get(`https://rp.mainnet.tac.build/api/v3/jetton/wallets`, {
       params: {
         jetton_address: Object.values(tvmDict),
         owner_address: [address.value],
         limit: 50,
-        api_key: config.toncenterApiKey,
       },
     })
 

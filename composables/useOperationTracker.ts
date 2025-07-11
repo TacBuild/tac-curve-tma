@@ -9,7 +9,7 @@ const POOL_MS = 5000
 const MAX_RETRIES = 40
 export const useOperationTracker = (transactionLinker: TransactionLinker | undefined) => {
   let interval: ReturnType<typeof setInterval>
-  const tracker = new OperationTracker(Network.TESTNET)
+  const tracker = new OperationTracker(Network.MAINNET)
   const operationId = ref('')
   const status = ref('')
   const error = ref('')

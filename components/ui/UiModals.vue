@@ -9,7 +9,7 @@ const { list } = useModal()
     v-if="list.length"
     class="v-modals"
   >
-    <transition-group
+    <TransitionGroup
       name="modal"
     >
       <UiModal
@@ -20,6 +20,6 @@ const { list } = useModal()
         :component="modal.component"
         :data="modal.data"
       />
-    </transition-group>
+    </TransitionGroup>
   </div>
 </template>
