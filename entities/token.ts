@@ -35,6 +35,13 @@ export const tokens: Token[] = [
     evmTokenAddress: '0x7048c9e4aBD0cf0219E95a17A8C6908dfC4f0Ee4',
     decimals: 8,
   },
+  {
+    title: 'TAC',
+    logo: 'https://res.cloudinary.com/dqz8o8js4/image/upload/v1752369223/Copy_of_TAC-logo-symbol-purple_xx17mf.png',
+    symbol: 'TAC',
+    evmTokenAddress: '0xB63B9f0eb4A6E6f191529D71d4D88cc8900Df2C9',
+    decimals: 18,
+  },
   // {
   //   title: 'TonStakers Liquid Staked TON',
   //   logo: 'https://assets.coingecko.com/coins/images/35404/large/icon_%281%29.png',
