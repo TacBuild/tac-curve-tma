@@ -274,7 +274,7 @@ watch(isReady, (val) => {
           <span
             class="c-secondary-text"
             :class="{ 'c-red': errorRate }"
-          >~{{ rate || '-' }} {{ tokens[0].symbol }}-{{ tokens[1].symbol }}</span>
+          >~{{ rate || '-' }} {{ pair[0].token.symbol }}-{{ pair[1].token.symbol }}</span>
         </p>
 
         <p

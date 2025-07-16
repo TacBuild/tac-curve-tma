@@ -26,13 +26,13 @@ const transitionName = ref('')
 const pair: { id: number, token: Token, inputValue: string, balance: number, swapKey: 0 | 1 }[]
   = reactive([{
     id: 1,
-    token: tokens[0],
+    token: tokens[1],
     inputValue: '1',
     balance: 0,
     swapKey: 0,
   }, {
     id: 2,
-    token: tokens[1],
+    token: tokens[0],
     inputValue: '0',
     balance: 0,
     swapKey: 1 },
@@ -105,7 +105,7 @@ const swapPair = () => {
 const calcRate = useDebounceFn(async (inputIndex: number) => {
   errorRate.value = ''
   const value = Number(pair[inputIndex].inputValue || 0)
-  const keys = pair.map(o => o.swapKey).reverse()
+  const keys = pair.map(o => o.swapKey)
   let rate
   try {
     rate = value <= 0 ? 0 : await getRate(value, keys, inputIndex)
@@ -158,7 +158,7 @@ const handleSwap = async () => {
     isSwapping.value = true
     const txLinker = await swap(
       pool.value[1],
-      pair.map(o => o.swapKey).reverse(),
+      pair.map(o => o.swapKey),
       pair[0].token.evmTokenAddress,
       valueToNano(pair[0].inputValue, pair[0].token.decimals),
       valueToNano(pair[1].inputValue, pair[1].token.decimals),
