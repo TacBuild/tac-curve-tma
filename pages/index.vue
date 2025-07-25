@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { usePools } from '~/composables/usePools'
+
 defineOptions({
   name: 'IndexPage',
 })
+usePools()
 </script>
 
 <template>
@@ -12,6 +15,6 @@ defineOptions({
 
 <style module lang='scss'>
 .form {
-  min-height: calc(100dvh - 174px);
+  min-height: calc(100dvh - 180px);
 }
 </style>

@@ -4,7 +4,7 @@ let tacSdk: TacSdk
 const isLoaded = ref(false)
 
 export const useTac = () => {
-  const { address } = useTonConnect()
+  const { address, fetchTonBalance } = useTonConnect()
 
   const init = async () => {
     tacSdk = await TacSdk.create({
@@ -18,9 +18,13 @@ export const useTac = () => {
   const fetchJettonBalanceByEvmAddress = async (evmAddress: string) => {
     try {
       const sdk = getTacSdk()
+      const tvmAddress = await sdk.getTVMTokenAddress(evmAddress)
+      if (tvmAddress === 'NONE') {
+        return await fetchTonBalance()
+      }
       const res = await sdk.getUserJettonBalanceExtended(
         address.value,
-        await sdk.getTVMTokenAddress(evmAddress),
+        tvmAddress,
       )
       return res?.exists ? res.amount : 0
     }

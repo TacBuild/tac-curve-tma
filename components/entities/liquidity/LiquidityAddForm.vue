@@ -2,24 +2,25 @@
 import { UserRejectsError } from '@tonconnect/ui'
 import { useDebounceFn } from '@vueuse/core'
 import type { Reactive } from 'vue'
-import { type Token, tokens } from '~/entities/token'
+import { formatUnits, parseUnits } from 'ethers'
 import { useTonConnect } from '~/composables/useTonConnect'
 import { useModal } from '~/components/ui/composables/useModal'
 import { TransactionDetailsModal, SwapStatusModal } from '#components'
-import { valueToNano } from '~/utils/ton-utils'
 import { useSwap } from '~/composables/useSwap'
 import { formatNumber } from '~/utils/string-utils'
-import { poolsWithTokens } from '~/entities/pool'
+import type { Pool, PoolCoin } from '~/entities/pool'
 
 const modal = useModal()
+const { getPool } = usePools()
 const { isLoaded: isTonLoaded, isConnected, walletName, fetchTonBalance, getTonConnectUI } = useTonConnect()
 const { addLiquidity, getLiquidityRates, slippagePercent } = useSwap()
 const { fetchJettonBalanceByEvmAddress, isLoaded: isTacLoaded } = useTac()
 
 const { poolAddress } = defineProps<{ poolAddress: string }>()
 
+const pool: Ref<Pool | undefined> = ref()
 const error = ref('')
-const rate: Ref<number | undefined> = ref(undefined)
+const rate: Ref<bigint> = ref(0n)
 const errorRate = ref('')
 const isLoadingBalances = ref(false)
 const isSubmitting = ref(false)
@@ -27,22 +28,22 @@ const isLoaded = ref(false)
 
 const getErrorForToken = (item: typeof pair[number]) => {
   if (item.balance < +item.inputValue) {
-    return `Insufficient ${item.token.symbol} balance`
+    return `Insufficient ${item.coin?.symbol} balance`
   }
 
   return ''
 }
 
-const pair: Reactive<{ id: number, token: Token, inputValue: string, balance: number, error: ComputedRef<string> }[]>
+const pair: Reactive<{ id: number, coin: PoolCoin, inputValue: string, balance: number, error: ComputedRef<string> }[]>
   = reactive([{
     id: 1,
-    token: JSON.parse(JSON.stringify(tokens[0])),
+    coin: {} as PoolCoin,
     inputValue: '1',
     balance: 0,
     error: computed(() => !isConnected.value || !isReady.value || isLoadingBalances.value ? '' : getErrorForToken(pair[0])),
   }, {
     id: 2,
-    token: JSON.parse(JSON.stringify(tokens[1])),
+    coin: {} as PoolCoin,
     inputValue: '1',
     balance: 0,
     error: computed(() => !isConnected.value || !isReady.value || isLoadingBalances.value ? '' : getErrorForToken(pair[1])),
@@ -62,26 +63,27 @@ const isSubmitDisabled = computed(() => {
 })
 const isReady = computed(() => isConnected.value && isTacLoaded.value && isLoaded.value)
 
-const load = () => {
+const load = async () => {
   isLoaded.value = false
-  const pool = poolsWithTokens.find(pool => pool.address === poolAddress)
-  if (!pool) {
+  pool.value = await getPool(poolAddress)
+  if (!pool.value) {
     error.value = 'Pool not found'
     isLoaded.value = true
     return
   }
-  Object.assign(pair[0].token, pool!.tokens[0])
-  Object.assign(pair[1].token, pool!.tokens[1])
+  pair[0].coin = pool!.value.coins[0]
+  pair[1].coin = pool!.value.coins[1]
+  calcRates()
   isLoaded.value = true
 }
 const calcRates = useDebounceFn(async () => {
-  const amounts = [valueToNano(pair[0].inputValue, pair[0].token.decimals), valueToNano(pair[1].inputValue, pair[1].token.decimals)]
+  const amounts = [parseUnits(pair[0].inputValue || '0', +pair[0].coin.decimals), parseUnits(pair[1].inputValue || '0', +pair[1].coin.decimals)]
   errorRate.value = ''
   try {
-    rate.value = +nanoToValue(await getLiquidityRates(poolAddress, amounts, true), 18).toFixed(9)
+    rate.value = await getLiquidityRates(poolAddress, amounts, true)
   }
   catch (e) {
-    rate.value = undefined
+    rate.value = 0n
     errorRate.value = 'Unable to calculate rate. Price impact may be very high.'
     console.warn(e)
   }
@@ -91,12 +93,12 @@ const updateBalances = async () => {
     isLoadingBalances.value = true
 
     const res = await Promise.all([
-      !pair[0].token.evmTokenAddress
+      pair[0].coin.address === 'NONE'
         ? fetchTonBalance()
-        : fetchJettonBalanceByEvmAddress(pair[0].token.evmTokenAddress),
-      !pair[1].token.evmTokenAddress
+        : fetchJettonBalanceByEvmAddress(pair[0].coin.address),
+      pair[1].coin.address === 'NONE'
         ? fetchTonBalance()
-        : fetchJettonBalanceByEvmAddress(pair[1].token.evmTokenAddress),
+        : fetchJettonBalanceByEvmAddress(pair[1].coin.address),
     ])
     pair[0].balance = res[0]
     pair[1].balance = res[1]
@@ -125,21 +127,21 @@ const handleAddLiquidity = async () => {
     isSubmitting.value = true
     const txLinker = await addLiquidity(
       poolAddress,
-      pair[0].token.evmTokenAddress, pair[1].token.evmTokenAddress,
-      valueToNano(pair[0].inputValue, pair[0].token.decimals),
-      valueToNano(pair[1].inputValue, pair[1].token.decimals),
-      valueToNano(rate.value || 0, 18),
+      pair[0].coin.address, pair[1].coin.address,
+      parseUnits(pair[0].inputValue, +pair[0].coin.decimals),
+      parseUnits(pair[1].inputValue, +pair[1].coin.decimals),
+      rate.value,
     )
 
     modal.open(TransactionDetailsModal, {
       props: {
         type: 'add-liquidity',
         title: 'Deposit details',
-        tokenA: pair[0].token,
-        tokenB: pair[1].token,
+        tokenA: pair[0].coin,
+        tokenB: pair[1].coin,
         valueA: pair[0].inputValue,
         valueB: pair[1].inputValue,
-        pool: poolsWithTokens.find(pool => pool.address === poolAddress),
+        pool: pool.value,
         poolValue: rate.value,
         transactionLinker: txLinker,
       },
@@ -168,6 +170,7 @@ const handleAddLiquidity = async () => {
 }
 const setMax = (inputIdx: 0 | 1) => {
   pair[inputIdx].inputValue = String(pair[inputIdx].balance)
+  calcRates()
 }
 
 load()
@@ -192,7 +195,7 @@ watch(isReady, (val) => {
           :key="pair[0].id"
           v-model="pair[0].inputValue"
           name="swap-from"
-          maxlength="12"
+          maxlength="36"
           autocomplete="off"
           step="0.1"
           inputmode="decimal"
@@ -204,7 +207,7 @@ watch(isReady, (val) => {
           <template #label>
             {{
               isConnected ? `Avail. ${isLoadingBalances || !isTacLoaded
-                ? 'loading...' : formatNumber(pair[0].balance, pair[0].token.decimals)}`
+                ? 'loading...' : formatNumber(pair[0].balance, +pair[0].coin.decimals)}`
               : 'Token A'
             }}
           </template>
@@ -219,9 +222,9 @@ watch(isReady, (val) => {
                 MAX
               </UiButton>
 
-              <BaseAvatar
+              <CoinAvatar
                 class="icon--32"
-                :src="pair[0].token.logo"
+                :coins="[pair[0].coin]"
               />
             </div>
           </template>
@@ -230,7 +233,7 @@ watch(isReady, (val) => {
           :key="pair[1].id"
           v-model="pair[1].inputValue"
           name="swap-to"
-          maxlength="12"
+          maxlength="36"
           autocomplete="off"
           step="0.1"
           inputmode="decimal"
@@ -242,7 +245,7 @@ watch(isReady, (val) => {
           <template #label>
             {{
               isConnected ? `Avail. ${isLoadingBalances || !isTacLoaded
-                ? 'loading...' : formatNumber(pair[1].balance, pair[1].token.decimals)}`
+                ? 'loading...' : formatNumber(pair[1].balance, +pair[1].coin.decimals)}`
               : 'Token B'
             }}
           </template>
@@ -256,9 +259,9 @@ watch(isReady, (val) => {
               >
                 MAX
               </UiButton>
-              <BaseAvatar
+              <CoinAvatar
                 class="icon--32"
-                :src="pair[1].token.logo"
+                :coins="[pair[1].coin]"
               />
             </div>
           </template>
@@ -272,9 +275,9 @@ watch(isReady, (val) => {
         <p :class="$style.info">
           <span class=" weight-600">Minimum LP Tokens</span>
           <span
-            class="c-secondary-text"
+            class="c-secondary-text right"
             :class="{ 'c-red': errorRate }"
-          >~{{ rate || '-' }} {{ pair[0].token.symbol }}-{{ pair[1].token.symbol }}</span>
+          >~{{ formatNumber(formatUnits(rate || 0n), 4) || '-' }} {{ pool?.symbol }}</span>
         </p>
 
         <p
@@ -285,13 +288,20 @@ watch(isReady, (val) => {
         </p>
 
         <p :class="$style.info">
+          <span class=" weight-600">TVL</span>
+          <span class="c-secondary-text right">
+            {{ formatUsd(pool?.usdTotal, 2) }}
+          </span>
+        </p>
+
+        <p :class="$style.info">
           <span class=" weight-600">Slippage Tolerance</span>
-          <span class="c-secondary-text">{{ slippagePercent }}%</span>
+          <span class="c-secondary-text right">{{ slippagePercent }}%</span>
         </p>
 
         <p :class="$style.info">
           <span class=" weight-600">Network fee</span>
-          <span class="c-secondary-text">~0.5 TON</span>
+          <span class="c-secondary-text right">~0.5 TON</span>
         </p>
       </div>
 

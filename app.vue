@@ -26,13 +26,17 @@ initTonConnect()
 
     <section class="page-wrapper">
       <div class="container">
-        <UiTabs
+        <div
           v-if="route.name === 'index' || route.name === 'pools'"
+          :class="$style.sticky"
           class="mb-32"
-          :model-value="activeRoute"
-          :tabs="[{ label: 'Swap', value: 'index' }, { label: 'Pools', value: 'pools' }]"
-          @update:model-value="onChangeNav($event as string)"
-        />
+        >
+          <UiTabs
+            :model-value="activeRoute"
+            :tabs="[{ label: 'Swap', value: 'index' }, { label: 'Pools', value: 'pools' }]"
+            @update:model-value="onChangeNav($event as string)"
+          />
+        </div>
 
         <NuxtPage
           :page-key="route => route.fullPath"
@@ -46,4 +50,13 @@ initTonConnect()
 </template>
 
 <style module lang="scss">
+.sticky {
+  position: sticky;
+  top: 62px;
+  z-index: 1;
+  margin-left: calc(-1 * var(--container-padding-side));
+  margin-right: calc(-1 * var(--container-padding-side));
+  padding: var(--container-padding);
+  background-color: var(--c-body-bg);
+}
 </style>

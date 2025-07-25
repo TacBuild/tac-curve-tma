@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { Token } from '~/entities/token'
+import type { PoolCoin } from '~/entities/pool'
 
 const emits = defineEmits(['close', 'select'])
-const { title = 'Select token', tokens, onSelect } = defineProps<{ title?: string, tokens: Token[], onSelect: (e: Token) => void }>()
+const { title = 'Select token', coins, onSelect } = defineProps<{ title?: string, coins: PoolCoin[], onSelect: (e: PoolCoin) => void }>()
 
-const handleSelect = (token: Token) => {
+const handleSelect = (coin: PoolCoin) => {
   if (onSelect) {
-    onSelect(token)
+    onSelect(coin)
   }
   emits('close')
 }
@@ -24,18 +24,18 @@ const handleSelect = (token: Token) => {
 
     <ul :class="$style.list">
       <li
-        v-for="token in tokens"
-        :key="token.evmTokenAddress"
+        v-for="coin in coins"
+        :key="coin.address"
         :class="$style.item"
-        @click="handleSelect(token)"
+        @click="handleSelect(coin)"
       >
-        <BaseAvatar
-          :src="token.logo"
+        <CoinAvatar
           class="icon--32"
+          :coins="[coin]"
         />
 
         <p class="weight-700 p1">
-          {{ token?.symbol || 'Unknown' }}
+          {{ coin?.symbol || 'Unknown' }}
         </p>
       </li>
     </ul>
@@ -43,7 +43,7 @@ const handleSelect = (token: Token) => {
 </template>
 
 <style module lang="scss">
-.TokenSelectList {
+.CoinSelectListModal {
   //
 }
 

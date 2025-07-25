@@ -1,16 +1,25 @@
 <script setup lang="ts">
-import { pools } from '~/entities/pool'
+import type { Pool } from '~/entities/pool'
+import { usePools } from '~/composables/usePools'
 
 const route = useRoute()
+const { getPool, isLoading } = usePools()
+const pool: Ref<Pool | undefined> = ref()
 
-const pool = pools.find(pool => pool[0].toLowerCase() === String(route.params.pool).toLowerCase())
-if (!pool) {
-  showError({
-    status: 404,
-    message: 'Pool not found. Make sure this pool exists or try a bit later.',
-  })
+const load = async () => {
+  try {
+    pool.value = await getPool(route.params.pool as string)
+  }
+  catch (e) {
+    console.warn(e)
+    showError({
+      status: 404,
+      message: 'Pool not found. Make sure this pool exists or try a bit later.',
+    })
+  }
 }
-const poolAddress = pool?.[1]
+
+load()
 </script>
 
 <template>
@@ -20,20 +29,25 @@ const poolAddress = pool?.[1]
       class="flex-between p1 mb-24"
     >
       <h1 class="weight-600">
-        Withdraw to pool
+        Withdraw from pool
       </h1>
       <p
         v-if="pool"
         class="weight-600"
       >
-        {{ pool[0] }}
+        {{ pool.name }}
       </p>
     </div>
 
+    <span
+      v-if="isLoading"
+      class="ui-loader"
+    />
+
     <LiquidityRemoveForm
-      v-if="poolAddress"
+      v-else-if="pool"
       :class="$style.form"
-      :pool-address="poolAddress"
+      :pool-address="pool.address"
     />
   </div>
 </template>
@@ -46,6 +60,6 @@ const poolAddress = pool?.[1]
 }
 
 .form {
-  min-height: calc(100dvh - 172px);
+  min-height: calc(100dvh - 180px);
 }
 </style>

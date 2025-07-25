@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import type { PoolWithTokens } from '~/entities/pool'
-import { formatNumber } from '~/utils/string-utils'
+import { until } from '@vueuse/core'
+import type { Pool } from '~/entities/pool'
+import { formatNumber, formatUsd } from '~/utils/string-utils'
 
 const emits = defineEmits(['close'])
-const { pool } = defineProps<{ pool: PoolWithTokens }>()
+const { pool } = defineProps<{ pool: Pool }>()
 
-const { fetchJettonBalanceByEvmAddress } = useTac()
+const { isLoaded, fetchJettonBalanceByEvmAddress } = useTac()
 
 const isLoading = ref(false)
 const balance = ref(0)
@@ -13,6 +14,7 @@ const balance = ref(0)
 const load = async () => {
   try {
     isLoading.value = true
+    await until(isLoaded).toBe(true)
     balance.value = await fetchJettonBalanceByEvmAddress(pool.address)
   }
   catch (e) {
@@ -44,9 +46,9 @@ load()
         :class="$style.token"
         class="flex-center"
       >
-        <BaseAvatar
+        <CoinAvatar
           class="icon--32"
-          :src="[pool.tokens[0].logo, pool.tokens[1].logo]"
+          :coins="pool.coins"
         />
 
         <p class="weight-600 p2">
@@ -54,10 +56,7 @@ load()
         </p>
       </div>
 
-      <div
-        :class="$style.position"
-        class="flex-between flex-center mt-12 weight-600"
-      >
+      <div class="flex-between flex-center mt-12 weight-600">
         <p>
           Position
         </p>
@@ -76,10 +75,25 @@ load()
         </p>
       </div>
 
+      <div class="flex-between flex-center mt-12 weight-600">
+        <p>
+          TVL
+        </p>
+
+        <p
+          class="right c-secondary-text"
+          style="line-height: 24px"
+        >
+          <span>
+            {{ formatUsd(pool.usdTotal, 2) }}
+          </span>
+        </p>
+      </div>
+
       <div :class="$style.btns">
         <UiButton
           wide
-          @click="changeRoute(`/pools/${pool.name}/deposit`)"
+          @click="changeRoute(`/pools/${pool.address}/deposit`)"
         >
           Deposit
         </UiButton>
@@ -87,7 +101,7 @@ load()
           :disabled="balance <= 0"
           class="mt-16"
           wide
-          @click="changeRoute(`/pools/${pool.name}/withdraw`)"
+          @click="changeRoute(`/pools/${pool.address}/withdraw`)"
         >
           Withdraw
         </UiButton>

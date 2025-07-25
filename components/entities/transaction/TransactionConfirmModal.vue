@@ -40,10 +40,7 @@ onMounted(() => {
       {{ title }}
     </template>
 
-    <div
-      :class="$style.wrap"
-      class="mb-24"
-    >
+    <div :class="$style.wrap">
       <TransactionAssetsInfo
         class="mb-16"
         :type="type"
@@ -74,7 +71,7 @@ onMounted(() => {
     <template #bottom>
       <div ref="confirmBtnWrap">
         <UiButton
-          class="mb-4"
+          class="mb-16"
           wide
           @click="onSubmit"
         >

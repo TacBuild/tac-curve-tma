@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import type { TransactionLinker } from '@tonappchain/sdk'
-import type { Token } from '~/entities/token'
-import type { PoolWithTokens } from '~/entities/pool'
+import type { Pool, PoolCoin } from '~/entities/pool'
 
 defineEmits(['close'])
 const { title = 'Operation details', transactionLinker } = defineProps<{
   type?: 'swap' | 'add-liquidity' | 'remove-liquidity'
   title?: string
-  tokenA?: Token
-  tokenB?: Token
+  tokenA?: PoolCoin
+  tokenB?: PoolCoin
   valueA?: number | string
   valueB?: number | string
-  pool?: PoolWithTokens
+  pool?: Pool
   poolValue?: number | string
   transactionLinker: TransactionLinker
 }>()

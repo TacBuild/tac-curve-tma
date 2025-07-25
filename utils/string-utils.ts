@@ -4,3 +4,9 @@ export const truncate = (string = '', length = 6) => {
 
 export const formatNumber = (value: string | number = 0, maximumFractionDigits = 4, maximumSignificantDigits = undefined) =>
   Number(value).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits, maximumSignificantDigits })
+
+export const formatUsd = (value: string | number = 0, maximumFractionDigits = 2) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD', maximumFractionDigits,
+  }).format(+value)

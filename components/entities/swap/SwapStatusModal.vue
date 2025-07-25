@@ -1,6 +1,11 @@
 <script setup lang="ts">
 defineEmits(['close'])
-const { buttonLabel = 'Great' } = defineProps<{ title?: string, text?: string, buttonLabel?: string, status?: 'success' | 'pending' | 'error' }>()
+const { buttonLabel = 'Great' } = defineProps<{
+  title?: string
+  text?: string
+  buttonLabel?: string
+  status?: 'success' | 'pending' | 'error'
+}>()
 </script>
 
 <template>

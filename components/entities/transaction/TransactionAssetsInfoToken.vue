@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { Token } from '~/entities/token'
+import type { PoolCoin } from '~/entities/pool'
 
 defineProps<{
-  token: Token
+  token: PoolCoin
   amount: number | string | undefined
 }>()
 </script>
@@ -10,9 +10,9 @@ defineProps<{
 <template>
   <div :class="$style.TransactionAssetsInfoToken">
     <div :class="$style.left">
-      <BaseAvatar
+      <CoinAvatar
         :class="$style.img"
-        :src="token.logo"
+        :coins="[token]"
       />
 
       <p

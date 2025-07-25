@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import type { PoolWithTokens } from '~/entities/pool'
+import { formatUnits } from 'ethers'
+import type { Pool } from '~/entities/pool'
 
-const { pool, balance, balanceLoading } = defineProps<{ pool: PoolWithTokens, balance?: bigint, balanceLoading?: boolean }>()
+const { pool, balance, balanceLoading } = defineProps<{ pool: Pool, balance?: bigint, balanceLoading?: boolean }>()
 </script>
 
 <template>
@@ -9,9 +10,9 @@ const { pool, balance, balanceLoading } = defineProps<{ pool: PoolWithTokens, ba
     :class="$style.PoolItem"
     class="flex-center"
   >
-    <BaseAvatar
+    <CoinAvatar
       class="icon--32"
-      :src="[pool.tokens[0].logo, pool.tokens[1].logo]"
+      :coins="pool.coins"
     />
 
     <p class="weight-700 p2">
@@ -23,7 +24,7 @@ const { pool, balance, balanceLoading } = defineProps<{ pool: PoolWithTokens, ba
         v-if="balance"
         class="weight-700"
       >
-        {{ formatNumber(nanoToValue(balance || 0n, 18), 2, 2) }} LP
+        {{ formatNumber(formatUnits(balance || 0n, 18), 2) }} LP
       </span>
       <span
         v-else-if="balanceLoading"

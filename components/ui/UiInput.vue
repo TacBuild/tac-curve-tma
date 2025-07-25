@@ -154,6 +154,7 @@ const onInput = (e: Event) => {
 
   &__content {
     width: 100%;
+    overflow: hidden;
   }
 
   &__append {
@@ -168,6 +169,10 @@ const onInput = (e: Event) => {
     color: var(--ui-secondary-text-color);
     margin-bottom: 6px;
     user-select: none;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    width: 100%;
+    overflow: hidden;
   }
 
   &__input {

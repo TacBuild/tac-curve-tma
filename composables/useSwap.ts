@@ -23,11 +23,14 @@ export const useSwap = () => {
     }
 
     const sender = await SenderFactory.getSender({ tonConnect: getTonConnectUI() })
+    let assetAddress = addressA ? await sdk.getTVMTokenAddress(addressA) : undefined
+    assetAddress = assetAddress === 'NONE' ? undefined : assetAddress
     const assets: AssetBridgingData[] = [{
       type: AssetType.FT,
       rawAmount: amountA,
-      address: addressA ? await sdk.getTVMTokenAddress(addressA) : undefined,
+      address: assetAddress,
     }]
+    console.log(assets)
     const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets)
     const tsResult = tx.sendTransactionResult as {
       success: boolean
@@ -55,14 +58,19 @@ export const useSwap = () => {
       ),
     }
     const sender = await SenderFactory.getSender({ tonConnect: getTonConnectUI() })
+    let assetAddressA = addressA ? await sdk.getTVMTokenAddress(addressA) : undefined
+    assetAddressA = assetAddressA === 'NONE' ? undefined : assetAddressA
+    let assetAddressB = addressB ? await sdk.getTVMTokenAddress(addressB) : undefined
+    assetAddressB = assetAddressB === 'NONE' ? undefined : assetAddressB
+
     const assets: AssetBridgingData[] = [{
       type: AssetType.FT,
       rawAmount: amountA,
-      address: addressA ? await sdk.getTVMTokenAddress(addressA) : undefined,
+      address: assetAddressA,
     }, {
       type: AssetType.FT,
       rawAmount: amountB,
-      address: addressB ? await sdk.getTVMTokenAddress(addressB) : undefined,
+      address: assetAddressB,
     }]
     const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets)
     const tsResult = tx.sendTransactionResult as {
@@ -135,15 +143,16 @@ export const useSwap = () => {
     }
     return tx
   }
-  const getContract = async (poolAddress: string) => {
+  const getContract = async (poolAddress: string, implementation?: 'plainstableng') => {
+    const isPlainStableNg = implementation === 'plainstableng'
     const abi = [
       {
         stateMutability: 'view',
         type: 'function',
         name: 'get_dx',
         inputs: [
-          { name: 'i', type: 'uint256' },
-          { name: 'j', type: 'uint256' },
+          { name: 'i', type: isPlainStableNg ? 'int128' : 'uint256' },
+          { name: 'j', type: isPlainStableNg ? 'int128' : 'uint256' },
           { name: 'dx', type: 'uint256' },
         ],
         outputs: [
@@ -155,8 +164,8 @@ export const useSwap = () => {
         type: 'function',
         name: 'get_dy',
         inputs: [
-          { name: 'i', type: 'uint256' },
-          { name: 'j', type: 'uint256' },
+          { name: 'i', type: isPlainStableNg ? 'int128' : 'uint256' },
+          { name: 'j', type: isPlainStableNg ? 'int128' : 'uint256' },
           { name: 'dx', type: 'uint256' },
         ],
         outputs: [
@@ -230,8 +239,8 @@ export const useSwap = () => {
     const contract = await getContract(poolAddress)
     return contract.calc_token_amount(amounts, isDeposit)
   }
-  const getSwapRates = async (method: 'get_dx' | 'get_dy', poolAddress: string, amount: bigint, swapKeys: number[]): Promise<bigint> => {
-    const contract = await getContract(poolAddress)
+  const getSwapRates = async (method: 'get_dx' | 'get_dy', poolAddress: string, amount: bigint, swapKeys: number[], implementation?: 'plainstableng'): Promise<bigint> => {
+    const contract = await getContract(poolAddress, implementation)
     return contract[method](swapKeys[0], swapKeys[1], amount)
   }
   const getTotalSupply = async (poolAddress: string): Promise<bigint> => {

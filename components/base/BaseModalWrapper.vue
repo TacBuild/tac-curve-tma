@@ -16,28 +16,33 @@ defineEmits(['close'])
       />
     </div>
 
-    <div>
+    <div :class="$style.content">
       <slot />
     </div>
 
-    <slot name="bottom" />
+    <div
+      v-if="$slots.bottom"
+      :class="$style.bottom"
+    >
+      <slot
+        name="bottom"
+      />
+    </div>
   </div>
 </template>
 
 <style module lang="scss">
 .BaseModal {
-  display: flex;
-  flex-direction: column;
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  padding: 16px 24px;
   background-color: var(--c-white);
   min-width: 375px;
   max-width: 600px;
   overflow: auto;
   max-height: calc(80dvh);
+  padding-bottom: 16px;
 
   @include respond-to(mobile) {
     top: auto;
@@ -45,21 +50,41 @@ defineEmits(['close'])
     bottom: 0;
     width: 100%;
     min-width: 100%;
-    padding: 16px;
     max-height: calc(90dvh);
     transform: translate(0, 0);
   }
 }
 
 .top {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: inherit;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
   min-height: 32px;
+  margin-bottom: -16px;
   font-size: 19px;
   line-height: 21px;
   font-weight: 600;
+  padding: 16px 24px;
+
+  @include respond-to(mobile) {
+    padding: 16px;
+  }
+}
+
+.content {
+  padding: 16px 24px;
+
+  @include respond-to(mobile) {
+    padding: 16px;
+  }
+}
+
+.bottom {
+  padding: 16px;
 }
 
 .close {

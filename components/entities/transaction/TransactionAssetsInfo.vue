@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import type { Token } from '~/entities/token'
-import type { PoolWithTokens } from '~/entities/pool'
+import type { Pool, PoolCoin } from '~/entities/pool'
 
 defineProps<{
   type?: 'swap' | 'add-liquidity' | 'remove-liquidity'
-  pool?: PoolWithTokens
+  pool?: Pool
   poolValue?: number | string
-  tokenA?: Token
-  tokenB?: Token
+  tokenA?: PoolCoin
+  tokenB?: PoolCoin
   valueA?: number | string
   valueB?: number | string
 }>()

@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { UserRejectsError } from '@tonconnect/ui'
 import { useDebounceFn } from '@vueuse/core'
-import { poolsWithTokens } from '~/entities/pool'
+import { formatUnits, parseUnits } from 'ethers'
 import { useTonConnect } from '~/composables/useTonConnect'
 import { useModal } from '~/components/ui/composables/useModal'
 import { TransactionDetailsModal, SwapStatusModal } from '#components'
 import { useSwap } from '~/composables/useSwap'
 import { formatNumber } from '~/utils/string-utils'
-import { type Token, tokens } from '~/entities/token'
-import { valueToNano } from '~/utils/ton-utils'
+import type { PoolCoin } from '~/entities/pool'
 
 const modal = useModal()
 const { isLoaded, isConnected, walletName, address, getTonConnectUI } = useTonConnect()
@@ -22,6 +21,7 @@ const { getTacSdk, isLoaded: isTacLoaded } = useTac()
 
 const { poolAddress } = defineProps<{ poolAddress: string }>()
 
+const { getPool } = usePools()
 const type = ref('balanced')
 const balance = ref(0)
 const decimals = ref(18)
@@ -30,14 +30,14 @@ const errorRate = ref('')
 const totalSupply = ref(0n)
 const oneCoinKey: Ref<0 | 1> = ref(0)
 const poolTokenBalances: Ref<[bigint, bigint]> = ref([0n, 0n])
-const pair: { id: number, token: Token, inputValue: string }[]
+const pair: { id: number, coin: PoolCoin, inputValue: string }[]
   = reactive([{
     id: 1,
-    token: JSON.parse(JSON.stringify(tokens[0])),
+    coin: {} as PoolCoin,
     inputValue: '0',
   }, {
     id: 2,
-    token: JSON.parse(JSON.stringify(tokens[1])),
+    coin: {} as PoolCoin,
     inputValue: '0',
   },
   ])
@@ -69,13 +69,13 @@ const isReady = computed(() => isConnected.value && isTacLoaded.value)
 const load = async () => {
   try {
     isLoaded.value = false
-    const pool = poolsWithTokens.find(pool => pool.address === poolAddress)
+    const pool = await getPool(poolAddress)
     if (!pool) {
       isLoaded.value = true
       return
     }
-    Object.assign(pair[0].token, pool!.tokens[0])
-    Object.assign(pair[1].token, pool!.tokens[1])
+    pair[0].coin = pool.coins[0]
+    pair[1].coin = pool.coins[1]
     const res = await Promise.all([getTotalSupply(poolAddress), getPoolTokenBalances(poolAddress, 0), getPoolTokenBalances(poolAddress, 1)])
     totalSupply.value = res[0]
     poolTokenBalances.value = [res[1], res[2]]
@@ -135,9 +135,9 @@ const updateBalance = async () => {
 // }, 200)
 const calcRatesByBalanced = () => {
   errorRate.value = ''
-  const arr = calcUnstakeBalancedTokenValues(BigInt(Number(amount.value) * 10 ** 18), totalSupply.value, poolTokenBalances.value)
-  pair[0].inputValue = String(nanoToValue(arr[0] || 0n, pair[0].token.decimals))
-  pair[1].inputValue = String(nanoToValue(arr[1] || 0n, pair[1].token.decimals))
+  const arr = calcUnstakeBalancedTokenValues(parseUnits(amount.value), totalSupply.value, poolTokenBalances.value)
+  pair[0].inputValue = String(formatUnits(arr[0] || 0n, +pair[0].coin.decimals))
+  pair[1].inputValue = String(formatUnits(arr[1] || 0n, +pair[1].coin.decimals))
   isRatesLoading.value = false
 }
 const calcRatesByOneCoin = async () => {
@@ -145,10 +145,10 @@ const calcRatesByOneCoin = async () => {
   pair[oneCoinKey.value].inputValue = ''
   try {
     isRatesLoading.value = true
-    pair[oneCoinKey.value].inputValue = nanoToValue(
-      await getOneCoinWithdrawRate(poolAddress, valueToNano(amount.value, decimals.value), oneCoinKey.value),
+    pair[oneCoinKey.value].inputValue = formatUnits(
+      await getOneCoinWithdrawRate(poolAddress, parseUnits(amount.value, decimals.value), oneCoinKey.value),
       decimals.value,
-    ).toString()
+    )
   }
   catch (e) {
     amount.value = ''
@@ -188,20 +188,20 @@ const handleRemoveLiquidity = async () => {
     isSubmitting.value = true
     const txLinker = await removeLiquidity(
       poolAddress,
-      valueToNano(amount.value, decimals.value),
-      valueToNano(pair[0].inputValue, pair[0].token.decimals),
-      valueToNano(pair[1].inputValue, pair[1].token.decimals),
+      parseUnits(amount.value, decimals.value),
+      parseUnits(pair[0].inputValue, +pair[0].coin.decimals),
+      parseUnits(pair[1].inputValue, +pair[1].coin.decimals),
     )
 
     modal.open(TransactionDetailsModal, {
       props: {
         type: 'remove-liquidity',
         title: 'Withdraw details',
-        tokenA: pair[0].token,
-        tokenB: pair[1].token,
+        tokenA: pair[0].coin,
+        tokenB: pair[1].coin,
         valueA: pair[0].inputValue,
         valueB: pair[1].inputValue,
-        pool: poolsWithTokens.find(pool => pool.address === poolAddress),
+        pool: await getPool(poolAddress),
         poolValue: amount.value,
         transactionLinker: txLinker,
       },
@@ -250,7 +250,7 @@ watch(type, () => {
         <UiInput
           v-model="amount"
           name="remove-liquidity-from"
-          maxlength="12"
+          maxlength="36"
           autocomplete="off"
           step="0.1"
           inputmode="decimal"
@@ -298,11 +298,11 @@ watch(type, () => {
               :class="$style.tokenName"
               class="flex-center weight-600 p1"
             >
-              <BaseAvatar
+              <CoinAvatar
                 class="icon--32"
-                :src="pair[0].token.logo"
+                :coins="[pair[0].coin]"
               />
-              {{ pair[0].token.symbol }}
+              {{ pair[0].coin.symbol }}
             </div>
             <span
               class="weight-600 p1"
@@ -319,11 +319,11 @@ watch(type, () => {
               :class="$style.tokenName"
               class="flex-center weight-600 p1"
             >
-              <BaseAvatar
+              <CoinAvatar
                 class="icon--32"
-                :src="pair[1].token.logo"
+                :coins="[pair[1].coin]"
               />
-              {{ pair[1].token.symbol }}
+              {{ pair[1].coin.symbol }}
             </div>
             <span
               class="weight-600 p1"
@@ -337,8 +337,8 @@ watch(type, () => {
           <UiRadio
             v-model="oneCoinKey"
             :options="[
-              { id: 0, value: 0, label: pair[0].token.symbol },
-              { id: 1, value: 1, label: pair[1].token.symbol },
+              { id: 0, value: 0, label: pair[0].coin.symbol },
+              { id: 1, value: 1, label: pair[1].coin.symbol },
             ]"
             @update:model-value="calcRatesByOneCoin()"
           >
@@ -352,11 +352,11 @@ watch(type, () => {
                   :class="$style.tokenName"
                   class="flex-center weight-600 p1"
                 >
-                  <BaseAvatar
+                  <CoinAvatar
                     class="icon--32"
-                    :src="pair[option.value as 0 | 1].token.logo"
+                    :coins="[pair[option.value as 0 | 1].coin]"
                   />
-                  {{ pair[option.value as 0 | 1].token.symbol }}
+                  {{ pair[option.value as 0 | 1].coin.symbol }}
                 </div>
                 <span
                   class="weight-600 p1"

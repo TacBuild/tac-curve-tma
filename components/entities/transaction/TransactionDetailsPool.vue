@@ -32,8 +32,8 @@ defineProps<{
       class="mb-8"
     >
       <div class="flex-center">
-        <BaseAvatar
-          :src="tokenA?.logo"
+        <CoinAvatar
+          :coins="[tokenA]"
           class="mr-8"
         />
 
@@ -52,8 +52,8 @@ defineProps<{
       class="mb-12"
     >
       <div class="flex-center">
-        <BaseAvatar
-          :src="tokenB?.logo"
+        <CoinAvatar
+          :coins="[tokenB]"
           class="mr-8"
         />
 

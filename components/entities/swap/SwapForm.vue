@@ -1,38 +1,38 @@
 <script setup lang="ts">
 import { UserRejectsError } from '@tonconnect/ui'
-import { useDebounceFn } from '@vueuse/core'
-import { type Token, tokens } from '~/entities/token'
-import { pools } from '~/entities/pool'
+import { until, useDebounceFn } from '@vueuse/core'
+import { formatUnits, parseUnits } from 'ethers'
 import { useTonConnect } from '~/composables/useTonConnect'
 import { useModal } from '~/components/ui/composables/useModal'
-import { TransactionDetailsModal, TransactionConfirmModal, SwapStatusModal } from '#components'
+import { SwapStatusModal, TransactionConfirmModal, TransactionDetailsModal } from '#components'
 import { useSwap } from '~/composables/useSwap'
 import { formatNumber } from '~/utils/string-utils'
+import type { Pool, PoolCoin } from '~/entities/pool'
 
 const modal = useModal()
-const { isLoaded, isConnected, walletName, fetchTonBalance, getTonConnectUI } = useTonConnect()
+const { pools, coins, isLoaded: isPoolsLoaded } = usePools()
 const { swap, getSwapRates, slippagePercent } = useSwap()
 const { fetchJettonBalanceByEvmAddress, isLoaded: isTacLoaded } = useTac()
+const { isLoaded, isConnected, walletName, fetchTonBalance, getTonConnectUI } = useTonConnect()
 
-const pool = ref(pools[0])
-
-const poolTokens: Ref<Token[]> = ref([])
+const pool: Ref<Pool | undefined> = ref()
+const poolCoins: Ref<PoolCoin[]> = ref([])
 const isPreparing = ref(false)
 const isLoadingBalances = ref(false)
 const isLoadingRates = ref(false)
 const isSwapping = ref(false)
 const errorRate = ref('')
 const transitionName = ref('')
-const pair: { id: number, token: Token, inputValue: string, balance: number, swapKey: 0 | 1 }[]
+const pair: { id: number, coin: PoolCoin, inputValue: string, balance: number, swapKey: 0 | 1 }[]
   = reactive([{
     id: 1,
-    token: tokens[1],
+    coin: coins.value[1],
     inputValue: '1',
     balance: 0,
     swapKey: 0,
   }, {
     id: 2,
-    token: tokens[0],
+    coin: coins.value[0],
     inputValue: '0',
     balance: 0,
     swapKey: 1 },
@@ -44,7 +44,7 @@ const errorInput = computed(() => {
   }
 
   if (pair[0].balance < +pair[0].inputValue) {
-    return `Insufficient ${pair[0].token.symbol} balance`
+    return `Insufficient ${pair[0].coin.symbol} balance`
   }
 
   return ''
@@ -59,25 +59,44 @@ const isSubmitDisabled = computed(() => {
     || Number(pair[0].inputValue) > pair[0].balance
     || Number(pair[0].inputValue) <= 0
 })
-const isReady = computed(() => isConnected.value && isTacLoaded.value)
+const isReady = computed(() => isConnected.value && isTacLoaded.value && isPoolsLoaded.value)
 
-const getRate = async (value: number, keys: Array<number>, inputIndex: number) => {
+const load = async () => {
+  try {
+    await until(isPoolsLoaded).toBe(true)
+    pool.value = pools.value[0]
+    pair[0].coin = pool.value.coins[0]
+    pair[1].coin = pool.value.coins[1]
+    calcRate(0)
+  }
+  catch (e) {
+    console.warn(e)
+    showError({
+      status: 404,
+      message: 'Pool not found. Make sure this pool exists or try a bit later.',
+    })
+  }
+}
+
+const getRate = async (value: string, keys: Array<number>, inputIndex: number) => {
+  if (!pool.value) {
+    return 0n
+  }
   const method = inputIndex === 0 ? 'get_dy' : 'get_dx'
-  const decimals = pair[inputIndex === 0 ? 0 : 1].token.decimals
-  const rate = await getSwapRates(method, pool.value[1], BigInt(Math.floor(value * 10 ** decimals)), keys)
-  return nanoToValue(rate, pair[inputIndex === 0 ? 1 : 0].token.decimals)
+  const decimals = pair[inputIndex === 0 ? 0 : 1].coin.decimals
+  return await getSwapRates(method, pool.value.address, parseUnits(value, +decimals), keys, pool.value.implementation)
 }
 const updateBalances = async () => {
   try {
     isLoadingBalances.value = true
 
     const res = await Promise.all([
-      !pair[0].token.evmTokenAddress
+      pair[0].coin.address === 'NONE'
         ? fetchTonBalance()
-        : fetchJettonBalanceByEvmAddress(pair[0].token.evmTokenAddress),
-      !pair[1].token.evmTokenAddress
+        : fetchJettonBalanceByEvmAddress(pair[0].coin.address),
+      pair[1].coin.address === 'NONE'
         ? fetchTonBalance()
-        : fetchJettonBalanceByEvmAddress(pair[1].token.evmTokenAddress),
+        : fetchJettonBalanceByEvmAddress(pair[1].coin.address),
     ])
     pair[0].balance = res[0]
     pair[1].balance = res[1]
@@ -90,6 +109,9 @@ const updateBalances = async () => {
   }
 }
 const swapPair = () => {
+  if (isLoadingBalances.value) {
+    return
+  }
   if (transitionName.value === 'swap') {
     return
   }
@@ -104,11 +126,11 @@ const swapPair = () => {
 }
 const calcRate = useDebounceFn(async (inputIndex: number) => {
   errorRate.value = ''
-  const value = Number(pair[inputIndex].inputValue || 0)
+  const value = pair[inputIndex].inputValue || '0'
   const keys = pair.map(o => o.swapKey)
   let rate
   try {
-    rate = value <= 0 ? 0 : await getRate(value, keys, inputIndex)
+    rate = +value <= 0 ? 0n : await getRate(value, keys, inputIndex)
   }
   catch (e) {
     errorRate.value = 'Unable to calculate rate. Price impact may be very high.'
@@ -116,10 +138,10 @@ const calcRate = useDebounceFn(async (inputIndex: number) => {
     rate = 0
   }
   if (inputIndex === 0) {
-    pair[1].inputValue = !value ? '' : rate.toLocaleString('en', { useGrouping: false, maximumFractionDigits: pair[1].token.decimals })
+    pair[1].inputValue = !value ? '' : formatUnits(rate, +pair[1].coin.decimals)
   }
   else {
-    pair[0].inputValue = !value ? '' : rate.toLocaleString('en', { useGrouping: false, maximumFractionDigits: pair[0].token.decimals })
+    pair[0].inputValue = !value ? '' : formatUnits(rate, +pair[0].coin.decimals)
   }
 }, 200)
 const onSubmit = async () => {
@@ -132,7 +154,7 @@ const onSubmit = async () => {
     return
   }
 
-  pair[0].inputValue = String(Math.trunc((Number(pair[0].inputValue)) * 10 ** pair[0].token.decimals) / 10 ** pair[0].token.decimals)
+  // pair[0].inputValue = String(Math.trunc((Number(pair[0].inputValue)) * 10 ** pair[0].coin.decimals) / 10 ** pair[0].coin.decimals)
   try {
     isPreparing.value = true
     await calcRate(0)
@@ -143,8 +165,8 @@ const onSubmit = async () => {
   modal.open(TransactionConfirmModal, {
     props: {
       type: 'swap',
-      tokenA: pair[0].token,
-      tokenB: pair[1].token,
+      tokenA: pair[0].coin,
+      tokenB: pair[1].coin,
       valueA: pair[0].inputValue,
       valueB: pair[1].inputValue,
       onConfirm: () => {
@@ -157,11 +179,11 @@ const handleSwap = async () => {
   try {
     isSwapping.value = true
     const txLinker = await swap(
-      pool.value[1],
+      pool.value!.address,
       pair.map(o => o.swapKey),
-      pair[0].token.evmTokenAddress,
-      valueToNano(pair[0].inputValue, pair[0].token.decimals),
-      valueToNano(pair[1].inputValue, pair[1].token.decimals),
+      pair[0].coin.address,
+      parseUnits(pair[0].inputValue, +pair[0].coin.decimals),
+      parseUnits(pair[1].inputValue, +pair[1].coin.decimals),
     )
 
     if (!txLinker) {
@@ -181,8 +203,8 @@ const handleSwap = async () => {
             props: {
               type: 'swap',
               title: 'Swap details',
-              tokenA: pair[0].token,
-              tokenB: pair[1].token,
+              tokenA: pair[0].coin,
+              tokenB: pair[1].coin,
               valueA: pair[0].inputValue,
               valueB: pair[1].inputValue,
               transactionLinker: txLinker,
@@ -217,64 +239,60 @@ const setMax = () => {
   pair[0].inputValue = String(pair[0].balance)
   calcRate(0)
 }
-const onTokenChange = (token: Token, index: number) => {
-  const validPools = pools.filter(pool => pool[0].includes(token.symbol))
+const onCoinChange = (coin: PoolCoin, index: number) => {
+  const otherIndex = index === 0 ? 1 : 0
+  const validPools = pools.value.filter(pool => pool.coinsAddresses.includes(coin.address))
 
-  if (validPools.length < 0) {
+  if (validPools.length <= 0) {
     return
   }
 
-  // set selected token
+  const closestPool = validPools.find((pool) => {
+    const str1 = [pair[otherIndex].coin.address, coin.address].join('')
+    const str2 = [coin.address, pair[otherIndex].coin.address].join('')
+    return (pool.coinsAddresses.join('') === str1) || (pool.coinsAddresses.join('') === str2)
+  })
+  pool.value = closestPool || validPools[0]
+  const coinIndex = pool.value.coinsAddresses.findIndex((coinAddress: string) => coinAddress === coin.address)
+  const otherCoinIndex = coinIndex === 0 ? 1 : 0
+  const otherCoin = pool.value.coins[otherCoinIndex]
   Object.assign(pair[index], {
     id: index + 1,
-    token,
+    coin,
     inputValue: pair[index].inputValue,
     balance: 0,
-    swapKey: 0,
+    swapKey: coinIndex,
   })
-
-  const currentPoolKey = `${pair[0].token.symbol}-${pair[1].token.symbol}`
-  const invertedCurrentPoolKey = `${pair[1].token.symbol}-${pair[0].token.symbol}`
-  pool.value = validPools.find(pool => [currentPoolKey, invertedCurrentPoolKey].includes(pool[0])) || validPools[0]
-  const keys = pool.value[0].split('-')
-
-  const pairKey = keys.find(key => key !== token.symbol)
-  const pairToken = tokens.find(token => token.symbol === pairKey)
-
-  Object.assign(pair[index === 0 ? 1 : 0], {
-    id: index === 0 ? 2 : 1,
-    token: pairToken,
-    inputValue: pair[index === 0 ? 1 : 0].inputValue,
+  Object.assign(pair[otherIndex], {
+    id: otherIndex + 1,
+    coin: otherCoin,
+    inputValue: pair[otherIndex].inputValue,
     balance: 0,
-    swapKey: 1,
+    swapKey: otherCoinIndex,
   })
 
-  pair[0].swapKey = (keys.findIndex(key => key === pair[0].token.symbol) || 0) as 0 | 1
-  pair[1].swapKey = (keys.findIndex(key => key === pair[1].token.symbol) || 0) as 0 | 1
   if (isReady.value) {
     updateBalances()
   }
 
   calcRate(0)
 }
-const updatePoolTokens = () => {
-  poolTokens.value.length = 0
-  const validPools = pools.filter(pool => pool[0].includes(pair[0].token.symbol))
-
-  validPools.forEach((pool) => {
-    const keys = pool[0].split('-')
-    const pairKey = keys.find(key => key !== pair[0].token.symbol)
-    const token = tokens.find(token => token.symbol === pairKey)
-    if (token) {
-      poolTokens.value.push(token)
+const updatePoolCoins = () => {
+  poolCoins.value.length = 0
+  const coinsSet = new Set()
+  const validPools = pools.value.filter(pool => pool.coinsAddresses.includes(pair[0].coin.address))
+  validPools.forEach(pool => pool.coins.forEach((coin) => {
+    if (!coinsSet.has(coin.address) && coin.address !== pair[0].coin.address) {
+      coinsSet.add(coin.address)
+      poolCoins.value.push(coin)
     }
-  })
+  }))
 }
 
-calcRate(0)
+load()
 
-watch(() => pair[0].token, () => {
-  updatePoolTokens()
+watch(() => pair[0].coin, () => {
+  updatePoolCoins()
 }, { immediate: true })
 watch(isReady, (val) => {
   if (val) {
@@ -299,7 +317,7 @@ watch(isReady, (val) => {
           :key="pair[0].id"
           v-model="pair[0].inputValue"
           name="swap-from"
-          maxlength="12"
+          maxlength="36"
           autocomplete="off"
           step="0.1"
           inputmode="decimal"
@@ -311,7 +329,7 @@ watch(isReady, (val) => {
           <template #label>
             {{
               isConnected ? `Avail. ${isLoadingBalances || !isTacLoaded
-                ? 'loading...' : formatNumber(pair[0].balance, pair[0].token.decimals)}`
+                ? 'loading...' : formatNumber(pair[0].balance, +pair[0].coin.decimals)}`
               : 'You send'
             }}
           </template>
@@ -325,11 +343,11 @@ watch(isReady, (val) => {
               >
                 MAX
               </UiButton>
-              <TokenSelectButton
+              <CoinSelectButton
                 key="tb0"
-                :tokens="tokens"
-                :model-value="pair[0].token"
-                @change="onTokenChange($event, 0)"
+                :coins="coins"
+                :model-value="pair[0].coin"
+                @change="onCoinChange($event, 0)"
               />
             </div>
           </template>
@@ -349,7 +367,7 @@ watch(isReady, (val) => {
           :key="pair[1].id"
           v-model="pair[1].inputValue"
           name="swap-to"
-          maxlength="12"
+          maxlength="36"
           autocomplete="off"
           step="0.1"
           inputmode="decimal"
@@ -361,16 +379,16 @@ watch(isReady, (val) => {
           <template #label>
             {{
               isConnected ? `Avail. ${isLoadingBalances || !isTacLoaded
-                ? 'loading...' : formatNumber(pair[1].balance, pair[1].token.decimals)}`
+                ? 'loading...' : formatNumber(pair[1].balance, +pair[1].coin.decimals)}`
               : 'You receive'
             }}
           </template>
           <template #append>
-            <TokenSelectButton
+            <CoinSelectButton
               key="tb1"
-              :tokens="poolTokens"
-              :model-value="pair[1].token"
-              @change="onTokenChange($event, 1)"
+              :coins="poolCoins"
+              :model-value="pair[1].coin"
+              @change="onCoinChange($event, 1)"
             />
           </template>
         </UiInput>

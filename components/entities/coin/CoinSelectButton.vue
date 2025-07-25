@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import type { Token } from '~/entities/token'
-import { TokenSelectListModal } from '#components'
+import { CoinSelectListModal } from '#components'
 import { useModal } from '~/components/ui/composables/useModal'
+import type { PoolCoin } from '~/entities/pool'
 
 const modal = useModal()
 const emits = defineEmits(['change'])
-const model = defineModel<Token | undefined>()
-const { desc, tokens } = defineProps<{ desc?: string, tokens: Token[] }>()
+const model = defineModel<PoolCoin | undefined>()
+const { desc, coins } = defineProps<{ desc?: string, coins: PoolCoin[] }>()
 
 const open = () => {
-  modal.open(TokenSelectListModal, {
+  modal.open(CoinSelectListModal, {
     props: {
-      tokens,
-      onSelect: (token: Token) => {
-        model.value = token
-        emits('change', token)
+      coins,
+      onSelect: (coin: PoolCoin) => {
+        model.value = coin
+        emits('change', coin)
       },
     },
   })
@@ -23,13 +23,13 @@ const open = () => {
 
 <template>
   <button
-    :class="$style.TokenSelectButton"
+    :class="$style.CoinSelectButton"
     type="button"
     @click.stop="open"
   >
-    <BaseAvatar
+    <CoinAvatar
       v-if="model"
-      :src="model.logo"
+      :coins="[model]"
     />
 
     <div class="mx-auto">
@@ -47,7 +47,7 @@ const open = () => {
 </template>
 
 <style lang="scss" module>
-.TokenSelectButton {
+.CoinSelectButton {
   display: flex;
   align-items: center;
   background-color: #F8F8F9;
