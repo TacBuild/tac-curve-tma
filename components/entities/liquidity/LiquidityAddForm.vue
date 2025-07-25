@@ -142,7 +142,7 @@ const handleAddLiquidity = async () => {
         valueA: pair[0].inputValue,
         valueB: pair[1].inputValue,
         pool: pool.value,
-        poolValue: rate.value,
+        poolValue: formatUnits(rate.value),
         transactionLinker: txLinker,
       },
       onClose: () => {
