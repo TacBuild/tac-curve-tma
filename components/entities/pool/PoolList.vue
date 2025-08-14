@@ -7,7 +7,7 @@ import type { Pool } from '~/entities/pool'
 
 const modal = useModal()
 const { pools } = usePools()
-const { address } = useTonConnect()
+const { address, isConnected } = useTonConnect()
 const { getTacSdk, isLoaded } = useTac()
 
 const balances: Ref<Record<string, bigint>> = ref({})
@@ -71,8 +71,8 @@ onActivated(() => {
     updateBalances()
   }
 })
-watch([pools, isLoaded], () => {
-  if (isLoaded.value && pools.value.length) {
+watch([pools, isLoaded, isConnected], () => {
+  if (isLoaded.value && pools.value.length && isConnected.value) {
     updateBalances()
   }
 }, { immediate: true })

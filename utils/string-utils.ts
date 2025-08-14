@@ -10,3 +10,16 @@ export const formatUsd = (value: string | number = 0, maximumFractionDigits = 2)
     style: 'currency',
     currency: 'USD', maximumFractionDigits,
   }).format(+value)
+
+export const formatPercent = (value: string | number = 0, maximumFractionDigits = 2) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'percent',
+    maximumFractionDigits,
+  }).format(+value)
+
+export const compactNumber = (value: string | number = 0, maximumFractionDigits = 2) => {
+  return Intl.NumberFormat('en-US', {
+    notation: 'compact',
+    maximumFractionDigits,
+  }).format(Number(value))
+}

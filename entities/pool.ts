@@ -2,6 +2,9 @@ import axios from 'axios'
 
 const USDT_WTAC_POOL_ADDRESS = '0xAaD47973427b39bE737C1154F50DD6595083FA88'
 const WTAC_TON_POOL_ADDRESS = '0xed0CDC6363222eF823eF44d30B57f76CF980c368'
+export const STABLE_PROXY_ADDRESS = '0xfC99BD3dAABAcAC47c1040421A3Fb05bbf8c2b4b'
+export const TWO_PROXY_ADDRESS = '0x402879F4a18C79747177a91DDeAb1aB18f97503F'
+
 export interface PoolCoin {
   address: string
   usdPrice: null | number
@@ -40,7 +43,9 @@ export interface Pool {
   usdTotalExcludingBasePool: number
   usesRateOracle: boolean
   isBroken: boolean
-
+  merkl: {
+    apr: number
+  }
 }
 
 const convertUsdtWtacToUsdtTacPool = (pool: Pool): Pool => {
@@ -80,24 +85,50 @@ const convertWtacTonToTacTonPool = (pool: Pool): Pool => {
 }
 
 export const fetchPools = async () => {
-  const { data } = await axios.get<{ success: boolean, data: { poolData: Pool[] } }>
-  ('https://api-core.curve.finance/v1/getPools/tac/factory-twocrypto')
+  const [twos, stables, { data: merklOpportunities }] = await Promise.all([
+    await axios.get<{ success: boolean, data: { poolData: Pool[] } }>
+    ('https://api-core.curve.finance/v1/getPools/tac/factory-twocrypto'),
+    await axios.get<{ success: boolean, data: { poolData: Pool[] } }>
+    ('https://api-core.curve.finance/v1/getPools/tac/factory-stable-ng'),
+    await axios.get('https://api.merkl.xyz/v4/opportunities', {
+      params: {
+        mainProtocolId: 'curve',
+        chainId: 239,
+      },
+    }),
+  ])
 
-  if (data.success) {
-    // Get pools only with liquidity and display wtac as tac
-    return data.data.poolData.filter(pool => pool.usdTotal > 0).map((pool) => {
-      if (pool.address === USDT_WTAC_POOL_ADDRESS) {
-        return convertUsdtWtacToUsdtTacPool(pool)
-      }
-      if (pool.address === WTAC_TON_POOL_ADDRESS) {
-        return convertWtacTonToTacTonPool(pool)
-      }
-
-      return pool
-    })
+  const poolData: Pool[] = []
+  if (!twos.data.success || !stables.data.success) {
+  // if (!twos.data.success) {
+    throw new Error('Unable to fetch pools')
   }
 
-  throw new Error('Unable to fetch pools')
+  if (twos.data.data.poolData) {
+    poolData.push(...twos.data.data.poolData)
+  }
+
+  if (stables.data.data.poolData) {
+    poolData.push(...stables.data.data.poolData)
+  }
+
+  // Get pools only with liquidity and display wtac as tac
+  return poolData.filter(pool => pool.usdTotal > 0).map((pool) => {
+    pool.merkl = { apr: 0 }
+    const merklOpportunity = merklOpportunities
+      .find((opportunity: Record<string, unknown>) => opportunity.identifier === pool.address)
+    if (merklOpportunity) {
+      pool.merkl.apr = merklOpportunity.apr
+    }
+    if (pool.address === USDT_WTAC_POOL_ADDRESS) {
+      return convertUsdtWtacToUsdtTacPool(pool)
+    }
+    if (pool.address === WTAC_TON_POOL_ADDRESS) {
+      return convertWtacTonToTacTonPool(pool)
+    }
+
+    return pool
+  })
 }
 
 export const getCoinsFromPools = (pools: Pool[]) => {
@@ -108,4 +139,11 @@ export const getCoinsFromPools = (pools: Pool[]) => {
     })
   })
   return map.values().toArray()
+}
+
+export const getProxyAddressByPoolImplementation = (implementation?: string) => {
+  if (implementation === 'plainstableng') {
+    return STABLE_PROXY_ADDRESS
+  }
+  return TWO_PROXY_ADDRESS
 }

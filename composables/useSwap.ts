@@ -1,27 +1,34 @@
 import { ethers } from 'ethers'
 import { type AssetBridgingData, AssetType, SenderFactory } from '@tonappchain/sdk'
 import { DEFAULT_SLIPPAGE_PERCENT_VALUE } from '~/utils/ton-utils'
+import { getProxyAddressByPoolImplementation } from '~/entities/pool'
 
 export const useSwap = () => {
   const { getTacSdk } = useTac()
   const { getTonConnectUI } = useTonConnect()
-  const proxyAddress = '0x402879F4a18C79747177a91DDeAb1aB18f97503F'
   const evmProviderUrl = 'https://rpc.ankr.com/tac'
   // const slippagePercent = useLocalStorage('swap-slippage-percent', DEFAULT_SLIPPAGE_PERCENT_VALUE)
   const slippagePercent = DEFAULT_SLIPPAGE_PERCENT_VALUE
   const slippagePercentBigInt = 100n / 2n
 
-  const swap = async (poolAddress: string, swapKeys: Array<0 | 1>, addressA: string, amountA: bigint, minAmountB: bigint) => {
+  const swap = async (
+    poolAddress: string, swapKeys: Array<0 | 1>,
+    addressA: string, amountA: bigint,
+    minAmountB: bigint, poolImplementation?: string,
+  ) => {
     const sdk = getTacSdk()
     const evmProxyMsg = {
-      evmTargetAddress: proxyAddress,
+      evmTargetAddress: getProxyAddressByPoolImplementation(poolImplementation),
       methodName: 'exchange(bytes,bytes)',
       encodedParameters: ethers.AbiCoder.defaultAbiCoder().encode(
-        ['tuple(address,uint256,uint256,uint256,uint256)'],
-        [[poolAddress, swapKeys[0], swapKeys[1], amountA, minAmountB - (minAmountB / slippagePercentBigInt)]],
+        [`tuple(address,uint256,uint256,uint256,uint256)`],
+        [[poolAddress, BigInt(swapKeys[0]), BigInt(swapKeys[1]), amountA, minAmountB - (minAmountB / slippagePercentBigInt)]],
       ),
     }
 
+    console.log('params: ', [`tuple(address,uint256,uint256,uint256,uint256)`],
+      [[poolAddress, BigInt(swapKeys[0]), BigInt(swapKeys[1]), amountA, minAmountB - (minAmountB / slippagePercentBigInt)]])
+    console.log('evmProxyMsg', evmProxyMsg)
     const sender = await SenderFactory.getSender({ tonConnect: getTonConnectUI() })
     let assetAddress = addressA ? await sdk.getTVMTokenAddress(addressA) : undefined
     assetAddress = assetAddress === 'NONE' ? undefined : assetAddress
@@ -30,7 +37,6 @@ export const useSwap = () => {
       rawAmount: amountA,
       address: assetAddress,
     }]
-    console.log(assets)
     const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets)
     const tsResult = tx.sendTransactionResult as {
       success: boolean
@@ -46,14 +52,15 @@ export const useSwap = () => {
     poolAddress: string,
     addressA: string, addressB: string,
     amountA: bigint, amountB: bigint,
-    minAmountLP: bigint = 0n,
+    minAmountLP: bigint = 0n, poolImplementation?: string,
   ) => {
+    const isPlainStableNg = poolImplementation === 'plainstableng'
     const sdk = getTacSdk()
     const evmProxyMsg = {
-      evmTargetAddress: proxyAddress,
+      evmTargetAddress: getProxyAddressByPoolImplementation(poolImplementation),
       methodName: 'addLiquidity(bytes,bytes)',
       encodedParameters: ethers.AbiCoder.defaultAbiCoder().encode(
-        ['tuple(address, uint256[2], uint256)'],
+        [`tuple(address,${isPlainStableNg ? 'uint256[]' : 'uint256[2]'},uint256)`],
         [[poolAddress, [amountA, amountB], minAmountLP - (minAmountLP / slippagePercentBigInt)]],
       ),
     }
@@ -86,13 +93,15 @@ export const useSwap = () => {
   const removeLiquidity = async (
     poolAddress: string, amount: bigint,
     minAmountA: bigint = 0n, minAmountB: bigint = 0n,
+    poolImplementation?: string,
   ) => {
     const sdk = getTacSdk()
+    const isPlainStableNg = poolImplementation === 'plainstableng'
     const evmProxyMsg = {
-      evmTargetAddress: proxyAddress,
+      evmTargetAddress: getProxyAddressByPoolImplementation(poolImplementation),
       methodName: 'removeLiquidity(bytes,bytes)',
       encodedParameters: ethers.AbiCoder.defaultAbiCoder().encode(
-        ['tuple(address, uint256, uint256[2])'],
+        [`tuple(address,uint256,${isPlainStableNg ? 'uint256[]' : 'uint256[2]'})`],
         [[poolAddress, amount, [minAmountA - (minAmountA / slippagePercentBigInt), minAmountB - (minAmountB / slippagePercentBigInt)]]],
       ),
     }
@@ -116,13 +125,14 @@ export const useSwap = () => {
   const removeLiquidityOneCoin = async (
     poolAddress: string, amount: bigint,
     tokenIndex: 0 | 1, minTokenAmount: bigint = 0n,
+    poolImplementation?: string,
   ) => {
     const sdk = getTacSdk()
     const evmProxyMsg = {
-      evmTargetAddress: proxyAddress,
+      evmTargetAddress: getProxyAddressByPoolImplementation(poolImplementation),
       methodName: 'removeLiquidityOneCoin(bytes,bytes)',
       encodedParameters: ethers.AbiCoder.defaultAbiCoder().encode(
-        ['tuple(address, uint256, uint256, uint256)'],
+        ['tuple(address,uint256,uint256,uint256)'],
         [[poolAddress, amount, tokenIndex, [minTokenAmount - (minTokenAmount / slippagePercentBigInt)]]],
       ),
     }
@@ -143,8 +153,8 @@ export const useSwap = () => {
     }
     return tx
   }
-  const getContract = async (poolAddress: string, implementation?: 'plainstableng') => {
-    const isPlainStableNg = implementation === 'plainstableng'
+  const getContract = async (poolAddress: string, poolImplementation?: string) => {
+    const isPlainStableNg = poolImplementation === 'plainstableng'
     const abi = [
       {
         stateMutability: 'view',
@@ -177,7 +187,7 @@ export const useSwap = () => {
         type: 'function',
         name: 'calc_token_amount',
         inputs: [
-          { name: 'amounts', type: 'uint256[2]' },
+          { name: 'amounts', type: isPlainStableNg ? 'uint256[]' : 'uint256[2]' },
           { name: 'deposit', type: 'bool' },
         ],
         outputs: [
@@ -235,12 +245,12 @@ export const useSwap = () => {
     const provider = ethers.getDefaultProvider(evmProviderUrl)
     return new ethers.Contract(poolAddress, abi, provider)
   }
-  const getLiquidityRates = async (poolAddress: string, amounts: bigint[], isDeposit: boolean): Promise<bigint> => {
-    const contract = await getContract(poolAddress)
+  const getLiquidityRates = async (poolAddress: string, amounts: bigint[], isDeposit: boolean, poolImplementation?: string): Promise<bigint> => {
+    const contract = await getContract(poolAddress, poolImplementation)
     return contract.calc_token_amount(amounts, isDeposit)
   }
-  const getSwapRates = async (method: 'get_dx' | 'get_dy', poolAddress: string, amount: bigint, swapKeys: number[], implementation?: 'plainstableng'): Promise<bigint> => {
-    const contract = await getContract(poolAddress, implementation)
+  const getSwapRates = async (method: 'get_dx' | 'get_dy', poolAddress: string, amount: bigint, swapKeys: number[], poolImplementation?: string): Promise<bigint> => {
+    const contract = await getContract(poolAddress, poolImplementation)
     return contract[method](swapKeys[0], swapKeys[1], amount)
   }
   const getTotalSupply = async (poolAddress: string): Promise<bigint> => {

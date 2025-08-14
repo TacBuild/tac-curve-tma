@@ -186,11 +186,13 @@ const onSubmit = async () => {
 const handleRemoveLiquidity = async () => {
   try {
     isSubmitting.value = true
+    const pool = await getPool(poolAddress)
     const txLinker = await removeLiquidity(
       poolAddress,
       parseUnits(amount.value, decimals.value),
       parseUnits(pair[0].inputValue, +pair[0].coin.decimals),
       parseUnits(pair[1].inputValue, +pair[1].coin.decimals),
+      pool.implementation,
     )
 
     modal.open(TransactionDetailsModal, {
@@ -201,7 +203,7 @@ const handleRemoveLiquidity = async () => {
         tokenB: pair[1].coin,
         valueA: pair[0].inputValue,
         valueB: pair[1].inputValue,
-        pool: await getPool(poolAddress),
+        pool,
         poolValue: amount.value,
         transactionLinker: txLinker,
       },

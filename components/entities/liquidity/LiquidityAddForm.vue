@@ -80,7 +80,7 @@ const calcRates = useDebounceFn(async () => {
   const amounts = [parseUnits(pair[0].inputValue || '0', +pair[0].coin.decimals), parseUnits(pair[1].inputValue || '0', +pair[1].coin.decimals)]
   errorRate.value = ''
   try {
-    rate.value = await getLiquidityRates(poolAddress, amounts, true)
+    rate.value = await getLiquidityRates(poolAddress, amounts, true, pool.value?.implementation)
   }
   catch (e) {
     rate.value = 0n
@@ -130,7 +130,7 @@ const handleAddLiquidity = async () => {
       pair[0].coin.address, pair[1].coin.address,
       parseUnits(pair[0].inputValue, +pair[0].coin.decimals),
       parseUnits(pair[1].inputValue, +pair[1].coin.decimals),
-      rate.value,
+      rate.value, pool.value?.implementation,
     )
 
     modal.open(TransactionDetailsModal, {
@@ -277,7 +277,7 @@ watch(isReady, (val) => {
           <span
             class="c-secondary-text right"
             :class="{ 'c-red': errorRate }"
-          >~{{ formatNumber(formatUnits(rate || 0n), 4) || '-' }} {{ pool?.symbol }}</span>
+          >~{{ formatNumber(formatUnits(rate || 0n), 9) || '-' }} {{ pool?.symbol }}</span>
         </p>
 
         <p
@@ -295,8 +295,17 @@ watch(isReady, (val) => {
         </p>
 
         <p :class="$style.info">
+          <span class=" weight-600">APR</span>
+          <span class="c-secondary-text right">
+            {{ formatPercent((pool?.merkl.apr || 0) / 100) }}
+          </span>
+        </p>
+
+        <p :class="$style.info">
           <span class=" weight-600">Slippage Tolerance</span>
-          <span class="c-secondary-text right">{{ slippagePercent }}%</span>
+          <span class="c-secondary-text right">
+            {{ formatPercent(slippagePercent / 100) }}
+          </span>
         </p>
 
         <p :class="$style.info">

@@ -184,6 +184,7 @@ const handleSwap = async () => {
       pair[0].coin.address,
       parseUnits(pair[0].inputValue, +pair[0].coin.decimals),
       parseUnits(pair[1].inputValue, +pair[1].coin.decimals),
+      pool.value?.implementation,
     )
 
     if (!txLinker) {
@@ -222,7 +223,7 @@ const handleSwap = async () => {
     modal.open(SwapStatusModal, {
       props: {
         title: 'Failed',
-        text: (e as Error).message.includes('Transaction was not sent')
+        text: ((e as Error)?.message || '').includes('Transaction was not sent')
           ? 'Transaction was not sent'
           : e instanceof UserRejectsError
             ? 'You rejected the transaction'

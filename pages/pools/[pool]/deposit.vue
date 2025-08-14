@@ -39,10 +39,14 @@ load()
       </p>
     </div>
 
-    <span
+    <div
       v-if="isLoading"
-      class="ui-loader"
-    />
+      class="flex-center"
+    >
+      <span
+        class="ui-loader mx-auto"
+      />
+    </div>
 
     <LiquidityAddForm
       v-else-if="pool"

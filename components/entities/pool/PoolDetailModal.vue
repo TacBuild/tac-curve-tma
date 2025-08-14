@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { until } from '@vueuse/core'
 import type { Pool } from '~/entities/pool'
-import { formatNumber, formatUsd } from '~/utils/string-utils'
+import { formatNumber, formatPercent, formatUsd } from '~/utils/string-utils'
 
 const emits = defineEmits(['close'])
 const { pool } = defineProps<{ pool: Pool }>()
 
+const { isConnected } = useTonConnect()
 const { isLoaded, fetchJettonBalanceByEvmAddress } = useTac()
 
 const isLoading = ref(false)
@@ -56,7 +57,10 @@ load()
         </p>
       </div>
 
-      <div class="flex-between flex-center mt-12 weight-600">
+      <div
+        v-if="isConnected"
+        class="flex-between flex-center mt-12 weight-600"
+      >
         <p>
           Position
         </p>
@@ -86,6 +90,21 @@ load()
         >
           <span>
             {{ formatUsd(pool.usdTotal, 2) }}
+          </span>
+        </p>
+      </div>
+
+      <div class="flex-between flex-center mt-12 weight-600">
+        <p>
+          APR
+        </p>
+
+        <p
+          class="right c-secondary-text"
+          style="line-height: 24px"
+        >
+          <span>
+            {{ formatPercent(pool.merkl.apr / 100) }}
           </span>
         </p>
       </div>
