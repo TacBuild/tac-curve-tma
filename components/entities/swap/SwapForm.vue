@@ -26,13 +26,13 @@ const transitionName = ref('')
 const pair: { id: number, coin: PoolCoin, inputValue: string, balance: number, swapKey: 0 | 1 }[]
   = reactive([{
     id: 1,
-    coin: coins.value[1],
+    coin: coins.value[0],
     inputValue: '1',
     balance: 0,
     swapKey: 0,
   }, {
     id: 2,
-    coin: coins.value[0],
+    coin: coins.value[1],
     inputValue: '0',
     balance: 0,
     swapKey: 1 },
@@ -65,8 +65,10 @@ const load = async () => {
   try {
     await until(isPoolsLoaded).toBe(true)
     pool.value = pools.value[0]
+    console.log(pools.value[0])
     pair[0].coin = pool.value.coins[0]
     pair[1].coin = pool.value.coins[1]
+    console.log(pair)
     calcRate(0)
   }
   catch (e) {
