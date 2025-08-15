@@ -1,4 +1,6 @@
-export default defineNuxtPlugin(() => {
+import { parseQuery } from 'vue-router'
+
+export default defineNuxtPlugin((nuxtApp) => {
   const webapp = window.Telegram?.WebApp
   const router = useRouter()
   const route = useRoute()
@@ -54,6 +56,21 @@ export default defineNuxtPlugin(() => {
 
     webapp.BackButton.show()
   }, { immediate: true })
+
+  nuxtApp.hook('app:mounted', async () => {
+    const str = decodeURIComponent(webapp.initData)
+    const params = str.split('&')
+    const startParam = params.find(str => str.startsWith('start_param'))?.split('=')[1]
+    if (startParam) {
+      const queries = startParam.split('__')
+      queries.forEach((query) => {
+        const [name, value] = query.split('_')
+        if (name === 'to-deposit') {
+          router.replace(`/pools/${value}/deposit`)
+        }
+      })
+    }
+  })
 
   return {
     provide: {
