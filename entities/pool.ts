@@ -92,6 +92,7 @@ export const fetchPools = async () => {
     ('https://api-core.curve.finance/v1/getPools/tac/factory-stable-ng'),
     await axios.get('https://api.merkl.xyz/v4/opportunities', {
       params: {
+        items: 50,
         mainProtocolId: 'curve',
         chainId: 239,
       },
