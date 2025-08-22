@@ -22,7 +22,7 @@ const { getTacSdk, isLoaded: isTacLoaded } = useTac()
 const { getCoin } = useCurve()
 
 const type = ref('balanced')
-const balance = ref(0)
+const balance = ref(0n)
 const decimals = ref(18)
 const amount = ref('1')
 const errorRate = ref('')
@@ -61,7 +61,10 @@ const isSubmitDisabled = computed(() => {
     return !isLoaded.value
   }
 
-  return isSubmitting.value || isLoadingBalance.value || Number(amount.value) > balance.value || Number(amount.value) <= 0
+  return isSubmitting.value
+    || isLoadingBalance.value
+    || parseUnits(amount.value, decimals.value) > balance.value
+    || Number(amount.value) <= 0
 })
 const isReady = computed(() => isConnected.value && isTacLoaded.value)
 
@@ -84,7 +87,7 @@ const load = async () => {
 
 const updateBalance = async () => {
   const sdk = getTacSdk()
-  balance.value = 0
+  balance.value = 0n
   decimals.value = 18
 
   try {
@@ -98,7 +101,7 @@ const updateBalance = async () => {
     }
     const obj = await sdk.getUserJettonBalanceExtended(address.value, tvmAddress)
     if (obj?.exists) {
-      balance.value = obj.amount
+      balance.value = obj.rawAmount
       decimals.value = obj.decimals
     }
   }
@@ -174,7 +177,7 @@ const calcRates = useDebounceFn(async () => {
   }
 }, 200)
 const setMax = () => {
-  amount.value = String(balance.value)
+  amount.value = formatUnits(balance.value, decimals.value)
   calcRates()
 }
 const onSubmit = async () => {
@@ -269,7 +272,7 @@ watch(type, () => {
           <template #label>
             {{
               isConnected ? `LP Tokens Avail. ${isLoadingBalance || !isTacLoaded
-                ? 'loading...' : formatNumber(balance, 9)}`
+                ? 'loading...' : formatNumber(formatUnits(balance, decimals), 9)}`
               : 'You send'
             }}
           </template>
