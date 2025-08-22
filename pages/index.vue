@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { usePools } from '~/composables/usePools'
+import { useCurve } from '~/composables/useCurve'
 
 defineOptions({
   name: 'IndexPage',
 })
-usePools()
+useCurve()
 </script>
 
 <template>
   <div>
-    <SwapForm :class="$style.form" />
+    <!--    <SwapForm :class="$style.form" /> -->
+    <SwapRouterForm :class="$style.form" />
   </div>
 </template>
 

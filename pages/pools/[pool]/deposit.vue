@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import type { Pool } from '~/entities/pool'
-import { usePools } from '#imports'
 
 const route = useRoute()
-const { getPool, isLoading } = usePools()
+const { getPool, isLoading } = useCurve()
 const pool: Ref<Pool | undefined> = ref()
 
 const load = async () => {
@@ -51,7 +50,7 @@ load()
     <LiquidityAddForm
       v-else-if="pool"
       :class="$style.form"
-      :pool-address="pool.address"
+      :pool="pool"
     />
   </div>
 </template>

@@ -1,10 +1,16 @@
 <script setup lang="ts">
 import { formatUnits } from 'ethers'
+import { compactNumber } from '~/utils/string-utils'
 import type { Pool } from '~/entities/pool'
-import { compactNumber, formatPercent } from '~/utils/string-utils'
 
 const { pool, balance, balanceLoading } = defineProps<{ pool: Pool, balance?: bigint, balanceLoading?: boolean }>()
 const { isConnected } = useTonConnect()
+const { coinsMap, aprs } = useCurve()
+
+const coins = computed(() => [
+  coinsMap.get(pool.underlyingCoinAddresses[0])!,
+  coinsMap.get(pool.underlyingCoinAddresses[1])!,
+])
 </script>
 
 <template>
@@ -14,7 +20,7 @@ const { isConnected } = useTonConnect()
   >
     <CoinAvatar
       class="icon--32"
-      :coins="pool.coins"
+      :coins="coins"
     />
 
     <p class="weight-700 p2">
@@ -23,11 +29,11 @@ const { isConnected } = useTonConnect()
 
     <div
       :class="$style.values"
-      class="right ml-auto weight-700"
+      class="right ml-auto "
     >
       <template v-if="!balanceLoading">
-        <p v-if="pool.merkl.apr">
-          {{ formatPercent(pool.merkl.apr / 100) }} APR
+        <p v-if="aprs[pool.address]">
+          {{ formatPercent(aprs[pool.address] / 100) }} APR
         </p>
 
         <p v-if="isConnected && balance">

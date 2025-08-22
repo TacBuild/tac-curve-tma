@@ -1,27 +1,26 @@
 <script setup lang="ts">
 import { UserRejectsError } from '@tonconnect/ui'
 import { useDebounceFn } from '@vueuse/core'
-import { formatUnits, parseUnits } from 'ethers'
+import { formatUnits, getAddress, parseUnits } from 'ethers'
 import { useTonConnect } from '~/composables/useTonConnect'
 import { useModal } from '~/components/ui/composables/useModal'
 import { TransactionDetailsModal, SwapStatusModal } from '#components'
-import { useSwap } from '~/composables/useSwap'
+import { useTransaction } from '~/composables/useTransaction'
 import { formatNumber } from '~/utils/string-utils'
-import type { PoolCoin } from '~/entities/pool'
+import type { Pool, PoolCoin } from '~/entities/pool'
+
+const { pool } = defineProps<{ pool: Pool }>()
 
 const modal = useModal()
 const { isLoaded, isConnected, walletName, address, getTonConnectUI } = useTonConnect()
 const {
   removeLiquidity,
-  // removeLiquidityOneCoin, getLiquidityRates,
   getTotalSupply, getPoolTokenBalances, getOneCoinWithdrawRate,
   calcUnstakeBalancedTokenValues, slippagePercent,
-} = useSwap()
+} = useTransaction()
 const { getTacSdk, isLoaded: isTacLoaded } = useTac()
+const { getCoin } = useCurve()
 
-const { poolAddress } = defineProps<{ poolAddress: string }>()
-
-const { getPool } = usePools()
 const type = ref('balanced')
 const balance = ref(0)
 const decimals = ref(18)
@@ -30,14 +29,14 @@ const errorRate = ref('')
 const totalSupply = ref(0n)
 const oneCoinKey: Ref<0 | 1> = ref(0)
 const poolTokenBalances: Ref<[bigint, bigint]> = ref([0n, 0n])
-const pair: { id: number, coin: PoolCoin, inputValue: string }[]
+const pair: { id: number, coin: PoolCoin | undefined, inputValue: string }[]
   = reactive([{
     id: 1,
-    coin: {} as PoolCoin,
+    coin: await getCoin(pool.underlyingCoinAddresses[0], true),
     inputValue: '0',
   }, {
     id: 2,
-    coin: {} as PoolCoin,
+    coin: await getCoin(pool.underlyingCoinAddresses[1], true),
     inputValue: '0',
   },
   ])
@@ -69,14 +68,7 @@ const isReady = computed(() => isConnected.value && isTacLoaded.value)
 const load = async () => {
   try {
     isLoaded.value = false
-    const pool = await getPool(poolAddress)
-    if (!pool) {
-      isLoaded.value = true
-      return
-    }
-    pair[0].coin = pool.coins[0]
-    pair[1].coin = pool.coins[1]
-    const res = await Promise.all([getTotalSupply(poolAddress), getPoolTokenBalances(poolAddress, 0), getPoolTokenBalances(poolAddress, 1)])
+    const res = await Promise.all([getTotalSupply(pool.address), getPoolTokenBalances(pool.address, 0), getPoolTokenBalances(pool.address, 1)])
     totalSupply.value = res[0]
     poolTokenBalances.value = [res[1], res[2]]
     await calcRates()
@@ -100,7 +92,7 @@ const updateBalance = async () => {
       return
     }
     isLoadingBalance.value = true
-    const tvmAddress = await sdk.getTVMTokenAddress(poolAddress)
+    const tvmAddress = await sdk.getTVMTokenAddress(getAddress(pool.address))
     if (!tvmAddress) {
       return
     }
@@ -135,10 +127,24 @@ const updateBalance = async () => {
 // }, 200)
 const calcRatesByBalanced = () => {
   errorRate.value = ''
-  const arr = calcUnstakeBalancedTokenValues(parseUnits(amount.value), totalSupply.value, poolTokenBalances.value)
-  pair[0].inputValue = String(formatUnits(arr[0] || 0n, +pair[0].coin.decimals))
-  pair[1].inputValue = String(formatUnits(arr[1] || 0n, +pair[1].coin.decimals))
-  isRatesLoading.value = false
+  try {
+    const arr = calcUnstakeBalancedTokenValues(
+      parseUnits(amount.value || '0'),
+      totalSupply.value,
+      poolTokenBalances.value,
+    )
+    pair[0].inputValue = String(formatUnits((arr[0] || 0n), +pair[0].coin!.decimals))
+    pair[1].inputValue = String(formatUnits((arr[1] || 0n), +pair[1].coin!.decimals))
+  }
+  catch (e) {
+    console.warn(e)
+    pair[0].inputValue = '0'
+    pair[1].inputValue = '0'
+    errorRate.value = 'Unable to calculate rate. Price impact may be very high.'
+  }
+  finally {
+    isRatesLoading.value = false
+  }
 }
 const calcRatesByOneCoin = async () => {
   errorRate.value = ''
@@ -146,7 +152,7 @@ const calcRatesByOneCoin = async () => {
   try {
     isRatesLoading.value = true
     pair[oneCoinKey.value].inputValue = formatUnits(
-      await getOneCoinWithdrawRate(poolAddress, parseUnits(amount.value, decimals.value), oneCoinKey.value),
+      await getOneCoinWithdrawRate(pool.address, parseUnits(amount.value, decimals.value), oneCoinKey.value),
       decimals.value,
     )
   }
@@ -186,13 +192,12 @@ const onSubmit = async () => {
 const handleRemoveLiquidity = async () => {
   try {
     isSubmitting.value = true
-    const pool = await getPool(poolAddress)
     const txLinker = await removeLiquidity(
-      poolAddress,
+      pool.address,
       parseUnits(amount.value, decimals.value),
-      parseUnits(pair[0].inputValue, +pair[0].coin.decimals),
-      parseUnits(pair[1].inputValue, +pair[1].coin.decimals),
-      pool.implementation,
+      parseUnits(pair[0].inputValue, +pair[0].coin!.decimals),
+      parseUnits(pair[1].inputValue, +pair[1].coin!.decimals),
+      pool.isPlain && pool.isNg && !pool.isCrypto ? 'plainstableng' : '',
     )
 
     modal.open(TransactionDetailsModal, {
@@ -297,6 +302,7 @@ watch(type, () => {
             class="flex-between flex-center"
           >
             <div
+              v-if="pair[0].coin"
               :class="$style.tokenName"
               class="flex-center weight-600 p1"
             >
@@ -318,6 +324,7 @@ watch(type, () => {
             class="flex-between flex-center"
           >
             <div
+              v-if="pair[1].coin"
               :class="$style.tokenName"
               class="flex-center weight-600 p1"
             >
@@ -339,8 +346,8 @@ watch(type, () => {
           <UiRadio
             v-model="oneCoinKey"
             :options="[
-              { id: 0, value: 0, label: pair[0].coin.symbol },
-              { id: 1, value: 1, label: pair[1].coin.symbol },
+              { id: 0, value: 0, label: pair[0].coin!.symbol },
+              { id: 1, value: 1, label: pair[1].coin!.symbol },
             ]"
             @update:model-value="calcRatesByOneCoin()"
           >
@@ -356,9 +363,9 @@ watch(type, () => {
                 >
                   <CoinAvatar
                     class="icon--32"
-                    :coins="[pair[option.value as 0 | 1].coin]"
+                    :coins="[pair[option.value as 0 | 1].coin!]"
                   />
-                  {{ pair[option.value as 0 | 1].coin.symbol }}
+                  {{ pair[option.value as 0 | 1].coin!.symbol }}
                 </div>
                 <span
                   class="weight-600 p1"
@@ -399,9 +406,7 @@ watch(type, () => {
       </div>
     </template>
     <template v-else>
-      <div class="mx-auto">
-        loading...
-      </div>
+      <div class="mx-auto ui-loader" />
     </template>
   </form>
 </template>

@@ -1,11 +1,14 @@
-import { ethers } from 'ethers'
+import { AbiCoder, Contract, getAddress, getDefaultProvider } from 'ethers'
 import { type AssetBridgingData, AssetType, SenderFactory } from '@tonappchain/sdk'
+import type { IRoute } from '@curvefi/api/lib/interfaces'
 import { DEFAULT_SLIPPAGE_PERCENT_VALUE } from '~/utils/ton-utils'
 import { getProxyAddressByPoolImplementation } from '~/entities/pool'
+import { CURVE_ROUTER_PROXY } from '~/entities/config'
 
-export const useSwap = () => {
+export const useTransaction = () => {
   const { getTacSdk } = useTac()
   const { getTonConnectUI } = useTonConnect()
+  const { getCurve } = useCurve()
   const evmProviderUrl = 'https://rpc.ankr.com/tac'
   // const slippagePercent = useLocalStorage('swap-slippage-percent', DEFAULT_SLIPPAGE_PERCENT_VALUE)
   const slippagePercent = DEFAULT_SLIPPAGE_PERCENT_VALUE
@@ -20,15 +23,12 @@ export const useSwap = () => {
     const evmProxyMsg = {
       evmTargetAddress: getProxyAddressByPoolImplementation(poolImplementation),
       methodName: 'exchange(bytes,bytes)',
-      encodedParameters: ethers.AbiCoder.defaultAbiCoder().encode(
+      encodedParameters: AbiCoder.defaultAbiCoder().encode(
         [`tuple(address,uint256,uint256,uint256,uint256)`],
         [[poolAddress, BigInt(swapKeys[0]), BigInt(swapKeys[1]), amountA, minAmountB - (minAmountB / slippagePercentBigInt)]],
       ),
     }
 
-    console.log('params: ', [`tuple(address,uint256,uint256,uint256,uint256)`],
-      [[poolAddress, BigInt(swapKeys[0]), BigInt(swapKeys[1]), amountA, minAmountB - (minAmountB / slippagePercentBigInt)]])
-    console.log('evmProxyMsg', evmProxyMsg)
     const sender = await SenderFactory.getSender({ tonConnect: getTonConnectUI() })
     let assetAddress = addressA ? await sdk.getTVMTokenAddress(addressA) : undefined
     assetAddress = assetAddress === 'NONE' ? undefined : assetAddress
@@ -37,6 +37,53 @@ export const useSwap = () => {
       rawAmount: amountA,
       address: assetAddress,
     }]
+    const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets)
+    const tsResult = tx.sendTransactionResult as {
+      success: boolean
+      error: Record<string, unknown>
+    }
+    sdk.closeConnections()
+    if (!tsResult?.success) {
+      throw tsResult?.error?.info || 'Unknown error'
+    }
+    return tx
+  }
+  const swapViaRouter = async (
+    route: IRoute,
+    inAmount: bigint, inAddress: string,
+    outAmount: bigint, outAddress: string,
+  ) => {
+    const sdk = getTacSdk()
+    const curve = getCurve()
+
+    const args = curve.router.getArgs(route)
+    const encodedParameters = new AbiCoder().encode(
+      ['tuple(address[11],uint256[4][5],uint256,uint256,address)'],
+      [
+        [
+          args._route,
+          args._swapParams,
+          inAmount,
+          outAmount - (outAmount / slippagePercentBigInt),
+          outAddress,
+        ],
+      ],
+    )
+    const evmProxyMsg = {
+      evmTargetAddress: CURVE_ROUTER_PROXY,
+      methodName: 'exchange(bytes,bytes)',
+      encodedParameters,
+    }
+
+    const sender = await SenderFactory.getSender({ tonConnect: getTonConnectUI() })
+    let assetAddress = inAddress ? await sdk.getTVMTokenAddress(getAddress(inAddress)) : undefined
+    assetAddress = assetAddress === 'NONE' ? undefined : assetAddress
+    const assets: AssetBridgingData[] = [{
+      type: AssetType.FT,
+      rawAmount: inAmount,
+      address: assetAddress,
+    }]
+
     const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets)
     const tsResult = tx.sendTransactionResult as {
       success: boolean
@@ -59,15 +106,15 @@ export const useSwap = () => {
     const evmProxyMsg = {
       evmTargetAddress: getProxyAddressByPoolImplementation(poolImplementation),
       methodName: 'addLiquidity(bytes,bytes)',
-      encodedParameters: ethers.AbiCoder.defaultAbiCoder().encode(
+      encodedParameters: AbiCoder.defaultAbiCoder().encode(
         [`tuple(address,${isPlainStableNg ? 'uint256[]' : 'uint256[2]'},uint256)`],
         [[poolAddress, [amountA, amountB], minAmountLP - (minAmountLP / slippagePercentBigInt)]],
       ),
     }
     const sender = await SenderFactory.getSender({ tonConnect: getTonConnectUI() })
-    let assetAddressA = addressA ? await sdk.getTVMTokenAddress(addressA) : undefined
+    let assetAddressA = addressA ? await sdk.getTVMTokenAddress(getAddress(addressA)) : undefined
     assetAddressA = assetAddressA === 'NONE' ? undefined : assetAddressA
-    let assetAddressB = addressB ? await sdk.getTVMTokenAddress(addressB) : undefined
+    let assetAddressB = addressB ? await sdk.getTVMTokenAddress(getAddress(addressB)) : undefined
     assetAddressB = assetAddressB === 'NONE' ? undefined : assetAddressB
 
     const assets: AssetBridgingData[] = [{
@@ -100,7 +147,7 @@ export const useSwap = () => {
     const evmProxyMsg = {
       evmTargetAddress: getProxyAddressByPoolImplementation(poolImplementation),
       methodName: 'removeLiquidity(bytes,bytes)',
-      encodedParameters: ethers.AbiCoder.defaultAbiCoder().encode(
+      encodedParameters: AbiCoder.defaultAbiCoder().encode(
         [`tuple(address,uint256,${isPlainStableNg ? 'uint256[]' : 'uint256[2]'})`],
         [[poolAddress, amount, [minAmountA - (minAmountA / slippagePercentBigInt), minAmountB - (minAmountB / slippagePercentBigInt)]]],
       ),
@@ -109,7 +156,7 @@ export const useSwap = () => {
     const assets: AssetBridgingData[] = [{
       type: AssetType.FT,
       rawAmount: amount,
-      address: await sdk.getTVMTokenAddress(poolAddress),
+      address: await sdk.getTVMTokenAddress(getAddress(poolAddress)),
     }]
     const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets)
     const tsResult = tx.sendTransactionResult as {
@@ -127,11 +174,12 @@ export const useSwap = () => {
     tokenIndex: 0 | 1, minTokenAmount: bigint = 0n,
     poolImplementation?: string,
   ) => {
+    // TODO: Untested
     const sdk = getTacSdk()
     const evmProxyMsg = {
       evmTargetAddress: getProxyAddressByPoolImplementation(poolImplementation),
       methodName: 'removeLiquidityOneCoin(bytes,bytes)',
-      encodedParameters: ethers.AbiCoder.defaultAbiCoder().encode(
+      encodedParameters: AbiCoder.defaultAbiCoder().encode(
         ['tuple(address,uint256,uint256,uint256)'],
         [[poolAddress, amount, tokenIndex, [minTokenAmount - (minTokenAmount / slippagePercentBigInt)]]],
       ),
@@ -140,7 +188,7 @@ export const useSwap = () => {
     const assets: AssetBridgingData[] = [{
       type: AssetType.FT,
       rawAmount: amount,
-      address: await sdk.getTVMTokenAddress(poolAddress),
+      address: await sdk.getTVMTokenAddress(getAddress(poolAddress)),
     }]
     const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets)
     const tsResult = tx.sendTransactionResult as {
@@ -242,8 +290,8 @@ export const useSwap = () => {
         ],
       },
     ]
-    const provider = ethers.getDefaultProvider(evmProviderUrl)
-    return new ethers.Contract(poolAddress, abi, provider)
+    const provider = getDefaultProvider(evmProviderUrl)
+    return new Contract(poolAddress, abi, provider)
   }
   const getLiquidityRates = async (poolAddress: string, amounts: bigint[], isDeposit: boolean, poolImplementation?: string): Promise<bigint> => {
     const contract = await getContract(poolAddress, poolImplementation)
@@ -272,6 +320,7 @@ export const useSwap = () => {
   return {
     slippagePercent,
     swap,
+    swapViaRouter,
     addLiquidity,
     removeLiquidity,
     removeLiquidityOneCoin,

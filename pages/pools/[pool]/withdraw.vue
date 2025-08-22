@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import type { Pool } from '~/entities/pool'
-import { usePools } from '~/composables/usePools'
 
 const route = useRoute()
-const { getPool, isLoading } = usePools()
+const { getPool, isLoading } = useCurve()
 const pool: Ref<Pool | undefined> = ref()
 
 const load = async () => {
@@ -23,7 +22,7 @@ load()
 </script>
 
 <template>
-  <div>
+  <div class="flex column">
     <div
       :class="$style.header"
       class="flex-between p1 mb-24"
@@ -39,15 +38,15 @@ load()
       </p>
     </div>
 
-    <span
+    <div
       v-if="isLoading"
-      class="ui-loader"
+      class="ui-loader mx-auto"
     />
 
     <LiquidityRemoveForm
       v-else-if="pool"
       :class="$style.form"
-      :pool-address="pool.address"
+      :pool="pool"
     />
   </div>
 </template>

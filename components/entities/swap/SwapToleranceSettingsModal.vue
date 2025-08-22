@@ -3,7 +3,7 @@ import { MAX_SLIPPAGE_PERCENT_VALUE, MIN_SLIPPAGE_PERCENT_VALUE } from '~/utils/
 
 const emits = defineEmits(['close'])
 
-const { slippagePercent } = useSwap()
+const { slippagePercent } = useTransaction()
 
 const customValue = ref([0.1, 0.5].includes(slippagePercent.value) ? 0.8 : slippagePercent.value)
 const selectedOption: Ref<number | undefined> = ref(slippagePercent.value || DEFAULT_SLIPPAGE_PERCENT_VALUE)

@@ -6,25 +6,23 @@ import { formatUnits, parseUnits } from 'ethers'
 import { useTonConnect } from '~/composables/useTonConnect'
 import { useModal } from '~/components/ui/composables/useModal'
 import { TransactionDetailsModal, SwapStatusModal } from '#components'
-import { useSwap } from '~/composables/useSwap'
+import { useTransaction } from '~/composables/useTransaction'
 import { formatNumber } from '~/utils/string-utils'
 import type { Pool, PoolCoin } from '~/entities/pool'
 
 const modal = useModal()
-const { getPool } = usePools()
 const { isLoaded: isTonLoaded, isConnected, walletName, fetchTonBalance, getTonConnectUI } = useTonConnect()
-const { addLiquidity, getLiquidityRates, slippagePercent } = useSwap()
+const { addLiquidity, getLiquidityRates, slippagePercent } = useTransaction()
 const { fetchJettonBalanceByEvmAddress, isLoaded: isTacLoaded } = useTac()
+const { getCoin, aprs } = useCurve()
 
-const { poolAddress } = defineProps<{ poolAddress: string }>()
+const { pool } = defineProps<{ pool: Pool }>()
 
-const pool: Ref<Pool | undefined> = ref()
 const error = ref('')
 const rate: Ref<bigint> = ref(0n)
 const errorRate = ref('')
 const isLoadingBalances = ref(false)
 const isSubmitting = ref(false)
-const isLoaded = ref(false)
 
 const getErrorForToken = (item: typeof pair[number]) => {
   if (item.balance < +item.inputValue) {
@@ -34,16 +32,16 @@ const getErrorForToken = (item: typeof pair[number]) => {
   return ''
 }
 
-const pair: Reactive<{ id: number, coin: PoolCoin, inputValue: string, balance: number, error: ComputedRef<string> }[]>
+const pair: Reactive<{ id: number, coin: PoolCoin | undefined, inputValue: string, balance: number, error: ComputedRef<string> }[]>
   = reactive([{
     id: 1,
-    coin: {} as PoolCoin,
+    coin: await getCoin(pool.underlyingCoinAddresses[0], true),
     inputValue: '1',
     balance: 0,
     error: computed(() => !isConnected.value || !isReady.value || isLoadingBalances.value ? '' : getErrorForToken(pair[0])),
   }, {
     id: 2,
-    coin: {} as PoolCoin,
+    coin: await getCoin(pool.underlyingCoinAddresses[1], true),
     inputValue: '1',
     balance: 0,
     error: computed(() => !isConnected.value || !isReady.value || isLoadingBalances.value ? '' : getErrorForToken(pair[1])),
@@ -61,26 +59,21 @@ const isSubmitDisabled = computed(() => {
     || Number(pair[1].inputValue) > pair[1].balance
     || Number(pair[0].inputValue) <= 0 || Number(pair[1].inputValue) <= 0
 })
-const isReady = computed(() => isConnected.value && isTacLoaded.value && isLoaded.value)
+const isReady = computed(() => isConnected.value && isTacLoaded.value)
 
-const load = async () => {
-  isLoaded.value = false
-  pool.value = await getPool(poolAddress)
-  if (!pool.value) {
-    error.value = 'Pool not found'
-    isLoaded.value = true
-    return
-  }
-  pair[0].coin = pool!.value.coins[0]
-  pair[1].coin = pool!.value.coins[1]
-  calcRates()
-  isLoaded.value = true
-}
 const calcRates = useDebounceFn(async () => {
-  const amounts = [parseUnits(pair[0].inputValue || '0', +pair[0].coin.decimals), parseUnits(pair[1].inputValue || '0', +pair[1].coin.decimals)]
+  console.log(pool, await pool.stats.parameters())
+  const amounts = [
+    parseUnits(pair[0].inputValue || '0', +pair[0].coin!.decimals),
+    parseUnits(pair[1].inputValue || '0', +pair[1].coin!.decimals),
+  ]
   errorRate.value = ''
   try {
-    rate.value = await getLiquidityRates(poolAddress, amounts, true, pool.value?.implementation)
+    rate.value = await getLiquidityRates(
+      pool.address,
+      amounts, true,
+      pool.isPlain && pool.isNg && !pool.isCrypto ? 'plainstableng' : '',
+    )
   }
   catch (e) {
     rate.value = 0n
@@ -93,12 +86,12 @@ const updateBalances = async () => {
     isLoadingBalances.value = true
 
     const res = await Promise.all([
-      pair[0].coin.address === 'NONE'
+      pair[0].coin?.address === 'NONE'
         ? fetchTonBalance()
-        : fetchJettonBalanceByEvmAddress(pair[0].coin.address),
-      pair[1].coin.address === 'NONE'
+        : fetchJettonBalanceByEvmAddress(pair[0].coin!.address),
+      pair[1].coin?.address === 'NONE'
         ? fetchTonBalance()
-        : fetchJettonBalanceByEvmAddress(pair[1].coin.address),
+        : fetchJettonBalanceByEvmAddress(pair[1].coin!.address),
     ])
     pair[0].balance = res[0]
     pair[1].balance = res[1]
@@ -126,11 +119,12 @@ const handleAddLiquidity = async () => {
   try {
     isSubmitting.value = true
     const txLinker = await addLiquidity(
-      poolAddress,
-      pair[0].coin.address, pair[1].coin.address,
-      parseUnits(pair[0].inputValue, +pair[0].coin.decimals),
-      parseUnits(pair[1].inputValue, +pair[1].coin.decimals),
-      rate.value, pool.value?.implementation,
+      pool.address,
+      pair[0].coin!.address, pair[1].coin!.address,
+      parseUnits(pair[0].inputValue, +pair[0].coin!.decimals),
+      parseUnits(pair[1].inputValue, +pair[1].coin!.decimals),
+      rate.value,
+      pool.isPlain && pool.isNg && !pool.isCrypto ? 'plainstableng' : '',
     )
 
     modal.open(TransactionDetailsModal, {
@@ -141,7 +135,7 @@ const handleAddLiquidity = async () => {
         tokenB: pair[1].coin,
         valueA: pair[0].inputValue,
         valueB: pair[1].inputValue,
-        pool: pool.value,
+        pool: pool,
         poolValue: formatUnits(rate.value),
         transactionLinker: txLinker,
       },
@@ -173,9 +167,9 @@ const setMax = (inputIdx: 0 | 1) => {
   calcRates()
 }
 
-load()
 watch(isReady, (val) => {
   if (val) {
+    calcRates()
     updateBalances()
   }
 }, { immediate: true })
@@ -186,7 +180,12 @@ watch(isReady, (val) => {
     :class="$style.LiquidityAddForm"
     @submit.prevent="onSubmit"
   >
-    <template v-if="isLoaded">
+    <template v-if="error">
+      <div class="mx-auto">
+        {{ error }}
+      </div>
+    </template>
+    <template v-else>
       <div
         :class="$style.inputs"
         class="mb-16"
@@ -207,7 +206,7 @@ watch(isReady, (val) => {
           <template #label>
             {{
               isConnected ? `Avail. ${isLoadingBalances || !isTacLoaded
-                ? 'loading...' : formatNumber(pair[0].balance, +pair[0].coin.decimals)}`
+                ? 'loading...' : formatNumber(pair[0].balance, +pair[0].coin!.decimals)}`
               : 'Token A'
             }}
           </template>
@@ -223,6 +222,7 @@ watch(isReady, (val) => {
               </UiButton>
 
               <CoinAvatar
+                v-if="pair[0].coin"
                 class="icon--32"
                 :coins="[pair[0].coin]"
               />
@@ -245,7 +245,7 @@ watch(isReady, (val) => {
           <template #label>
             {{
               isConnected ? `Avail. ${isLoadingBalances || !isTacLoaded
-                ? 'loading...' : formatNumber(pair[1].balance, +pair[1].coin.decimals)}`
+                ? 'loading...' : formatNumber(pair[1].balance, +pair[1].coin!.decimals)}`
               : 'Token B'
             }}
           </template>
@@ -260,6 +260,7 @@ watch(isReady, (val) => {
                 MAX
               </UiButton>
               <CoinAvatar
+                v-if="pair[1].coin"
                 class="icon--32"
                 :coins="[pair[1].coin]"
               />
@@ -290,14 +291,14 @@ watch(isReady, (val) => {
         <p :class="$style.info">
           <span class=" weight-600">TVL</span>
           <span class="c-secondary-text right">
-            {{ formatUsd(pool?.usdTotal, 2) }}
+            {{ formatUsd(pool?.totalLiquidity, 2) }}
           </span>
         </p>
 
         <p :class="$style.info">
-          <span class=" weight-600">APR</span>
+          <span class="weight-600">APR</span>
           <span class="c-secondary-text right">
-            {{ formatPercent((pool?.merkl.apr || 0) / 100) }}
+            {{ formatPercent((aprs[pool.address] || 0) / 100) }}
           </span>
         </p>
 
@@ -325,16 +326,6 @@ watch(isReady, (val) => {
             !isConnected ? 'Connect wallet' : isSubmitting ? `Check ${walletName}` : 'Deposit'
           }}
         </UiButton>
-      </div>
-    </template>
-    <template v-else-if="error">
-      <div class="mx-auto">
-        {{ error }}
-      </div>
-    </template>
-    <template v-else>
-      <div class="mx-auto">
-        loading...
       </div>
     </template>
   </form>

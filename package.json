@@ -10,6 +10,7 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@curvefi/api": "^2.65.13",
     "@ton/ton": "^15.1.0",
     "@tonappchain/sdk": "^0.6.5-mainnet-alpha",
     "@tonconnect/ui": "^2.2.0",

@@ -8,7 +8,7 @@ defineOptions({
 const { coins } = defineProps<{ coins: PoolCoin[] }>()
 
 const getCoinLogo = (coin: PoolCoin) => {
-  if (coin.address) {
+  if (coin?.address) {
     return `https://cdn.jsdelivr.net/gh/curvefi/curve-assets/images/assets-tac/${coin.address.toLowerCase()}.png`
   }
 

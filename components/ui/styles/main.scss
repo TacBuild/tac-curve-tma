@@ -66,6 +66,12 @@
     height: 24px;
     text-align: center;
   }
+
+  &--auto-height {
+    &:before {
+      height: auto;
+    }
+  }
 }
 
 .ui-separator {

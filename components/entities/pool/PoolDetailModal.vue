@@ -1,16 +1,19 @@
 <script setup lang="ts">
 import { until } from '@vueuse/core'
+import { formatNumber, formatUsd } from '~/utils/string-utils'
 import type { Pool } from '~/entities/pool'
-import { formatNumber, formatPercent, formatUsd } from '~/utils/string-utils'
 
 const emits = defineEmits(['close'])
 const { pool } = defineProps<{ pool: Pool }>()
 
 const { isConnected } = useTonConnect()
-const { isLoaded, fetchJettonBalanceByEvmAddress } = useTac()
+const { isLoaded, coinsMap, aprs } = useCurve()
+const { fetchJettonBalanceByEvmAddress } = useTac()
 
 const isLoading = ref(false)
 const balance = ref(0)
+
+const coins = computed(() => [coinsMap.get(pool.underlyingCoinAddresses[0])!, coinsMap.get(pool.underlyingCoinAddresses[1])!])
 
 const load = async () => {
   try {
@@ -49,7 +52,7 @@ load()
       >
         <CoinAvatar
           class="icon--32"
-          :coins="pool.coins"
+          :coins="coins"
         />
 
         <p class="weight-600 p2">
@@ -89,7 +92,7 @@ load()
           style="line-height: 24px"
         >
           <span>
-            {{ formatUsd(pool.usdTotal, 2) }}
+            {{ formatUsd(pool.totalLiquidity, 2) }}
           </span>
         </p>
       </div>
@@ -103,16 +106,17 @@ load()
           class="right c-secondary-text"
           style="line-height: 24px"
         >
-          <span>
-            {{ formatPercent(pool.merkl.apr / 100) }}
+          <span v-if="aprs[pool.address]">
+            {{ formatPercent(aprs[pool.address] / 100) }}
           </span>
+          <span v-else>-</span>
         </p>
       </div>
 
       <div :class="$style.btns">
         <UiButton
           wide
-          @click="changeRoute(`/pools/${pool.address}/deposit`)"
+          @click="changeRoute(`/pools/${pool.id}/deposit`)"
         >
           Deposit
         </UiButton>
@@ -120,7 +124,7 @@ load()
           :disabled="balance <= 0"
           class="mt-16"
           wide
-          @click="changeRoute(`/pools/${pool.address}/withdraw`)"
+          @click="changeRoute(`/pools/${pool.id}/withdraw`)"
         >
           Withdraw
         </UiButton>

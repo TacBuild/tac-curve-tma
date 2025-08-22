@@ -2,7 +2,7 @@
 import type { PoolWithTokens } from '~/entities/pool'
 import type { Token } from '~/entities/token'
 
-const { slippagePercent } = useSwap()
+const { slippagePercent } = useTransaction()
 
 const emits = defineEmits(['close'])
 const { title = 'Confirm swap', type = 'swap', onConfirm } = defineProps<{

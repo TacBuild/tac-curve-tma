@@ -90,6 +90,8 @@ const onInput = (e: Event) => {
       </div>
     </label>
 
+    <slot name="below" />
+
     <UiError :error="error" />
   </div>
 </template>

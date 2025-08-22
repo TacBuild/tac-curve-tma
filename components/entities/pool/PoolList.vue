@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import axios from 'axios'
 import { Address } from '@ton/ton'
+import { getAddress } from 'ethers'
 import { useModal } from '~/components/ui/composables/useModal'
 import { PoolDetailModal } from '#components'
 import type { Pool } from '~/entities/pool'
 
 const modal = useModal()
-const { pools } = usePools()
+const { pools, isLoading: isCurveLoading } = useCurve()
 const { address, isConnected } = useTonConnect()
 const { getTacSdk, isLoaded } = useTac()
 
@@ -14,6 +15,10 @@ const balances: Ref<Record<string, bigint>> = ref({})
 const isBalancesLoading = ref(false)
 
 let lastUpdated = 0
+
+const sortedPools = computed(() => {
+  return pools.value.toSorted((a, b) => Number((balances.value[b.address] || 0n) - (balances.value[a.address] || 0n)))
+})
 
 const openDetail = (pool: Pool) => {
   modal.open(PoolDetailModal, {
@@ -34,7 +39,7 @@ const updateBalances = async () => {
     for (let i = 0; i < pools.value.length; i += batchSize) {
       const batch = pools.value.slice(i, i + batchSize)
       await Promise.allSettled(batch.map(async (pool) => {
-        const addr = await getTacSdk().getTVMTokenAddress(pool.address).catch(() => undefined)
+        const addr = await getTacSdk().getTVMTokenAddress(getAddress(pool.address)).catch(() => undefined)
         if (addr) {
           tvmDict[pool.address] = addr
         }
@@ -71,17 +76,24 @@ onActivated(() => {
     updateBalances()
   }
 })
-watch([pools, isLoaded, isConnected], () => {
-  if (isLoaded.value && pools.value.length && isConnected.value) {
+watch([isLoaded, isCurveLoading, isConnected], () => {
+  if (isLoaded.value && !isCurveLoading.value && isConnected.value) {
     updateBalances()
   }
 }, { immediate: true })
 </script>
 
 <template>
-  <ul :class="$style.PoolList">
+  <div
+    v-if="!isLoaded || isBalancesLoading || isCurveLoading"
+    class="ui-loader center"
+  />
+  <ul
+    v-else
+    :class="$style.PoolList"
+  >
     <li
-      v-for="pool in pools"
+      v-for="pool in sortedPools"
       :key="pool.address"
       :class="$style.item"
       @click="openDetail(pool)"
