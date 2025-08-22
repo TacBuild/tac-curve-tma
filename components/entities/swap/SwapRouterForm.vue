@@ -18,6 +18,7 @@ const { isLoaded, isConnected, walletName, getTonConnectUI } = useTonConnect()
 
 const { isLoaded: isPoolsLoaded, coinsMap, getBestRouteAndOutput } = useCurve()
 
+let calcRateKey = 0
 const isPreparing = ref(false)
 const isLoadingRate = ref(false)
 const isSwapping = ref(false)
@@ -101,6 +102,7 @@ const swapPair = () => {
   }, 300)
 }
 const calcRate = async (inputIndex: number) => {
+  calcRateKey = Math.random()
   route.value = []
   priceImpact.value = 0
   isLoadingRate.value = true
@@ -121,6 +123,7 @@ const debouncedCalcRate = useDebounceFn(async (inputIndex: number) => {
   }
 
   let rate
+  const currentCalcRateKey = calcRateKey
   pair[inputIndex ? 0 : 1].inputValue = ''
   try {
     const { route: routeRes, output, priceImpact: priceImpactRes } = await getBestRouteAndOutput(
@@ -129,22 +132,26 @@ const debouncedCalcRate = useDebounceFn(async (inputIndex: number) => {
       pair[inputIndex].inputValue,
       inputIndex === 1,
     )
+    if (calcRateKey !== currentCalcRateKey) {
+      console.log(`${calcRateKey}, cache discarded by ${currentCalcRateKey}`)
+      return
+    }
     rate = output
     route.value = routeRes
     priceImpact.value = priceImpactRes
+    isLoadingRate.value = false
+    isLoadingRoute.value = false
   }
   catch (e) {
     console.warn(e)
     rate = '0'
     route.value = []
     priceImpact.value = 0
-  }
-  finally {
     isLoadingRate.value = false
     isLoadingRoute.value = false
   }
   pair[inputIndex ? 0 : 1].inputValue = String(rate)
-}, 500)
+}, 1000)
 const onSubmit = async () => {
   if (!pair[0].inputValue) {
     return
@@ -250,6 +257,9 @@ const onCoinChange = async (coin: PoolCoin, index: 0 | 1) => {
     return
   }
 
+  const key = `${pair[0].coin?.address}-${pair[1].coin?.address}`
+  calcRateKey = Math.random()
+
   if (pair[0].coin?.address === pair[1].coin?.address) {
     pair[index ? 0 : 1].coin = undefined
     return
@@ -260,16 +270,20 @@ const onCoinChange = async (coin: PoolCoin, index: 0 | 1) => {
     pair[1].inputValue = ''
     const { route: routeRes, output, priceImpact: priceImpactRes }
       = await getBestRouteAndOutput(pair[0].coin.address, pair[1].coin.address, pair[0].inputValue)
+
+    if (key !== `${pair[0].coin?.address}-${pair[1].coin?.address}`) {
+      console.log(`${key}, cache discarded by ${pair[0].coin?.address}-${pair[1].coin?.address}`)
+      return
+    }
     priceImpact.value = priceImpactRes
     pair[1].inputValue = String(output)
     route.value = routeRes
+    isLoadingRoute.value = false
   }
   catch (e) {
+    console.warn(e)
     priceImpact.value = 0
     route.value = []
-    console.warn(e)
-  }
-  finally {
     isLoadingRoute.value = false
   }
 }
