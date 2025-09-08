@@ -10,15 +10,16 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@curvefi/api": "^2.65.13",
-    "@ton/ton": "^15.1.0",
+    "@curvefi/api": "^2.68.6",
+    "@ton/ton": "^15.3.1",
     "@tonappchain/sdk": "^0.6.5-mainnet-alpha",
     "@tonconnect/ui": "^2.2.0",
-    "@vueuse/components": "^13.5.0",
-    "@vueuse/core": "^12.5.0",
-    "ethers": "^6.13.2",
+    "@vueuse/components": "^13.8.0",
+    "@vueuse/core": "^13.8.0",
+    "axios": "^1.11.0",
+    "ethers": "^6.15.0",
     "modern-normalize": "^3.0.1",
-    "nuxt": "^3.17.6",
+    "nuxt": "^4.1.1",
     "vue": "latest",
     "vue-router": "latest"
   },
