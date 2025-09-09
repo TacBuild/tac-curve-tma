@@ -14,6 +14,7 @@ const isLoaded = ref(false)
 const walletName = ref('Wallet')
 const account: Account = reactive({} as Account)
 
+const balance = ref(0)
 const address = computed(() => account?.address || '')
 const chain = computed(() => account.chain)
 const friendlyAddress = computed(() => account?.address ? toUserFriendlyAddress(account.address) : '')
@@ -48,6 +49,7 @@ const init = () => {
     if (walletInfo?.account?.address) {
       Object.assign(account, walletInfo.account)
       walletName.value = walletInfo?.name
+      updateTonBalance()
     }
   })
 }
@@ -61,10 +63,15 @@ const fetchTonBalance = async () => {
     return 0
   }
 }
+const updateTonBalance = async () => {
+  balance.value = 0
+  balance.value = await fetchTonBalance()
+}
 const getTonConnectUI = () => {
   return tonConnectUI
 }
 const disconnect = async () => {
+  balance.value = 0
   Object.assign(account, {
     address: '',
     chain: '' as CHAIN,
@@ -98,6 +105,8 @@ export const useTonConnect = () => {
     walletName,
     shortAddress,
     shorterAddress,
+    balance,
+    updateTonBalance,
     fetchTonBalance,
     getTonConnectUI,
     disconnect,

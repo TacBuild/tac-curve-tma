@@ -42,9 +42,7 @@ load()
       v-if="isLoading"
       class="flex-center"
     >
-      <span
-        class="ui-loader mx-auto"
-      />
+      <span class="ui-loader mx-auto" />
     </div>
 
     <LiquidityAddForm
