@@ -12,7 +12,7 @@
   "dependencies": {
     "@curvefi/api": "^2.65.13",
     "@ton/ton": "^15.1.0",
-    "@tonappchain/sdk": "^0.6.5-mainnet-alpha",
+    "@tonappchain/sdk": "0.6.5-mainnet-alpha",
     "@tonconnect/ui": "^2.2.0",
     "@vueuse/components": "^13.5.0",
     "@vueuse/core": "^12.5.0",
