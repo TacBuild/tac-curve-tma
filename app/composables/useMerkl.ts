@@ -71,7 +71,7 @@ const updateRewards = async (isInitialLoading = true) => {
         return [...prev, ...curr.rewards]
       }, [] as Reward[])
 
-    rewards.value = rewardsList.filter(reward => reward.claimed !== reward.amount)
+    rewards.value = rewardsList.filter(reward => reward.token.symbol === 'WTAC' && (reward.claimed !== reward.amount))
   }
   catch (e) {
     console.warn(e)
