@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { HistoryTransactionRecord } from '~~/entities/history';
+import type { HistoryTransactionRecord } from '~~/entities/history'
 
 defineProps({
   records: {
     type: Array as PropType<HistoryTransactionRecord[]>,
-    default: () => []
-  }
-});
+    default: () => [],
+  },
+})
 </script>
 
 <template>
@@ -26,7 +26,11 @@ defineProps({
 <style module lang="scss">
 .item {
   &:not(:last-child) {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1)
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+
+    @media (prefers-color-scheme: dark) {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
   }
 }
 </style>

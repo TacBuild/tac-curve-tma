@@ -9,7 +9,6 @@ useCurve()
 
 <template>
   <div>
-    <!--    <SwapForm :class="$style.form" /> -->
     <SwapRouterForm :class="$style.form" />
   </div>
 </template>

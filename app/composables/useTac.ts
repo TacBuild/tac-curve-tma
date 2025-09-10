@@ -6,7 +6,7 @@ let tacSdk: TacSdk
 const isLoaded = ref(false)
 
 export const useTac = () => {
-  const { address, fetchTonBalance } = useTonConnect()
+  const { address, fetchTonBalanceBigInt } = useTonConnect()
 
   const init = async () => {
     tacSdk = await TacSdk.create({
@@ -17,24 +17,34 @@ export const useTac = () => {
   const getTacSdk = () => {
     return tacSdk
   }
-  const fetchJettonBalanceByEvmAddress = async (evmAddress: string) => {
+  const fetchJettonBalance = async (evmAddress: string) => {
+    const obj = {
+      balance: 0n,
+      decimals: 18,
+    }
     await until(isLoaded).toBe(true)
 
     try {
       const sdk = getTacSdk()
       const tvmAddress = await sdk.getTVMTokenAddress(getAddress(evmAddress))
       if (tvmAddress === 'NONE') {
-        return await fetchTonBalance()
+        obj.balance = await fetchTonBalanceBigInt()
+        obj.decimals = 9
+        return obj
       }
       const res = await sdk.getUserJettonBalanceExtended(
         address.value,
         tvmAddress,
       )
-      return res?.exists ? res.amount : 0
+      if (res.exists) {
+        obj.balance = res.rawAmount
+        obj.decimals = res.decimals
+      }
+      return obj
     }
     catch (e) {
       console.warn(e)
-      return 0
+      return obj
     }
   }
 
@@ -43,6 +53,6 @@ export const useTac = () => {
     isLoaded,
     init,
     getTacSdk,
-    fetchJettonBalanceByEvmAddress,
+    fetchJettonBalance,
   }
 }

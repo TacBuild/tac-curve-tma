@@ -2,24 +2,29 @@
 import { until } from '@vueuse/core'
 import { formatNumber, formatUsd } from '~/utils/string-utils'
 import type { Pool } from '~~/entities/pool'
+import { formatUnits } from 'ethers'
 
 const emits = defineEmits(['close'])
 const { pool } = defineProps<{ pool: Pool }>()
 
 const { isConnected } = useTonConnect()
-const { isLoaded, coinsMap, aprs } = useCurve()
-const { fetchJettonBalanceByEvmAddress } = useTac()
+const { isLoaded, coinsMap } = useCurve()
+const { aprs } = useMerkl()
+const { fetchJettonBalance } = useTac()
 
+const balance = ref(0n)
+const decimals = ref(18)
 const isLoading = ref(false)
-const balance = ref(0)
 
-const coins = computed(() => [coinsMap.get(pool.underlyingCoinAddresses[0])!, coinsMap.get(pool.underlyingCoinAddresses[1])!])
+const coins = computed(() => [coinsMap.get(pool.underlyingCoinAddresses[0]!)!, coinsMap.get(pool.underlyingCoinAddresses[1]!)!])
 
 const load = async () => {
   try {
     isLoading.value = true
     await until(isLoaded).toBe(true)
-    balance.value = await fetchJettonBalanceByEvmAddress(pool.address)
+    const res = (await fetchJettonBalance(pool.address))
+    balance.value = res.balance
+    decimals.value = res.decimals
   }
   catch (e) {
     console.warn(e)
@@ -77,7 +82,7 @@ load()
             class="ui-loader"
           />
           <span v-else>
-            {{ formatNumber(balance, 9) }} LP
+            {{ formatNumber(formatUnits(balance, decimals), 9) }} LP
           </span>
         </p>
       </div>
@@ -107,7 +112,7 @@ load()
           style="line-height: 24px"
         >
           <span v-if="aprs[pool.address]">
-            {{ formatPercent(aprs[pool.address] / 100) }}
+            {{ formatPercent(aprs[pool.address]! / 100) }}
           </span>
           <span v-else>-</span>
         </p>
@@ -121,7 +126,7 @@ load()
           Deposit
         </UiButton>
         <UiButton
-          :disabled="balance <= 0"
+          :disabled="balance <= 0n"
           class="mt-16"
           wide
           @click="changeRoute(`/pools/${pool.id}/withdraw`)"
@@ -138,6 +143,10 @@ load()
   gap: 8px;
   padding: 12px 0;
   box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.1);
+
+  @media (prefers-color-scheme: dark) {
+    box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  }
 }
 
 .btns {

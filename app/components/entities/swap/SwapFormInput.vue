@@ -3,23 +3,24 @@ import { debouncedWatch } from '@vueuse/core'
 import { formatNumber } from '~/utils/string-utils'
 import type { PoolCoin } from '~~/entities/pool'
 import { useTonConnect } from '~/composables/useTonConnect'
+import { formatUnits } from 'ethers'
 
 const { coins, getUsdRate } = useCurve()
-const { isConnected, fetchTonBalance } = useTonConnect()
-const { isLoaded: isTacLoaded, fetchJettonBalanceByEvmAddress } = useTac()
+const { isConnected } = useTonConnect()
+const { isLoaded: isTacLoaded, fetchJettonBalance } = useTac()
 
 defineProps<{ disabled?: boolean, to?: boolean, errorInput?: string }>()
 
 const inputValue = defineModel<string>('input', { default: '' })
 const coin = defineModel<PoolCoin | undefined>('coin', { default: undefined })
-const balance = defineModel<number>('balance', { default: 0 })
+const balance = defineModel<bigint>('balance', { default: 0n })
 
 const usdRate = ref(0)
 const isLoadingUsdRate = ref(false)
 const isLoadingBalance = ref(false)
 
 const setMax = () => {
-  inputValue.value = String(balance.value)
+  inputValue.value = formatUnits(balance.value, +(coin.value?.decimals || 18))
 }
 const onCoinChange = (selectedCoin: PoolCoin | undefined) => {
   coin.value = selectedCoin
@@ -27,9 +28,7 @@ const onCoinChange = (selectedCoin: PoolCoin | undefined) => {
 const updateBalance = async () => {
   try {
     isLoadingBalance.value = true
-    balance.value = coin.value?.address === 'NONE'
-      ? await fetchTonBalance()
-      : await fetchJettonBalanceByEvmAddress(coin.value!.address)
+    balance.value = (await fetchJettonBalance(coin.value!.address)).balance
   }
   catch (e) {
     console.warn(e)
@@ -87,7 +86,7 @@ defineExpose({
       <template #label>
         {{
           isConnected && coin ? `Avail. ${isLoadingBalance || !isTacLoaded
-            ? 'loading...' : formatNumber(balance, +coin?.decimals || 18)}`
+            ? 'loading...' : formatNumber(formatUnits(balance, +coin?.decimals || 18), +coin?.decimals || 18)}`
           : to ? 'You receive' : 'You send'
         }}
       </template>

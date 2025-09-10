@@ -1,5 +1,13 @@
 @use "mixins" as *;
 
+.gap-8 {
+  gap: 8px;
+}
+
+.gap-12 {
+  gap: 12px;
+}
+
 .mr-4 {
   margin-right: 4px;
 }
@@ -10,6 +18,10 @@
 
 .mr-12 {
   margin-right: 12px;
+}
+
+.ml-12 {
+  margin-left: 12px;
 }
 
 .mt-4 {
@@ -58,6 +70,10 @@
 
 .mb-32 {
   margin-bottom: 32px;
+}
+
+.p-16 {
+  padding: 16px
 }
 
 .mx-auto {
@@ -147,6 +163,7 @@
 }
 
 .column {
+  display: flex;
   flex-direction: column;
 }
 

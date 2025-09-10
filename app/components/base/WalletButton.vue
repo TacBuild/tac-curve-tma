@@ -2,7 +2,7 @@
 import { useModal } from '~/components/ui/composables/useModal'
 import { WalletModal } from '#components'
 
-const { isConnected, shorterAddress, getTonConnectUI } = useTonConnect()
+const { isConnected, isLoaded, shorterAddress, getTonConnectUI } = useTonConnect()
 const modal = useModal()
 
 const onClick = () => {
@@ -18,6 +18,7 @@ const onClick = () => {
 
 <template>
   <UiButton
+    v-show="isLoaded"
     size="small"
     :color="isConnected ? 'secondary' : undefined"
     @click="onClick"

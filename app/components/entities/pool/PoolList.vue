@@ -117,6 +117,10 @@ watch([isLoaded, isCurveLoading, isConnected], () => {
 
   &:not(:last-child) {
     box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.1);
+
+    @media (prefers-color-scheme: dark) {
+      box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.1);
+    }
   }
 }
 </style>

@@ -5,15 +5,20 @@
 <template>
   <header :class="$style.header">
     <div :class="$style.wrap">
-      <h1 :class="$style.logo">
+      <h1
+        :class="$style.logo"
+        class="weight-700"
+      >
         <a
+          class="flex-center gap-8"
           href="https://curve.fi"
           target="_blank"
         >
           <img
-            src="/logo.webp"
+            src="/logo.png"
             alt="Curve"
           >
+          Curve
         </a>
       </h1>
 
@@ -51,12 +56,13 @@
 }
 
 .logo {
+  font-size: 24px;
   width: 114px;
   height: 36px;
 
   img {
-    width: 100%;
-    height: 100%;
+    width: 36px;
+    height: 36px;
     object-fit: contain;
   }
 }

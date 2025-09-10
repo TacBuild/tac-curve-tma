@@ -36,11 +36,9 @@ onUnmounted(() => {
       </div>
     </template>
 
-    <div
-      :class="$style.wrap"
-      class="mt-16"
-    >
+    <div :class="$style.wrap">
       <TransactionAssetsInfo
+        v-if="pool || tokenA || tokenB"
         class="mb-16"
         :type="type"
         :token-a="tokenA"

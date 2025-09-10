@@ -3,7 +3,7 @@ export const truncate = (string = '', length = 6) => {
 }
 
 export const formatNumber = (value: string | number = 0, maximumFractionDigits = 4, maximumSignificantDigits = undefined) =>
-  Number(value).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits, maximumSignificantDigits })
+  value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits, maximumSignificantDigits })
 
 export const formatUsd = (value: string | number = 0, maximumFractionDigits = 2, notation: 'standard' | 'scientific' | 'engineering' | 'compact' | undefined = 'standard') =>
   new Intl.NumberFormat('en-US', {

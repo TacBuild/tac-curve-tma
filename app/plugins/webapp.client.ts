@@ -1,5 +1,3 @@
-import { parseQuery } from 'vue-router'
-
 export default defineNuxtPlugin((nuxtApp) => {
   const webapp = window.Telegram?.WebApp
   const router = useRouter()
@@ -26,9 +24,12 @@ export default defineNuxtPlugin((nuxtApp) => {
     }
   }
 
-  webapp.themeParams.bg_color = '#ffffff'
+  webapp.themeParams.bg_color = window?.matchMedia?.('(prefers-color-scheme:dark)')?.matches
+    ? '#131316'
+    : '#f2f2f7'
   const haptic = webapp.HapticFeedback
   try {
+    webapp.setBottomBarColor(webapp.themeParams.bg_color)
     webapp.setHeaderColor(webapp.themeParams.bg_color)
   }
   catch (e) {

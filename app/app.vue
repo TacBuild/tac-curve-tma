@@ -4,6 +4,21 @@ const router = useRouter()
 const { init: initTac } = useTac()
 const { init: initTonConnect } = useTonConnect()
 
+const nav = [
+  {
+    label: 'Swap',
+    value: 'index',
+  },
+  {
+    label: 'Pools',
+    value: 'pools',
+  },
+  {
+    label: 'Rewards',
+    value: 'rewards',
+  },
+]
+
 const onChangeNav = (name: string) => {
   router.push({ name })
 }
@@ -27,20 +42,20 @@ initTonConnect()
     <section class="page-wrapper">
       <div class="container">
         <div
-          v-if="route.name === 'index' || route.name === 'pools'"
+          v-if="['index', 'pools', 'rewards'].includes(route.name as string)"
           :class="$style.sticky"
           class="mb-32"
         >
           <UiTabs
             :model-value="activeRoute"
-            :tabs="[{ label: 'Swap', value: 'index' }, { label: 'Pools', value: 'pools' }]"
+            :tabs="nav"
             @update:model-value="onChangeNav($event as string)"
           />
         </div>
 
         <NuxtPage
           :page-key="route => route.fullPath"
-          :keepalive="{ include: ['IndexPage', 'PoolsPage'] }"
+          :keepalive="{ include: ['IndexPage', 'PoolsPage', 'RewardsPage'] }"
         />
       </div>
     </section>

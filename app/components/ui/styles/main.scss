@@ -28,15 +28,26 @@
   --ui-button-primary-disabled-bg-color: var(--c-disabled);
   --ui-button-primary-disabled-text-color: var(--c-secondary-text);
   --ui-button-primary-disabled-box-shadow: 1px 0 0 0 var(--c-secondary-text) inset, 0 1px 0 0 var(--c-secondary-text) inset, -4px 0 0 0 var(--c-secondary-text) inset, 0 -4px 0 0 var(--c-secondary-text) inset;
+  @media (prefers-color-scheme: dark) {
+    --ui-button-primary-text-color: var(--c-black);
+    --ui-button-primary-disabled-bg-color: #32343a;
+    --ui-button-primary-disabled-text-color: var(--c-secondary-text);
+    --ui-button-primary-disabled-box-shadow: 1px 0 0 0 var(--c-disabled) inset, 0 1px 0 0 var(--c-disabled) inset, -4px 0 0 0 var(--c-disabled) inset, 0 -4px 0 0 var(--c-disabled) inset;
+  }
 
   --ui-button-secondary-bg-color: var(--c-body-bg);
   --ui-button-secondary-box-shadow: 1px 0 0 0 #D9D9D9 inset, 0 1px 0 0 #D9D9D9 inset, -4px 0 0 0 #484D56 inset, 0 -4px 0 0 #484D56 inset;
   --ui-button-secondary-text-color: #484D56;
   --ui-button-secondary-hover-bg-color: var(--c-body-bg);
-  --ui-button-secondary-active-bg-color: var(--c-body-bg);;
+  --ui-button-secondary-active-bg-color: var(--c-body-bg);
   --ui-button-secondary-active-box-shadow: 4px 0 0 0 #484D56 inset, 0 4px 0 0 #484D56 inset, -1px 0 0 0 #D9D9D9 inset, 0 -1px 0 0 #D9D9D9 inset;
   --ui-button-secondary-disable-bg-color: var(--c-disabled);
   --ui-button-secondary-disable-text-color: var(--c-disabled);
+  @media (prefers-color-scheme: dark) {
+    --ui-button-secondary-text-color: #eaeaf0;
+    --ui-button-secondary-box-shadow: 1px 0 0 0 #32343a inset, 0 1px 0 0 #32343a inset, -4px 0 0 0 #23242c inset, 0 -4px 0 0 #23242c inset;
+    --ui-button-secondary-active-box-shadow: 4px 0 0 0 #23242c inset, 0 4px 0 0 #23242c inset, -1px 0 0 0 #32343a inset, 0 -1px 0 0 #32343a inset;
+  }
 
   --ui-radio-font-size: 15px;
   --ui-radio-line-height: 17px;
@@ -53,6 +64,11 @@
 
   --ui-input-box-shadow: 2px 0 0 0 #484D56 inset, 0 2px 0 0 #484D56 inset, -1px 0 0 0 #484D56 inset, 0 -1px 0 0 #484D56 inset;
   --ui-input-focus-box-shadow: -2px 0 0 0 #484D56 inset, 0 -2px 0 0 #484D56 inset, 1px 0 0 0 #484D56 inset, 0 1px 0 0 #484D56 inset;
+  @media (prefers-color-scheme: dark) {
+    --ui-input-box-shadow: 2px 0 0 0 var(--c-disabled) inset, 0 2px 0 0 var(--c-disabled) inset, -1px 0 0 0 var(--c-disabled) inset, 0 -1px 0 0 var(--c-disabled) inset;
+    --ui-input-focus-box-shadow: -2px 0 0 0 var(--c-disabled) inset, 0 -2px 0 0 var(--c-disabled) inset, 1px 0 0 0 var(--c-disabled) inset, 0 1px 0 0 var(--c-disabled) inset;
+  }
+
   --ui-input-warning-box-shadow: 2px 0 0 0 var(--c-orange) inset, 0 2px 0 0 var(--c-orange) inset, -1px 0 0 0 var(--c-orange) inset, 0 -1px 0 0 var(--c-orange) inset;
   --ui-input-warning-focus-box-shadow: -2px 0 0 0 var(--c-orange) inset, 0 -2px 0 0 var(--c-orange) inset, 1px 0 0 0 var(--c-orange) inset, 0 1px 0 0 var(--c-orange) inset;
 }
@@ -76,6 +92,10 @@
 
 .ui-separator {
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+
+  @media (prefers-color-scheme: dark) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
 }
 
 

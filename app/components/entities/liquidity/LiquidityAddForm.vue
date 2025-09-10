@@ -10,14 +10,23 @@ import { useTransaction } from '~/composables/useTransaction'
 import { formatNumber } from '~/utils/string-utils'
 import type { Pool, PoolCoin } from '~~/entities/pool'
 
+type PairItem = {
+  id: number
+  coin: PoolCoin | undefined
+  inputValue: string
+  balance: bigint
+  error: ComputedRef<string>
+}
+
 const modal = useModal()
 const {
   isLoaded: isTonLoaded,
   isConnected, walletName, balance,
-  fetchTonBalance, getTonConnectUI, updateTonBalance } = useTonConnect()
+  getTonConnectUI, updateTonBalance } = useTonConnect()
 const { addLiquidity, getLiquidityRates, slippagePercent } = useTransaction()
-const { fetchJettonBalanceByEvmAddress, isLoaded: isTacLoaded } = useTac()
-const { getCoin, aprs } = useCurve()
+const { fetchJettonBalance, isLoaded: isTacLoaded } = useTac()
+const { getCoin } = useCurve()
+const { aprs } = useMerkl()
 
 const { pool } = defineProps<{ pool: Pool }>()
 
@@ -35,18 +44,18 @@ const getErrorForToken = (item: typeof pair[number]) => {
   return ''
 }
 
-const pair: Reactive<{ id: number, coin: PoolCoin | undefined, inputValue: string, balance: number, error: ComputedRef<string> }[]>
+const pair: Reactive<[PairItem, PairItem]>
   = reactive([{
     id: 1,
-    coin: await getCoin(pool.underlyingCoinAddresses[0], true),
+    coin: await getCoin(pool.underlyingCoinAddresses[0]!, true),
     inputValue: '1',
-    balance: 0,
+    balance: 0n,
     error: computed(() => !isConnected.value || !isReady.value || isLoadingBalances.value ? '' : getErrorForToken(pair[0])),
   }, {
     id: 2,
-    coin: await getCoin(pool.underlyingCoinAddresses[1], true),
+    coin: await getCoin(pool.underlyingCoinAddresses[1]!, true),
     inputValue: '1',
-    balance: 0,
+    balance: 0n,
     error: computed(() => !isConnected.value || !isReady.value || isLoadingBalances.value ? '' : getErrorForToken(pair[1])),
   },
   ])
@@ -58,15 +67,14 @@ const isSubmitDisabled = computed(() => {
 
   return isNotEnoughForFee.value || Boolean(errorRate.value) || isSubmitting.value
     || isLoadingBalances.value || !pair[0].inputValue
-    || Number(pair[0].inputValue) > pair[0].balance
-    || Number(pair[1].inputValue) > pair[1].balance
+    || parseUnits(pair[0].inputValue, +pair[0].coin!.decimals) > pair[0].balance
+    || parseUnits(pair[1].inputValue, +pair[1].coin!.decimals) > pair[1].balance
     || Number(pair[0].inputValue) <= 0 || Number(pair[1].inputValue) <= 0
 })
 const isReady = computed(() => isConnected.value && isTacLoaded.value)
 const isNotEnoughForFee = computed(() => (balance.value < 1.5) && isConnected.value)
 
 const calcRates = useDebounceFn(async () => {
-  console.log(pool, await pool.stats.parameters())
   const amounts = [
     parseUnits(pair[0].inputValue || '0', +pair[0].coin!.decimals),
     parseUnits(pair[1].inputValue || '0', +pair[1].coin!.decimals),
@@ -90,12 +98,8 @@ const updateBalances = async () => {
     isLoadingBalances.value = true
 
     const res = await Promise.all([
-      pair[0].coin?.address === 'NONE'
-        ? fetchTonBalance()
-        : fetchJettonBalanceByEvmAddress(pair[0].coin!.address),
-      pair[1].coin?.address === 'NONE'
-        ? fetchTonBalance()
-        : fetchJettonBalanceByEvmAddress(pair[1].coin!.address),
+      (await fetchJettonBalance(pair[0].coin!.address)).balance,
+      (await fetchJettonBalance(pair[1].coin!.address)).balance,
     ])
     pair[0].balance = res[0]
     pair[1].balance = res[1]
@@ -168,7 +172,7 @@ const handleAddLiquidity = async () => {
   }
 }
 const setMax = (inputIdx: 0 | 1) => {
-  pair[inputIdx].inputValue = String(pair[inputIdx].balance)
+  pair[inputIdx].inputValue = formatUnits(pair[inputIdx].balance, +pair[inputIdx].coin?.decimals)
   calcRates()
 }
 
@@ -211,7 +215,7 @@ watch(isReady, (val) => {
           <template #label>
             {{
               isConnected ? `Avail. ${isLoadingBalances || !isTacLoaded
-                ? 'loading...' : formatNumber(pair[0].balance, +pair[0].coin!.decimals)}`
+                ? 'loading...' : formatNumber(formatUnits(pair[0].balance, +pair[0].coin!.decimals), +pair[0].coin!.decimals)}`
               : 'Token A'
             }}
           </template>
@@ -250,7 +254,7 @@ watch(isReady, (val) => {
           <template #label>
             {{
               isConnected ? `Avail. ${isLoadingBalances || !isTacLoaded
-                ? 'loading...' : formatNumber(pair[1].balance, +pair[1].coin!.decimals)}`
+                ? 'loading...' : formatNumber(formatUnits(pair[1].balance, +pair[1].coin!.decimals), +pair[1].coin!.decimals)}`
               : 'Token B'
             }}
           </template>
@@ -367,6 +371,10 @@ watch(isReady, (val) => {
   gap: 8px;
   padding-top: 12px;
   border-top: 1px solid rgba(0, 0, 0, 0.1);
+
+  @media (prefers-color-scheme: dark) {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
 }
 
 .info {

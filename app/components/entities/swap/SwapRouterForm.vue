@@ -11,6 +11,14 @@ import type { PoolCoin } from '~~/entities/pool'
 import { CURVE_HIGH_PRICE_IMPACT_PERCENT, EVM_TAC_ADDRESS } from '~~/entities/config'
 import SwapFormInput from '~/components/entities/swap/SwapFormInput.vue'
 
+type PairItem = {
+  id: number
+  coin: PoolCoin | undefined
+  inputValue: string
+  balance: bigint
+  swapKey: 0 | 1
+  isLoadingBalance: boolean
+}
 const modal = useModal()
 const { swapViaRouter, slippagePercent } = useTransaction()
 const { isLoaded: isTacLoaded } = useTac()
@@ -27,23 +35,21 @@ const transitionName = ref('')
 
 const swapInput1: Ref<typeof SwapFormInput | undefined> = ref()
 const swapInput2: Ref<typeof SwapFormInput | undefined> = ref()
-const pair: { id: number, coin: PoolCoin | undefined, inputValue: string, balance: number, swapKey: 0 | 1, isLoadingBalance: boolean }[]
-  = reactive([{
-    id: 1,
-    coin: undefined,
-    inputValue: '',
-    balance: 0,
-    swapKey: 0,
-    isLoadingBalance: false,
-  }, {
-    id: 2,
-    coin: undefined,
-    inputValue: '',
-    balance: 0,
-    swapKey: 1,
-    isLoadingBalance: false,
-  },
-  ])
+const pair: [PairItem, PairItem] = reactive([{
+  id: 1,
+  coin: undefined,
+  inputValue: '',
+  balance: 0n,
+  swapKey: 0,
+  isLoadingBalance: false,
+}, {
+  id: 2,
+  coin: undefined,
+  inputValue: '',
+  balance: 0n,
+  swapKey: 1,
+  isLoadingBalance: false,
+}])
 const route: Ref<IRoute> = ref([])
 const priceImpact: Ref<number> = ref(0)
 
@@ -66,7 +72,7 @@ const isSubmitDisabled = computed(() => {
 
   return isPreparing.value || isSwapping.value
     || isLoadingBalances.value || !pair[0].inputValue
-    || Number(pair[0].inputValue) > pair[0].balance
+    || parseUnits(pair[0].inputValue, +(pair[0].coin?.decimals || 18)) > pair[0].balance
     || Number(pair[0].inputValue) <= 0
     || isLoadingRoute.value || Boolean(!route.value.length)
 })
@@ -101,7 +107,7 @@ const swapPair = () => {
     transitionName.value = ''
   }, 300)
 }
-const calcRate = async (inputIndex: number) => {
+const calcRate = async (inputIndex: 0 | 1) => {
   calcRateKey = Math.random()
   route.value = []
   priceImpact.value = 0
@@ -110,7 +116,7 @@ const calcRate = async (inputIndex: number) => {
   await debouncedCalcRate(inputIndex)
 }
 
-const debouncedCalcRate = useDebounceFn(async (inputIndex: number) => {
+const debouncedCalcRate = useDebounceFn(async (inputIndex: 0 | 1) => {
   if (!pair[0].coin || !pair[1].coin) {
     return
   }
@@ -334,7 +340,7 @@ load()
           v-model:balance="pair[1].balance"
           :to="true"
           :disabled="isSwapping || isLoadingBalances"
-          @update:coin="(value: PoolCoin) => onCoinChange(value!, 1)"
+          @update:coin="(value: PoolCoin | undefined) => onCoinChange(value!, 1)"
           @update:input="calcRate(1)"
         />
       </TransitionGroup>

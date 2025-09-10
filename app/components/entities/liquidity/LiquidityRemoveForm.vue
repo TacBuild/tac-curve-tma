@@ -9,6 +9,8 @@ import { useTransaction } from '~/composables/useTransaction'
 import { formatNumber } from '~/utils/string-utils'
 import type { Pool, PoolCoin } from '~~/entities/pool'
 
+type PairItem = { id: number, coin: PoolCoin | undefined, inputValue: string }
+
 const { pool } = defineProps<{ pool: Pool }>()
 
 const modal = useModal()
@@ -30,14 +32,14 @@ const errorRate = ref('')
 const totalSupply = ref(0n)
 const oneCoinKey: Ref<0 | 1> = ref(0)
 const poolTokenBalances: Ref<[bigint, bigint]> = ref([0n, 0n])
-const pair: { id: number, coin: PoolCoin | undefined, inputValue: string }[]
+const pair: [PairItem, PairItem]
   = reactive([{
     id: 1,
-    coin: await getCoin(pool.underlyingCoinAddresses[0], true),
+    coin: await getCoin(pool.underlyingCoinAddresses[0]!, true),
     inputValue: '0',
   }, {
     id: 2,
-    coin: await getCoin(pool.underlyingCoinAddresses[1], true),
+    coin: await getCoin(pool.underlyingCoinAddresses[1]!, true),
     inputValue: '0',
   },
   ])
@@ -463,5 +465,9 @@ watch(type, () => {
   gap: 8px;
   padding-top: 12px;
   border-top: 1px solid rgba(0, 0, 0, 0.1);
+
+  @media (prefers-color-scheme: dark) {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
 }
 </style>

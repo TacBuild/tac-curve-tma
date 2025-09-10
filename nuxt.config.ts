@@ -27,6 +27,15 @@ export default defineNuxtConfig({
       htmlAttrs: {
         lang: 'en',
       },
+      style: [{
+        textContent: `
+          html, body { background: #f2f2f7; }
+          @media (prefers-color-scheme: dark) {
+            html, body { background: #131316; }
+          }
+        `,
+        blocking: 'render',
+      }],
       meta: [
         {
           name: 'description',
@@ -40,6 +49,12 @@ export default defineNuxtConfig({
         {
           name: 'theme-color',
           content: '#f2f2f7',
+          media: '(prefers-color-scheme: light)',
+        },
+        {
+          name: 'theme-color',
+          content: '#131316',
+          media: '(prefers-color-scheme: dark)',
         },
       ],
       link: [

@@ -34,7 +34,7 @@ const init = () => {
   tonConnectUI.uiOptions = {
     language: 'en',
     uiPreferences: {
-      theme: THEME.LIGHT,
+      theme: window?.matchMedia?.('(prefers-color-scheme:dark)')?.matches ? THEME.DARK : THEME.LIGHT,
       borderRadius: 'none',
     },
     actionsConfiguration: {
@@ -52,6 +52,9 @@ const init = () => {
       updateTonBalance()
     }
   })
+}
+const fetchTonBalanceBigInt = () => {
+  return client.getBalance(Address.parse(address.value))
 }
 const fetchTonBalance = async () => {
   try {
@@ -106,6 +109,7 @@ export const useTonConnect = () => {
     shortAddress,
     shorterAddress,
     balance,
+    fetchTonBalanceBigInt,
     updateTonBalance,
     fetchTonBalance,
     getTonConnectUI,

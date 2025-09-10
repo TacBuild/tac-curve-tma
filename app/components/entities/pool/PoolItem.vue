@@ -5,11 +5,12 @@ import type { Pool } from '~~/entities/pool'
 
 const { pool, balance, balanceLoading } = defineProps<{ pool: Pool, balance?: bigint, balanceLoading?: boolean }>()
 const { isConnected } = useTonConnect()
-const { coinsMap, aprs } = useCurve()
+const { coinsMap } = useCurve()
+const { aprs } = useMerkl()
 
 const coins = computed(() => [
-  coinsMap.get(pool.underlyingCoinAddresses[0])!,
-  coinsMap.get(pool.underlyingCoinAddresses[1])!,
+  coinsMap.get(pool.underlyingCoinAddresses[0]!)!,
+  coinsMap.get(pool.underlyingCoinAddresses[1]!)!,
 ])
 </script>
 
@@ -33,7 +34,7 @@ const coins = computed(() => [
     >
       <template v-if="!balanceLoading">
         <p v-if="aprs[pool.address]">
-          {{ formatPercent(aprs[pool.address] / 100) }} APR
+          {{ formatPercent(aprs[pool.address]! / 100) }} APR
         </p>
 
         <p v-if="isConnected && balance">

@@ -22,6 +22,10 @@
   transform-origin: bottom left;
   transition: transform 0.2s steps(15, end);
 
+  @media (prefers-color-scheme: dark) {
+    filter: invert(0);
+  }
+
   @include respond-to(mobile) {
     transform-origin: bottom;
   }

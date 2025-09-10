@@ -2,17 +2,6 @@
   // Project variables
   --safe-area-inset-bottom: env(safe-area-inset-bottom);
 
-  // Colors
-  --c-white: #fff;
-  --c-body-bg: #f2f2f7;
-  --c-primary-text: #081d34;
-  --c-secondary-text: #727577;
-  --c-disabled: #B5B5C5;
-  --c-primary: #1763fd;
-  --c-primary-dark: #153C8A;
-  --c-orange: #FFA700;
-  --c-red: #D10000;
-
   // Grid
   --header-h: 64px;
   --menu-h: calc(64px + var(--ios-tg-safe-inset-bottom));
@@ -25,4 +14,31 @@
   --trs-default: 0.25s ease-in-out;
   --trs-slow: 0.35s ease-in-out;
   --trs-fast: 0.2s ease-in-out;
+}
+
+:root {
+  // Colors
+  --c-white: #fff;
+  --c-black: #000;
+  --c-body-bg: #f2f2f7;
+  --c-primary-text: #081d34;
+  --c-secondary-text: #727577;
+  --c-disabled: #b5b5c5;
+  --c-primary: #1763fd;
+  --c-primary-dark: #153c8a;
+  --c-orange: #ffa700;
+  --c-red: #d10000;
+
+  @media (prefers-color-scheme: dark) {
+    --c-white: #18191a;
+    --c-black: #fff;
+    --c-body-bg: #131316;
+    --c-primary-text: #eaeaf0;
+    --c-secondary-text: #a0a1b2;
+    --c-disabled: #46484d;
+    --c-primary: #5b8eff;
+    --c-primary-dark: #3761b4;
+    --c-orange: #ffb94e;
+    --c-red: #ff5f5f;
+  }
 }

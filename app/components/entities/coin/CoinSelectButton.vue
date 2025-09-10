@@ -59,8 +59,17 @@ const open = () => {
   min-width: 118px;
   cursor: pointer;
 
+  @media (prefers-color-scheme: dark) {
+    color: #eaeaf0;
+    background-color: #23242c;
+    box-shadow: 1px 0 0 0 #32343a inset, 0 1px 0 0 #32343a inset, -4px 0 0 0 #23242c inset, 0 -4px 0 0 #23242c inset;
+  }
+
   &:active {
     box-shadow: 1px 0 0 0 #484D56 inset, 0 1px 0 0 #484D56 inset, -2px 0 0 0 #D9D9D9 inset, 0 -2px 0 0 #D9D9D9 inset;
+    @media (prefers-color-scheme: dark) {
+      box-shadow: 4px 0 0 0 #23242c inset, 0 4px 0 0 #23242c inset, -1px 0 0 0 #32343a inset, 0 -1px 0 0 #32343a inset;
+    }
   }
 }
 </style>

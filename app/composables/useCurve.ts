@@ -1,6 +1,5 @@
 import curve from '@curvefi/api'
 import { until } from '@vueuse/core'
-import axios from 'axios'
 import {
   EVM_CHAIN_ID,
   EVM_PROVIDER_URL,
@@ -12,7 +11,6 @@ const isLoading = ref(false)
 const isLoaded = ref(false)
 const poolsMap: Map<string, Pool> = reactive(new Map())
 const coinsMap: Map<string, PoolCoin> = reactive(new Map())
-const aprs: Ref<Record<string, number>> = ref({})
 
 const pools = computed(() => [...poolsMap.values()])
 const coins = computed(() => [...coinsMap.values()])
@@ -20,7 +18,6 @@ const coins = computed(() => [...coinsMap.values()])
 const init = async () => {
   try {
     isLoading.value = true
-    updateMerklAPRs()
     await curve.init('JsonRpc', { url: EVM_PROVIDER_URL }, { chainId: EVM_CHAIN_ID })
     await updatePools()
     isLoaded.value = true
@@ -65,7 +62,7 @@ const updatePools = async () => {
         if (!coinsMap.has(address)) {
           coinsMap.set(address, {
             address,
-            symbol: pool.underlyingCoins[index],
+            symbol: pool.underlyingCoins[index] || 'UKWN',
             decimals: String(pool.underlyingDecimals[index]),
             usdPrice: 0,
             poolBalance: '',
@@ -75,19 +72,6 @@ const updatePools = async () => {
       })
     }
   }
-}
-const updateMerklAPRs = async () => {
-  aprs.value = {}
-  const { data } = await axios.get('https://api.merkl.xyz/v4/opportunities', {
-    params: {
-      items: 50,
-      mainProtocolId: 'curve',
-      chainId: 239,
-    },
-  })
-  data.forEach((opportunity: Record<string, unknown>) => {
-    aprs.value[(opportunity.identifier as string).toLowerCase()] = opportunity.apr as number
-  })
 }
 const getBestRouteAndOutput = async (
   inputCoin: string,
@@ -137,7 +121,6 @@ export const useCurve = () => {
     coinsMap,
     pools,
     coins,
-    aprs,
     getCoin,
     getPool,
     getCurve,
