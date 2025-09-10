@@ -11,7 +11,10 @@ import { formatNumber } from '~/utils/string-utils'
 import type { Pool, PoolCoin } from '~~/entities/pool'
 
 const modal = useModal()
-const { isLoaded: isTonLoaded, isConnected, walletName, fetchTonBalance, getTonConnectUI } = useTonConnect()
+const {
+  isLoaded: isTonLoaded,
+  isConnected, walletName, balance,
+  fetchTonBalance, getTonConnectUI, updateTonBalance } = useTonConnect()
 const { addLiquidity, getLiquidityRates, slippagePercent } = useTransaction()
 const { fetchJettonBalanceByEvmAddress, isLoaded: isTacLoaded } = useTac()
 const { getCoin, aprs } = useCurve()
@@ -53,13 +56,14 @@ const isSubmitDisabled = computed(() => {
     return !isTonLoaded.value
   }
 
-  return Boolean(errorRate.value) || isSubmitting.value
+  return isNotEnoughForFee.value || Boolean(errorRate.value) || isSubmitting.value
     || isLoadingBalances.value || !pair[0].inputValue
     || Number(pair[0].inputValue) > pair[0].balance
     || Number(pair[1].inputValue) > pair[1].balance
     || Number(pair[0].inputValue) <= 0 || Number(pair[1].inputValue) <= 0
 })
 const isReady = computed(() => isConnected.value && isTacLoaded.value)
+const isNotEnoughForFee = computed(() => (balance.value < 1.5) && isConnected.value)
 
 const calcRates = useDebounceFn(async () => {
   console.log(pool, await pool.stats.parameters())
@@ -141,6 +145,7 @@ const handleAddLiquidity = async () => {
       },
       onClose: () => {
         updateBalances()
+        updateTonBalance()
       },
     })
   }
@@ -310,8 +315,19 @@ watch(isReady, (val) => {
         </p>
 
         <p :class="$style.info">
-          <span class=" weight-600">Network fee</span>
-          <span class="c-secondary-text right">~0.5 TON</span>
+          <template v-if="isNotEnoughForFee">
+            <span class="weight-600 c-red">
+              Not enough TON for fee. <br>
+              You have {{ formatNumber(balance, 2) }} TON
+            </span>
+            <span class="c-secondary-text right c-red">~{{ formatNumber(1.5, 2) }} TON</span>
+          </template>
+          <template v-else>
+            <span class="weight-600">
+              Network fee
+            </span>
+            <span class="c-secondary-text right">~{{ formatNumber(1.5, 2) }} TON</span>
+          </template>
         </p>
       </div>
 

@@ -119,7 +119,6 @@ export default defineNuxtConfig({
     },
 
     build: {
-      target: 'modules',
       rollupOptions: {
         output: {
           inlineDynamicImports: true,

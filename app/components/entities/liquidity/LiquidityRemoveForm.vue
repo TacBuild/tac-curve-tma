@@ -12,7 +12,8 @@ import type { Pool, PoolCoin } from '~~/entities/pool'
 const { pool } = defineProps<{ pool: Pool }>()
 
 const modal = useModal()
-const { isLoaded, isConnected, walletName, address, getTonConnectUI } = useTonConnect()
+const { isLoaded, isConnected, walletName, address,
+  balance: tonBalance, getTonConnectUI, updateTonBalance } = useTonConnect()
 const {
   removeLiquidity,
   getTotalSupply, getPoolTokenBalances, getOneCoinWithdrawRate,
@@ -56,12 +57,14 @@ const errorInput = computed(() => {
 
   return ''
 })
+const isNotEnoughForFee = computed(() => (tonBalance.value < 1.5) && isConnected.value)
 const isSubmitDisabled = computed(() => {
   if (!isConnected.value) {
     return !isLoaded.value
   }
 
-  return isSubmitting.value
+  return isNotEnoughForFee.value
+    || isSubmitting.value
     || isLoadingBalance.value
     || parseUnits(amount.value, decimals.value) > balance.value
     || Number(amount.value) <= 0
@@ -217,6 +220,7 @@ const handleRemoveLiquidity = async () => {
       },
       onClose: () => {
         updateBalance()
+        updateTonBalance()
       },
     })
   }
@@ -387,8 +391,19 @@ watch(type, () => {
         class="mb-24"
       >
         <p :class="$style.info">
-          <span class=" weight-600">Network fee</span>
-          <span class="c-secondary-text">~0.5 TON</span>
+          <template v-if="isNotEnoughForFee">
+            <span class="weight-600 c-red">
+              Not enough TON for fee. <br>
+              You have {{ formatNumber(tonBalance, 2) }} TON
+            </span>
+            <span class="c-secondary-text right c-red">~{{ formatNumber(1.5, 2) }} TON</span>
+          </template>
+          <template v-else>
+            <span class="weight-600">
+              Network fee
+            </span>
+            <span class="c-secondary-text right">~{{ formatNumber(1.5, 2) }} TON</span>
+          </template>
         </p>
 
         <p :class="$style.info">
