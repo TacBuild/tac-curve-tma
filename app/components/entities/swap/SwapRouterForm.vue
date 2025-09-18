@@ -10,6 +10,7 @@ import { useTransaction } from '~/composables/useTransaction'
 import type { PoolCoin } from '~~/entities/pool'
 import { CURVE_HIGH_PRICE_IMPACT_PERCENT, EVM_TAC_ADDRESS } from '~~/entities/config'
 import SwapFormInput from '~/components/entities/swap/SwapFormInput.vue'
+import { formatNumber } from '~/utils/string-utils'
 
 type PairItem = {
   id: number
@@ -22,7 +23,7 @@ type PairItem = {
 const modal = useModal()
 const { swapViaRouter, slippagePercent } = useTransaction()
 const { isLoaded: isTacLoaded } = useTac()
-const { isLoaded, isConnected, walletName, getTonConnectUI } = useTonConnect()
+const { isLoaded, isConnected, walletName, balance, getTonConnectUI } = useTonConnect()
 
 const { isLoaded: isPoolsLoaded, coinsMap, getBestRouteAndOutput } = useCurve()
 
@@ -53,6 +54,7 @@ const pair: [PairItem, PairItem] = reactive([{
 const route: Ref<IRoute> = ref([])
 const priceImpact: Ref<number> = ref(0)
 
+const isNotEnoughForFee = computed(() => (balance.value < 1.5) && isConnected.value)
 const isLoadingBalances = computed(() => pair[0].isLoadingBalance || pair[1].isLoadingBalance)
 const errorInput = computed(() => {
   if (isLoadingBalances.value || !isConnected.value) {
@@ -71,6 +73,7 @@ const isSubmitDisabled = computed(() => {
   }
 
   return isPreparing.value || isSwapping.value
+    || isNotEnoughForFee.value
     || isLoadingBalances.value || !pair[0].inputValue
     || parseUnits(pair[0].inputValue, +(pair[0].coin?.decimals || 18)) > pair[0].balance
     || Number(pair[0].inputValue) <= 0
@@ -384,11 +387,15 @@ load()
       </p>
 
       <p
+        v-if="isNotEnoughForFee"
         :class="$style.info"
         class="mb-24"
       >
-        <span class=" weight-600">Network fee</span>
-        <span class="c-secondary-text">~0.5 TON</span>
+        <span class="weight-600 c-red">
+          Not enough TON for fee. <br>
+          You have {{ formatNumber(balance, 2) }} TON
+        </span>
+        <span class="c-secondary-text right c-red">~{{ formatNumber(1.5, 2) }} TON</span>
       </p>
 
       <div class="submit-button-sticky-wrap">

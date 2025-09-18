@@ -59,13 +59,6 @@ onMounted(() => {
         <span class="weight-600">Slippage Tolerance</span>
         <span class="c-secondary-text weight-600">{{ slippagePercent }}%</span>
       </p>
-
-      <p
-        :class="$style.info"
-      >
-        <span class="weight-600">Network fee</span>
-        <span class="c-secondary-text weight-600">~0.5 TON</span>
-      </p>
     </div>
 
     <template #bottom>
