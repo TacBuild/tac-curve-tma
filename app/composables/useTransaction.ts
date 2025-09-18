@@ -15,7 +15,7 @@ export const useTransaction = () => {
   const slippagePercentBigInt = 100n / 2n
 
   const swap = async (
-    poolAddress: string, swapKeys: Array<0 | 1>,
+    poolAddress: string, swapKeys: [0 | 1, 0 | 1],
     addressA: string, amountA: bigint,
     minAmountB: bigint, poolImplementation?: string,
   ) => {
@@ -295,23 +295,23 @@ export const useTransaction = () => {
   }
   const getLiquidityRates = async (poolAddress: string, amounts: bigint[], isDeposit: boolean, poolImplementation?: string): Promise<bigint> => {
     const contract = await getContract(poolAddress, poolImplementation)
-    return contract.calc_token_amount(amounts, isDeposit)
+    return contract.calc_token_amount!(amounts, isDeposit)
   }
   const getSwapRates = async (method: 'get_dx' | 'get_dy', poolAddress: string, amount: bigint, swapKeys: number[], poolImplementation?: string): Promise<bigint> => {
     const contract = await getContract(poolAddress, poolImplementation)
-    return contract[method](swapKeys[0], swapKeys[1], amount)
+    return contract[method]!(swapKeys[0], swapKeys[1], amount)
   }
   const getTotalSupply = async (poolAddress: string): Promise<bigint> => {
     const contract = await getContract(poolAddress)
-    return contract['totalSupply']()
+    return contract['totalSupply']!()
   }
   const getPoolTokenBalances = async (poolAddress: string, tokenIndex: 0 | 1): Promise<bigint> => {
     const contract = await getContract(poolAddress)
-    return contract['balances'](tokenIndex)
+    return contract['balances']!(tokenIndex)
   }
   const getOneCoinWithdrawRate = async (poolAddress: string, amount: bigint, tokenIndex: 0 | 1): Promise<bigint> => {
     const contract = await getContract(poolAddress)
-    return contract['calc_withdraw_one_coin'](amount, tokenIndex)
+    return contract['calc_withdraw_one_coin']!(amount, tokenIndex)
   }
   const calcUnstakeBalancedTokenValues = (amount: bigint, totalSupply: bigint, poolTokenBalances: [bigint, bigint]) => {
     return [poolTokenBalances[0] * amount / totalSupply, poolTokenBalances[1] * amount / totalSupply]

@@ -1,5 +1,9 @@
 @use "mixins" as *;
 
+.gap-4 {
+  gap: 4px;
+}
+
 .gap-8 {
   gap: 8px;
 }
@@ -165,6 +169,11 @@
 .column {
   display: flex;
   flex-direction: column;
+}
+
+.flex-wrap {
+  display: flex;
+  flex-wrap: wrap;
 }
 
 .flex-center {

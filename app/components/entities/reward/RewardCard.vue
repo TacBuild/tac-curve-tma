@@ -2,11 +2,11 @@
 import { useModal } from '~/components/ui/composables/useModal'
 import type { Reward } from '~~/entities/merkl'
 import { FixedNumber } from 'ethers'
-import { TransactionDetailsModal } from '#components'
+import { RewardConfirmClaimModal, TransactionDetailsModal } from '#components'
 
 const { reward } = defineProps<{ reward: Reward }>()
 
-const { claimReward, updateRewards } = useMerkl()
+const { claimReward } = useMerkl()
 const modal = useModal()
 
 const isLocked = ref(false)
@@ -47,20 +47,14 @@ const claim = async () => {
 
 const onClaimClick = async () => {
   try {
-    await claim()
-    // modal.open(OperationReviewModal, {
-    //   props: {
-    //     type: 'reward',
-    //     asset: reward.token,
-    //     amount: amountToClaim.value,
-    //     rewardInfo: reward,
-    //     onConfirm: () => {
-    //       setTimeout(() => {
-    //         claim()
-    //       }, 400)
-    //     },
-    //   },
-    // })
+    modal.open(RewardConfirmClaimModal, {
+      props: {
+        reward,
+        onConfirm: async () => {
+          await claim()
+        },
+      },
+    })
   }
   catch (e) {
     console.warn(e)
@@ -98,7 +92,7 @@ const onClaimClick = async () => {
         :loading="isClaiming"
         @click="onClaimClick"
       >
-        {{ isLocked ? 'Claimed' : 'Claim' }}
+        {{ isLocked ? 'Claimed' : 'Review claim' }}
       </UiButton>
     </div>
   </div>

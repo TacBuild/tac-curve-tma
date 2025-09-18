@@ -3,7 +3,7 @@ import { SenderFactory, type EvmProxyMsg } from '@tonappchain/sdk'
 import axios from 'axios'
 import { ethers } from 'ethers'
 
-import type { Reward, RewardsResponseItem, RewardToken } from '~~/entities/merkl'
+import type { Opportunity, Reward, RewardsResponseItem, RewardToken } from '~~/entities/merkl'
 import {
   EVM_CHAIN_ID,
   EVM_PROVIDER_URL,
@@ -21,17 +21,17 @@ const endpoints = {
 const { friendlyAddress, getTonConnectUI } = useTonConnect()
 
 const address = ref('')
-const isAPRsLoading = ref(false)
+const isOpportunitiesLoading = ref(false)
 const isRewardsLoading = ref(true)
 const rewards: Ref<Reward[]> = ref([])
-const rewardTokens: Ref<RewardToken[]> = ref([])
+const opportunitiesMap: Ref<Record<string, Opportunity>> = ref({})
 const aprs: Ref<Record<string, number>> = ref({})
 
 const updateAPRs = async () => {
   aprs.value = {}
 
   try {
-    isAPRsLoading.value = true
+    isOpportunitiesLoading.value = true
     const { data } = await axios.get(endpoints.opportunities, {
       params: {
         items: 50,
@@ -39,15 +39,17 @@ const updateAPRs = async () => {
         chainId: 239,
       },
     })
-    data.forEach((opportunity: Record<string, unknown>) => {
+    data.forEach((opportunity: Opportunity) => {
+      opportunitiesMap.value[opportunity.identifier] = opportunity
       aprs.value[(opportunity.identifier as string).toLowerCase()] = opportunity.apr as number
     })
+    console.log(aprs)
   }
   catch (e) {
     console.warn(e)
   }
   finally {
-    isAPRsLoading.value = false
+    isOpportunitiesLoading.value = false
   }
 }
 const updateRewards = async (isInitialLoading = true) => {
@@ -150,9 +152,9 @@ export const useMerkl = () => {
   return {
     aprs,
     rewards,
-    rewardTokens,
-    isAPRsLoading,
+    isOpportunitiesLoading,
     isRewardsLoading,
+    opportunitiesMap,
     updateAPRs,
     claimReward,
     initMerkl,

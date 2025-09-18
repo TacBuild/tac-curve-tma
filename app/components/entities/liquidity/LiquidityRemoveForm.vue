@@ -392,20 +392,15 @@ watch(type, () => {
         :class="$style.infos"
         class="mb-24"
       >
-        <p :class="$style.info">
-          <template v-if="isNotEnoughForFee">
-            <span class="weight-600 c-red">
-              Not enough TON for fee. <br>
-              You have {{ formatNumber(tonBalance, 2) }} TON
-            </span>
-            <span class="c-secondary-text right c-red">~{{ formatNumber(1.5, 2) }} TON</span>
-          </template>
-          <template v-else>
-            <span class="weight-600">
-              Network fee
-            </span>
-            <span class="c-secondary-text right">~{{ formatNumber(1.5, 2) }} TON</span>
-          </template>
+        <p
+          v-if="isNotEnoughForFee"
+          :class="$style.info"
+        >
+          <span class="weight-600 c-red">
+            Not enough TON for fee. <br>
+            You have {{ formatNumber(tonBalance, 2) }} TON
+          </span>
+          <span class="c-secondary-text right c-red">~{{ formatNumber(1.5, 2) }} TON</span>
         </p>
 
         <p :class="$style.info">
