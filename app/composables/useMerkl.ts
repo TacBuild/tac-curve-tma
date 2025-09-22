@@ -1,9 +1,9 @@
 import { Address } from '@ton/ton'
 import { SenderFactory, type EvmProxyMsg } from '@tonappchain/sdk'
 import axios from 'axios'
-import { ethers } from 'ethers'
+import { ethers, getAddress } from 'ethers'
 
-import type { Opportunity, Reward, RewardsResponseItem, RewardToken } from '~~/entities/merkl'
+import type { Opportunity, Reward, RewardsResponseItem } from '~~/entities/merkl'
 import {
   EVM_CHAIN_ID,
   EVM_PROVIDER_URL,
@@ -40,7 +40,7 @@ const updateAPRs = async () => {
       },
     })
     data.forEach((opportunity: Opportunity) => {
-      opportunitiesMap.value[opportunity.identifier] = opportunity
+      opportunitiesMap.value[getAddress(opportunity.identifier)] = opportunity
       aprs.value[(opportunity.identifier as string).toLowerCase()] = opportunity.apr as number
     })
     console.log(aprs)

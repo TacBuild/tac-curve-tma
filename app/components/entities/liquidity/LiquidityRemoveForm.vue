@@ -392,6 +392,11 @@ watch(type, () => {
         :class="$style.infos"
         class="mb-24"
       >
+        <p :class="$style.info">
+          <span class=" weight-600">Slippage Tolerance</span>
+          <span class="c-secondary-text">{{ slippagePercent }}%</span>
+        </p>
+
         <p
           v-if="isNotEnoughForFee"
           :class="$style.info"
@@ -400,12 +405,6 @@ watch(type, () => {
             Not enough TON for fee. <br>
             You have {{ formatNumber(tonBalance, 2) }} TON
           </span>
-          <span class="c-secondary-text right c-red">~{{ formatNumber(1.5, 2) }} TON</span>
-        </p>
-
-        <p :class="$style.info">
-          <span class=" weight-600">Slippage Tolerance</span>
-          <span class="c-secondary-text">{{ slippagePercent }}%</span>
         </p>
       </div>
 

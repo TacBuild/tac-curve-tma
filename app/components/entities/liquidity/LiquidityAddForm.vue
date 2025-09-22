@@ -172,7 +172,7 @@ const handleAddLiquidity = async () => {
   }
 }
 const setMax = (inputIdx: 0 | 1) => {
-  pair[inputIdx].inputValue = formatUnits(pair[inputIdx].balance, +pair[inputIdx].coin?.decimals)
+  pair[inputIdx].inputValue = formatUnits(pair[inputIdx].balance, +(pair[inputIdx].coin?.decimals || 18))
   calcRates()
 }
 
@@ -326,7 +326,6 @@ watch(isReady, (val) => {
             Not enough TON for fee. <br>
             You have {{ formatNumber(balance, 2) }} TON
           </span>
-          <span class="c-secondary-text right c-red">~{{ formatNumber(1.5, 2) }} TON</span>
         </p>
       </div>
 

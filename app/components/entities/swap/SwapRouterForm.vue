@@ -395,7 +395,6 @@ load()
           Not enough TON for fee. <br>
           You have {{ formatNumber(balance, 2) }} TON
         </span>
-        <span class="c-secondary-text right c-red">~{{ formatNumber(1.5, 2) }} TON</span>
       </p>
 
       <div class="submit-button-sticky-wrap">
