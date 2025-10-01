@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { StageName } from '@tonappchain/sdk/dist/structs/Struct'
 import { useClipboard } from '@vueuse/core'
+import { StageName } from '@tonappchain/sdk'
 
 const { copy, copied, isSupported } = useClipboard({ legacy: true })
 const { operationId, status } = defineProps<{ operationId: string, status: string }>()
@@ -16,7 +16,7 @@ const map: Record<string, number> = {
 }
 
 const getStatus = (key: string) => {
-  const currentIdx = map[status || '']
+  const currentIdx = map[status || '']!
   const idx = map[key || ''] || 0
   if (currentIdx + 1 === idx) {
     return 'pending'

@@ -1,9 +1,8 @@
 import {
   Network,
-  OperationTracker,
+  OperationTracker, StageName,
   type TransactionLinker,
 } from '@tonappchain/sdk'
-import { StageName } from '@tonappchain/sdk/dist/structs/Struct'
 
 const POOL_MS = 5000
 const MAX_RETRIES = 40

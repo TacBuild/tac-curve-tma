@@ -1,5 +1,9 @@
 import { AbiCoder, Contract, getAddress, getDefaultProvider } from 'ethers'
-import { type AssetBridgingData, AssetType, SenderFactory } from '@tonappchain/sdk'
+import {
+  type AssetLike,
+  AssetType,
+  SenderFactory,
+} from '@tonappchain/sdk'
 import type { IRoute } from '@curvefi/api/lib/interfaces'
 import { DEFAULT_SLIPPAGE_PERCENT_VALUE } from '~/utils/ton-utils'
 import { getProxyAddressByPoolImplementation } from '~~/entities/pool'
@@ -32,12 +36,13 @@ export const useTransaction = () => {
     const sender = await SenderFactory.getSender({ tonConnect: getTonConnectUI() })
     let assetAddress = addressA ? await sdk.getTVMTokenAddress(addressA) : undefined
     assetAddress = assetAddress === 'NONE' ? undefined : assetAddress
-    const assets: AssetBridgingData[] = [{
-      type: AssetType.FT,
+    const assets: AssetLike[] = [{
       rawAmount: amountA,
       address: assetAddress,
     }]
-    const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets)
+    const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets, {
+      waitOperationId: false,
+    })
     const tsResult = tx.sendTransactionResult as {
       success: boolean
       error: Record<string, unknown>
@@ -78,13 +83,14 @@ export const useTransaction = () => {
     const sender = await SenderFactory.getSender({ tonConnect: getTonConnectUI() })
     let assetAddress = inAddress ? await sdk.getTVMTokenAddress(getAddress(inAddress)) : undefined
     assetAddress = assetAddress === 'NONE' ? undefined : assetAddress
-    const assets: AssetBridgingData[] = [{
-      type: AssetType.FT,
+    const assets: AssetLike[] = [{
       rawAmount: inAmount,
       address: assetAddress,
     }]
 
-    const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets)
+    const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets, {
+      waitOperationId: false,
+    })
     const tsResult = tx.sendTransactionResult as {
       success: boolean
       error: Record<string, unknown>
@@ -117,8 +123,7 @@ export const useTransaction = () => {
     let assetAddressB = addressB ? await sdk.getTVMTokenAddress(getAddress(addressB)) : undefined
     assetAddressB = assetAddressB === 'NONE' ? undefined : assetAddressB
 
-    const assets: AssetBridgingData[] = [{
-      type: AssetType.FT,
+    const assets: AssetLike[] = [{
       rawAmount: amountA,
       address: assetAddressA,
     }, {
@@ -126,7 +131,9 @@ export const useTransaction = () => {
       rawAmount: amountB,
       address: assetAddressB,
     }]
-    const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets)
+    const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets, {
+      waitOperationId: false,
+    })
     const tsResult = tx.sendTransactionResult as {
       success: boolean
       error: Record<string, unknown>
@@ -153,12 +160,13 @@ export const useTransaction = () => {
       ),
     }
     const sender = await SenderFactory.getSender({ tonConnect: getTonConnectUI() })
-    const assets: AssetBridgingData[] = [{
-      type: AssetType.FT,
+    const assets: AssetLike[] = [{
       rawAmount: amount,
       address: await sdk.getTVMTokenAddress(getAddress(poolAddress)),
     }]
-    const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets)
+    const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets, {
+      waitOperationId: false,
+    })
     const tsResult = tx.sendTransactionResult as {
       success: boolean
       error: Record<string, unknown>
@@ -185,12 +193,13 @@ export const useTransaction = () => {
       ),
     }
     const sender = await SenderFactory.getSender({ tonConnect: getTonConnectUI() })
-    const assets: AssetBridgingData[] = [{
-      type: AssetType.FT,
+    const assets: AssetLike[] = [{
       rawAmount: amount,
       address: await sdk.getTVMTokenAddress(getAddress(poolAddress)),
     }]
-    const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets)
+    const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets, {
+      waitOperationId: false,
+    })
     const tsResult = tx.sendTransactionResult as {
       success: boolean
       error: Record<string, unknown>
