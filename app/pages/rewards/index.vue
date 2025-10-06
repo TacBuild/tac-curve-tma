@@ -36,7 +36,7 @@ const { rewards, isRewardsLoading } = useMerkl()
     </p>
 
     <div
-      v-if="isRewardsLoading"
+      v-if="isRewardsLoading && isConnected"
       class="ui-loader center"
     />
     <div v-else-if="!isConnected && isLoaded">
