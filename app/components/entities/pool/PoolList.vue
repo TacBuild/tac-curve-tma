@@ -1,23 +1,19 @@
 <script setup lang="ts">
-import axios from 'axios'
-import { Address } from '@ton/ton'
-import { getAddress } from 'ethers'
 import { useModal } from '~/components/ui/composables/useModal'
 import { PoolDetailModal } from '#components'
 import type { Pool } from '~~/entities/pool'
 
 const modal = useModal()
+const { isLoaded } = useTac()
+const { isConnected } = useTonConnect()
 const { pools, isLoading: isCurveLoading } = useCurve()
-const { address, isConnected } = useTonConnect()
-const { getTacSdk, isLoaded } = useTac()
-
-const balances: Ref<Record<string, bigint>> = ref({})
-const isBalancesLoading = ref(false)
+const { poolsBalances, updatePoolsBalances, isPoolsBalancesLoading } = useBalances()
 
 let lastUpdated = 0
 
 const sortedPools = computed(() => {
-  return pools.value.toSorted((a, b) => Number((balances.value[b.address] || 0n) - (balances.value[a.address] || 0n)))
+  return pools.value.toSorted((a, b) =>
+    Number((poolsBalances.value[b.address] || 0n) - (poolsBalances.value[a.address] || 0n)))
 })
 
 const openDetail = (pool: Pool) => {
@@ -29,44 +25,11 @@ const openDetail = (pool: Pool) => {
 }
 const updateBalances = async () => {
   try {
-    isBalancesLoading.value = true
-    balances.value = {}
-    if (!address.value || !isLoaded.value) {
-      return
-    }
-    const tvmDict: Record<string, string | bigint> = {}
-    const batchSize = 5
-    for (let i = 0; i < pools.value.length; i += batchSize) {
-      const batch = pools.value.slice(i, i + batchSize)
-      await Promise.allSettled(batch.map(async (pool) => {
-        const addr = await getTacSdk().getTVMTokenAddress(getAddress(pool.address)).catch(() => undefined)
-        if (addr) {
-          tvmDict[pool.address] = addr
-        }
-      }))
-    }
-
-    const { data } = await axios.get(`https://rp.mainnet.tac.build/api/v3/jetton/wallets`, {
-      params: {
-        jetton_address: Object.values(tvmDict),
-        owner_address: [address.value],
-        limit: 50,
-      },
-    })
-
-    Object.entries(tvmDict).map((o) => {
-      const wallet = data.jetton_wallets.find((w: { jetton: string }) => w.jetton === (Address.parse(o[1] as string).toRawString()).toUpperCase())
-      tvmDict[o[0]] = BigInt(wallet?.balance || 0)
-    })
-
-    balances.value = tvmDict as Record<string, bigint>
+    await updatePoolsBalances()
     lastUpdated = +new Date()
   }
   catch (e) {
     console.warn(e)
-  }
-  finally {
-    isBalancesLoading.value = false
   }
 }
 
@@ -85,7 +48,7 @@ watch([isLoaded, isCurveLoading, isConnected], () => {
 
 <template>
   <div
-    v-if="!isLoaded || isBalancesLoading || isCurveLoading"
+    v-if="!isLoaded || isPoolsBalancesLoading || isCurveLoading"
     class="ui-loader center"
   />
   <ul
@@ -100,8 +63,8 @@ watch([isLoaded, isCurveLoading, isConnected], () => {
     >
       <PoolItem
         :pool="pool"
-        :balance="balances[pool.address]"
-        :balance-loading="!isLoaded || isBalancesLoading"
+        :balance="poolsBalances[pool.address]"
+        :balance-loading="!isLoaded || isPoolsBalancesLoading"
       />
     </li>
   </ul>

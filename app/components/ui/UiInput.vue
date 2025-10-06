@@ -38,7 +38,7 @@ const onBlur = (e: Event) => {
 const onInput = (e: Event) => {
   let value = (e.target as HTMLInputElement).value
   value = value.replace(',', '.')
-  if (props.onlyNumber && isNaN(Number(value)) && Boolean(value)) {
+  if (props.onlyNumber && (value !== '.' && isNaN(Number(value))) && Boolean(value)) {
     (e.target as HTMLInputElement).value = String(model.value)
   }
   else {

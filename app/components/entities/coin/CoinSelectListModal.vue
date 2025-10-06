@@ -1,9 +1,25 @@
 <script setup lang="ts">
-import type { PoolCoin } from '~~/entities/pool';
+import type { PoolCoin } from '~~/entities/pool'
+import { formatUnits } from 'ethers'
 
 const emits = defineEmits(['close', 'select'])
-const { title = 'Select token', coins, onSelect } = defineProps<{ title?: string, coins: PoolCoin[], onSelect: (e: PoolCoin) => void }>()
+const { title = 'Select token', onSelect }
+  = defineProps<{ title?: string, onSelect: (e: PoolCoin) => void }>()
+const { coins } = useCurve()
+const { coinsBalances } = useBalances()
 
+const priority = ['TAC', 'TON', 'USD₮', 'WETH']
+const coinsWithBalances = computed(() => (
+  coins.value.map(coin => ({
+    coin,
+    balance: coinsBalances.value[coin.address] || 0n,
+  })).sort((a, b) => {
+    const iA = priority.indexOf(a.coin.symbol)
+    const iB = priority.indexOf(b.coin.symbol)
+
+    return iA == -1 ? 1 : iB == -1 ? -1 : iA - iB
+  })
+))
 const handleSelect = (coin: PoolCoin) => {
   if (onSelect) {
     onSelect(coin)
@@ -24,7 +40,7 @@ const handleSelect = (coin: PoolCoin) => {
 
     <ul :class="$style.list">
       <li
-        v-for="coin in coins"
+        v-for="{ coin, balance } in coinsWithBalances"
         :key="coin.address"
         :class="$style.item"
         @click="handleSelect(coin)"
@@ -34,9 +50,20 @@ const handleSelect = (coin: PoolCoin) => {
           :coins="[coin]"
         />
 
-        <p class="weight-700 p1">
-          {{ coin?.symbol || 'Unknown' }}
-        </p>
+        <div
+          class="flex-between flex-center gap-8 flex-wrap"
+          style="flex-grow: 1"
+        >
+          <p class="weight-700 p1">
+            {{ coin?.symbol || 'Unknown' }}
+          </p>
+          <p
+            v-if="balance > 0n"
+            class="weight-600"
+          >
+            {{ formatNumber(formatUnits((balance).toString() || '0', +coin.decimals), 2, 4) }}
+          </p>
+        </div>
       </li>
     </ul>
   </BaseModalWrapper>

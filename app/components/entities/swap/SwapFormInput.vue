@@ -5,19 +5,22 @@ import type { PoolCoin } from '~~/entities/pool'
 import { useTonConnect } from '~/composables/useTonConnect'
 import { formatUnits } from 'ethers'
 
-const { coins, getUsdRate } = useCurve()
+const { getUsdRate } = useCurve()
 const { isConnected } = useTonConnect()
-const { isLoaded: isTacLoaded, fetchJettonBalance } = useTac()
+const { isLoaded: isTacLoaded } = useTac()
+const { coinsBalances, isCoinsBalancesLoading } = useBalances()
 
 defineProps<{ disabled?: boolean, to?: boolean, errorInput?: string }>()
 
 const inputValue = defineModel<string>('input', { default: '' })
 const coin = defineModel<PoolCoin | undefined>('coin', { default: undefined })
-const balance = defineModel<bigint>('balance', { default: 0n })
 
 const usdRate = ref(0)
 const isLoadingUsdRate = ref(false)
-const isLoadingBalance = ref(false)
+
+const balance = computed(() => coin.value ? coinsBalances.value?.[coin.value.address] || 0n : 0n)
+const balanceModel = defineModel<bigint>('balance', { default: 0n })
+watch(balance, val => balanceModel.value = val)
 
 const setMax = () => {
   inputValue.value = formatUnits(balance.value, +(coin.value?.decimals || 18))
@@ -25,18 +28,7 @@ const setMax = () => {
 const onCoinChange = (selectedCoin: PoolCoin | undefined) => {
   coin.value = selectedCoin
 }
-const updateBalance = async () => {
-  try {
-    isLoadingBalance.value = true
-    balance.value = (await fetchJettonBalance(coin.value!.address)).balance
-  }
-  catch (e) {
-    console.warn(e)
-  }
-  finally {
-    isLoadingBalance.value = false
-  }
-}
+
 const updateUsdRate = async () => {
   try {
     isLoadingUsdRate.value = true
@@ -55,19 +47,9 @@ const updateUsdRate = async () => {
 
 debouncedWatch(coin, () => {
   if (coin.value) {
-    updateBalance()
     updateUsdRate()
   }
 }, { immediate: true, debounce: 200 })
-watch(isConnected, (val) => {
-  if (val) {
-    updateBalance()
-  }
-})
-
-defineExpose({
-  updateBalance,
-})
 </script>
 
 <template>
@@ -85,7 +67,7 @@ defineExpose({
     >
       <template #label>
         {{
-          isConnected && coin ? `Avail. ${isLoadingBalance || !isTacLoaded
+          isConnected && coin ? `Avail. ${isCoinsBalancesLoading || !isTacLoaded
             ? 'loading...' : formatNumber(formatUnits(balance, +coin?.decimals || 18), +coin?.decimals || 18)}`
           : to ? 'You receive' : 'You send'
         }}
@@ -102,7 +84,6 @@ defineExpose({
             MAX
           </UiButton>
           <CoinSelectButton
-            :coins="coins"
             :model-value="coin"
             @change="onCoinChange"
           />

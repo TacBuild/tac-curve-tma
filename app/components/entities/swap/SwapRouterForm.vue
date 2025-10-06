@@ -26,6 +26,7 @@ const { isLoaded: isTacLoaded } = useTac()
 const { isLoaded, isConnected, walletName, balance, getTonConnectUI } = useTonConnect()
 
 const { isLoaded: isPoolsLoaded, coinsMap, getBestRouteAndOutput } = useCurve()
+const { updateCoinsBalances, isCoinsBalancesLoading } = useBalances()
 
 let calcRateKey = 0
 const isPreparing = ref(false)
@@ -55,13 +56,13 @@ const route: Ref<IRoute> = ref([])
 const priceImpact: Ref<number> = ref(0)
 
 const isNotEnoughForFee = computed(() => (balance.value < 1.5) && isConnected.value)
-const isLoadingBalances = computed(() => pair[0].isLoadingBalance || pair[1].isLoadingBalance)
 const errorInput = computed(() => {
-  if (isLoadingBalances.value || !isConnected.value) {
+  if (isCoinsBalancesLoading.value || !isConnected.value) {
     return ''
   }
 
-  if (pair[0].coin && (pair[0].balance < +pair[0].inputValue)) {
+  if (pair[0].coin && (
+    pair[0].balance < parseUnits(String(pair[0].inputValue || '0'), +(pair[0].coin?.decimals || 18)))) {
     return `Insufficient ${pair[0].coin?.symbol} balance`
   }
 
@@ -74,8 +75,8 @@ const isSubmitDisabled = computed(() => {
 
   return isPreparing.value || isSwapping.value
     || isNotEnoughForFee.value
-    || isLoadingBalances.value || !pair[0].inputValue
-    || parseUnits(pair[0].inputValue, +(pair[0].coin?.decimals || 18)) > pair[0].balance
+    || isCoinsBalancesLoading.value || !pair[0].inputValue
+    || parseUnits(pair[0].inputValue || '0', +(pair[0].coin?.decimals || 18)) > pair[0].balance
     || Number(pair[0].inputValue) <= 0
     || isLoadingRoute.value || Boolean(!route.value.length)
 })
@@ -95,7 +96,7 @@ const load = async () => {
 }
 
 const swapPair = () => {
-  if (isLoadingBalances.value) {
+  if (isCoinsBalancesLoading.value) {
     return
   }
   if (transitionName.value === 'swap') {
@@ -171,7 +172,6 @@ const onSubmit = async () => {
     return
   }
 
-  // pair[0].inputValue = String(Math.trunc((Number(pair[0].inputValue)) * 10 ** pair[0].coin.decimals) / 10 ** pair[0].coin.decimals)
   try {
     isPreparing.value = true
     await calcRate(0)
@@ -231,10 +231,9 @@ const handleSwap = async () => {
               transactionLinker: txLinker,
             },
             onClose: () => {
-              if (swapInput1.value && swapInput2.value) {
-                swapInput1.value.updateBalance()
-                swapInput2.value.updateBalance()
-              }
+              setTimeout(() => {
+                updateCoinsBalances()
+              }, 1000)
             },
           })
         }, 300)
@@ -260,6 +259,15 @@ const handleSwap = async () => {
   }
 }
 const onCoinChange = async (coin: PoolCoin, index: 0 | 1) => {
+  if (index === 0 && pair[0].inputValue) {
+    // normalize value inside input to selected coin decimals
+    const [n, m] = pair[0].inputValue.split('.')
+
+    if ((m || '').length > +coin.decimals) {
+      pair[0].inputValue = (n || '') + (m ? '.' + m!.slice(0, +coin.decimals)[0] : '')
+    }
+  }
+  pair[1].inputValue = ''
   pair[index].coin = coin
 
   if (!pair[0].coin || !pair[1].coin) {
@@ -276,7 +284,6 @@ const onCoinChange = async (coin: PoolCoin, index: 0 | 1) => {
 
   try {
     isLoadingRoute.value = true
-    pair[1].inputValue = ''
     const { route: routeRes, output, priceImpact: priceImpactRes }
       = await getBestRouteAndOutput(pair[0].coin.address, pair[1].coin.address, pair[0].inputValue)
 
@@ -320,7 +327,7 @@ load()
           v-model:balance="pair[0].balance"
           :to="false"
           :error-input="errorInput"
-          :disabled="isSwapping || isLoadingBalances"
+          :disabled="isSwapping || isCoinsBalancesLoading"
           @update:coin="(value: PoolCoin) => onCoinChange(value!, 0)"
           @update:input="calcRate(0)"
         />
@@ -342,7 +349,7 @@ load()
           v-model:input="pair[1].inputValue"
           v-model:balance="pair[1].balance"
           :to="true"
-          :disabled="isSwapping || isLoadingBalances"
+          :disabled="isSwapping || isCoinsBalancesLoading"
           @update:coin="(value: PoolCoin | undefined) => onCoinChange(value!, 1)"
           @update:input="calcRate(1)"
         />
@@ -400,7 +407,7 @@ load()
       <div class="submit-button-sticky-wrap">
         <UiButton
           type="submit"
-          :loading="isSwapping || isLoadingBalances || !isTacLoaded || isPreparing"
+          :loading="isSwapping || isCoinsBalancesLoading || !isTacLoaded || isPreparing"
           :disabled="isSubmitDisabled"
           wide
         >

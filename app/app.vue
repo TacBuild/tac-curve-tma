@@ -20,7 +20,8 @@ const nav = [
 ]
 
 const onChangeNav = (name: string) => {
-  router.push({ name })
+  const resolved = router.resolve({ name })
+  router.push(resolved)
 }
 
 const activeRoute = computed(() => {

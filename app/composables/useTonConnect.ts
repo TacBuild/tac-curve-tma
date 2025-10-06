@@ -28,6 +28,7 @@ const init = () => {
   })
   tonConnectUI = new TonConnectUI({
     manifestUrl: 'https://curve.tac.build/tonconnect-manifest.json',
+
   })
 
   Object.assign(account, tonConnectUI.account)

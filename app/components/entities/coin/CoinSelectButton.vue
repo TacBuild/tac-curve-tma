@@ -6,12 +6,11 @@ import type { PoolCoin } from '~~/entities/pool'
 const modal = useModal()
 const emits = defineEmits(['change'])
 const model = defineModel<PoolCoin | undefined>()
-const { desc, coins } = defineProps<{ desc?: string, coins: PoolCoin[] }>()
+const { desc } = defineProps<{ desc?: string }>()
 
 const open = () => {
   modal.open(CoinSelectListModal, {
     props: {
-      coins,
       onSelect: (coin: PoolCoin) => {
         model.value = coin
         emits('change', coin)

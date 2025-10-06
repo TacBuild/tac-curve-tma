@@ -43,6 +43,8 @@ defineEmits(['close'])
   overflow: auto;
   max-height: calc(80dvh);
   padding-bottom: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-primary-text) var(--c-white);
 
   @include respond-to(mobile) {
     top: auto;

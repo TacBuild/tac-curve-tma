@@ -43,7 +43,6 @@ const updateAPRs = async () => {
       opportunitiesMap.value[getAddress(opportunity.identifier)] = opportunity
       aprs.value[(opportunity.identifier as string).toLowerCase()] = opportunity.apr as number
     })
-    console.log(aprs)
   }
   catch (e) {
     console.warn(e)

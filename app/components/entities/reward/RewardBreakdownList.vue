@@ -30,7 +30,6 @@ const items = computed(() => {
 
   const curveTotal = arr.reduce((prev, curr) => prev + curr.total, 0) + 0.00001
   const rewardTotal = FixedNumber.fromValue(reward.amount, reward.token.decimals).sub(FixedNumber.fromValue(reward.claimed, reward.token.decimals)).toUnsafeFloat()
-  console.log(curveTotal, rewardTotal)
   if (curveTotal < rewardTotal) {
     arr.push({
       name: 'Other sources',
