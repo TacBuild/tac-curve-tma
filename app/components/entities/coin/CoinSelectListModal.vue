@@ -61,7 +61,7 @@ const handleSelect = (coin: PoolCoin) => {
             v-if="balance > 0n"
             class="weight-600"
           >
-            {{ formatNumber(formatUnits((balance).toString() || '0', +coin.decimals), 2, 4) }}
+            {{ formatNumber(formatUnits(balance || '0', +coin.decimals), 4, 4) }}
           </p>
         </div>
       </li>

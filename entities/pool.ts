@@ -13,6 +13,7 @@ export interface PoolCoin {
 }
 
 export interface Pool extends PoolTemplate {
+  originalName: string
   totalLiquidity: string
   merklApr: number
 }

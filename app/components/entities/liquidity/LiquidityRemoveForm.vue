@@ -278,7 +278,7 @@ watch(type, () => {
           <template #label>
             {{
               isConnected ? `LP Tokens Avail. ${isLoadingBalance || !isTacLoaded
-                ? 'loading...' : formatNumber(formatUnits(balance, decimals), 9)}`
+                ? 'loading...' : formatNumber(formatUnits(balance, decimals), 4, 4)}`
               : 'You send'
             }}
           </template>

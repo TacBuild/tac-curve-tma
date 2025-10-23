@@ -82,7 +82,7 @@ load()
             class="ui-loader"
           />
           <span v-else>
-            {{ formatNumber(formatUnits(balance, decimals), 9) }} LP
+            {{ formatNumber(formatUnits(balance, decimals), 4, 4) }} LP
           </span>
         </p>
       </div>

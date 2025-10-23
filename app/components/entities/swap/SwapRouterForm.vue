@@ -437,6 +437,7 @@ load()
 .info {
   display: flex;
   justify-content: space-between;
+  min-height: 24px;
 }
 
 .disconnect {

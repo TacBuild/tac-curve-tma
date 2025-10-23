@@ -55,6 +55,7 @@ const updatePools = async () => {
     } as Pool
     if (pool && +pool.totalLiquidity > 0) { // show non-empty pools only
       // change wtac to tac in name
+      pool.originalName = pool.name
       pool.name = pool.name.toUpperCase().replace('WTAC', 'TAC')
       poolsMap.set(poolId, pool)
 

@@ -3,24 +3,29 @@ export const truncate = (string = '', length = 6) => {
 }
 
 export const formatNumber = (value: string | number = 0, maximumFractionDigits = 4, maximumSignificantDigits: number | undefined = undefined) =>
-  value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits, maximumSignificantDigits })
+  Intl.NumberFormat('en-US', {
+    notation: 'compact',
+    maximumFractionDigits,
+    maximumSignificantDigits,
+    roundingMode: 'floor',
+    roundingPriority: 'morePrecision',
+  }).format(+value)
 
 export const formatUsd = (value: string | number = 0, maximumFractionDigits = 2, notation: 'standard' | 'scientific' | 'engineering' | 'compact' | undefined = 'standard') =>
-  new Intl.NumberFormat('en-US', {
+  Intl.NumberFormat('en-US', {
     style: 'currency',
     notation,
     currency: 'USD', maximumFractionDigits,
   }).format(+value)
 
 export const formatPercent = (value: string | number = 0, maximumFractionDigits = 2) =>
-  new Intl.NumberFormat('en-US', {
+  Intl.NumberFormat('en-US', {
     style: 'percent',
     maximumFractionDigits,
   }).format(+value)
 
-export const compactNumber = (value: string | number = 0, maximumFractionDigits = 2) => {
-  return Intl.NumberFormat('en-US', {
+export const compactNumber = (value: string | number = 0, maximumFractionDigits = 2) =>
+  Intl.NumberFormat('en-US', {
     notation: 'compact',
     maximumFractionDigits,
-  }).format(Number(value))
-}
+  }).format(+value)

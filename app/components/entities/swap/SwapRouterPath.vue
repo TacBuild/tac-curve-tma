@@ -9,7 +9,7 @@ const paths = computed(() => {
   return route.map((routePool) => {
     const pool = poolsMap.get(routePool.poolId)
     return {
-      name: pool?.name || routePool?.poolId || 'Unknown',
+      name: pool?.originalName || pool?.name || routePool?.poolId || 'Unknown',
       // link: pool?.address ? `/pools/${pool?.address}/deposit` : undefined,
       link: undefined,
       inputCoinSymbol: coinsMap.get(routePool.inputCoinAddress)?.symbol || 'UKWN',
@@ -111,10 +111,17 @@ const paths = computed(() => {
   display: flex;
   flex-direction: column;
   min-height: 24px;
+  gap: 2px;
 
   &._one {
     flex-direction: row;
     justify-content: space-between;
+    flex-wrap: wrap;
+
+    .paths {
+      flex-shrink: 0;
+      padding-left: 0;
+    }
   }
 }
 

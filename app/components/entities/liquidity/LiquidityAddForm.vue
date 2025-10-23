@@ -209,7 +209,7 @@ watch(isReady, (val) => {
           <template #label>
             {{
               isConnected ? `Avail. ${isCoinsBalancesLoading || !isTacLoaded
-                ? 'loading...' : formatNumber(formatUnits(pair[0].balance, +pair[0].coin!.decimals), +pair[0].coin!.decimals)}`
+                ? 'loading...' : formatNumber(formatUnits(pair[0].balance, +pair[0].coin!.decimals), 4, 4)}`
               : 'Token A'
             }}
           </template>
@@ -248,7 +248,7 @@ watch(isReady, (val) => {
           <template #label>
             {{
               isConnected ? `Avail. ${isCoinsBalancesLoading || !isTacLoaded
-                ? 'loading...' : formatNumber(formatUnits(pair[1].balance, +pair[1].coin!.decimals), +pair[1].coin!.decimals)}`
+                ? 'loading...' : formatNumber(formatUnits(pair[1].balance, +pair[1].coin!.decimals), 4, 4)}`
               : 'Token B'
             }}
           </template>
@@ -281,7 +281,7 @@ watch(isReady, (val) => {
           <span
             class="c-secondary-text right"
             :class="{ 'c-red': errorRate }"
-          >~{{ formatNumber(formatUnits(rate || 0n), 9) || '-' }} {{ pool?.symbol }}</span>
+          >~{{ formatNumber(formatUnits(rate || 0n), 4, 4) || '-' }} {{ pool?.symbol }}</span>
         </p>
 
         <p

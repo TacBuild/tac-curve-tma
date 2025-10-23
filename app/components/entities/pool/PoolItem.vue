@@ -39,7 +39,7 @@ const coins = computed(() => [
 
         <p v-if="isConnected && balance">
           <span class="weight-700">
-            {{ compactNumber(formatUnits(balance || 0n, 18), 4) }} LP
+            {{ compactNumber(formatUnits(balance || 0n, 18), 4, 4) }} LP
           </span>
         </p>
       </template>

@@ -68,7 +68,7 @@ debouncedWatch(coin, () => {
       <template #label>
         {{
           isConnected && coin ? `Avail. ${isCoinsBalancesLoading || !isTacLoaded
-            ? 'loading...' : formatNumber(formatUnits(balance, +coin?.decimals || 18), +coin?.decimals || 18)}`
+            ? 'loading...' : formatNumber(formatUnits(balance, +coin?.decimals || 18), 4, 4)}`
           : to ? 'You receive' : 'You send'
         }}
       </template>
