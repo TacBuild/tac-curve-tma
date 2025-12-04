@@ -1,223 +1,108 @@
-image: docker:dind
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" && ($CI_COMMIT_BRANCH == "development" || $CI_COMMIT_BRANCH == "main")'
+      when: always
+    - when: never
 
 default:
+  image: docker:29.0
   tags:
-    - eks
-    - linux
-    - cicd
-
-services:
-  - name: docker:24.0.2-dind
-    command: ["--tls=false"]
+    - gitlab_runner
 
 variables:
-  DOCKER_DRIVER: overlay2
-  DOCKER_TLS_CERTDIR: ""
-  DOCKER_HOST: tcp://docker:2375
-  AWS_DEFAULT_REGION: us-east-1
-  ECR_REPOSITORY: curve
-  NAMESPACE: curve
-  APP: curve
-  # Testnet variables
-  TESTNET_ROLE_ARN: arn:aws:iam::863518434589:role/aws-oidc-gitlab
-  TESTNET_ECR_REGISTRY: 863518434589.dkr.ecr.us-east-1.amazonaws.com
-  # Mainnet variables
-  MAINNET_ROLE_ARN: arn:aws:iam::526033727170:role/aws-oidc-gitlab
-  MAINNET_ECR_REGISTRY: 526033727170.dkr.ecr.us-east-1.amazonaws.com
+  DO_USERNAME: doadmin
+  DO_REGISTRY: registry.digitalocean.com
+  IMAGE_NAME: curve
+  SHORT_SHA: $CI_COMMIT_SHORT_SHA
+
+.build_template:
+  stage: build
+  image: docker:29.0
+  variables:
+    DOCKER_BUILDKIT: "1"
+  script:
+    - echo "Building $DOCKER_IMAGE"
+    - echo $DO_PASSWORD | docker login -u $DO_USERNAME --password-stdin $DO_REGISTRY
+    - docker build -t $DOCKER_IMAGE .
+    - docker push $DOCKER_IMAGE
 
 stages:
   - build
-  - push
   - deploy
 
-# ---------------------
-# 1) BUILD JOB
-# ---------------------
-
-build_job:
-  stage: build
+build:
+  extends:
+    - .build_template
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      when: always
-    - when: never
-  script:
-    - echo "Building a docker image..."
-    - docker build -t $ECR_REPOSITORY:latest .
-    - docker tag $ECR_REPOSITORY:latest $ECR_REPOSITORY:"${CI_COMMIT_SHA}"
-
-# ---------------------
-# 2) PUSH JOB
-# ---------------------
-
-push_to_ecr_testnet:
-  stage: push
-  id_tokens:
-    OIDC_TOKEN:
-      aud: https://gitlab.com
-  rules:
-    - if: $CI_COMMIT_BRANCH == "v3" && $CI_PIPELINE_SOURCE == "push"
-      when: always
+    - if: '$CI_PIPELINE_SOURCE == "push" && ($CI_COMMIT_BRANCH == "development")'
       variables:
-        ROLE_ARN: $TESTNET_ROLE_ARN
-        ECR_REGISTRY: $TESTNET_ECR_REGISTRY
-    - when: never
-  tags:
-    - eks
-    - linux
-    - cicd
-  variables:
-    AWS_PROFILE: oidc
-  before_script:
-    - apk add --no-cache python3 py3-pip
-    - pip3 install awscli --break-system-packages
-    - mkdir -p ~/.aws
-    - echo "${OIDC_TOKEN}" > /tmp/web_identity_token
-    - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" > ~/.aws/config
-    - >
-      aws ecr get-login-password --region "$AWS_DEFAULT_REGION" \
-        | docker login --username AWS --password-stdin "$ECR_REGISTRY"
-  script:
-    - echo "Building a docker image..."
-    - docker build -t $ECR_REPOSITORY:latest .
-    - docker tag $ECR_REPOSITORY:latest $ECR_REPOSITORY:"${CI_COMMIT_SHA}"
-    - echo "Preparing an image to push to AWS ECR..."
-    - docker tag $ECR_REPOSITORY:latest "$ECR_REGISTRY/$ECR_REPOSITORY:latest"
-    - docker tag $ECR_REPOSITORY:"$CI_COMMIT_SHA" "$ECR_REGISTRY/$ECR_REPOSITORY:${CI_COMMIT_SHA}"
-    - echo "Pushing the image to ECR..."
-    - docker push "$ECR_REGISTRY/$ECR_REPOSITORY:latest"
-    - docker push "$ECR_REGISTRY/$ECR_REPOSITORY:${CI_COMMIT_SHA}"
-
-
-push_to_ecr_mainnet:
-  stage: push
-  id_tokens:
-    OIDC_TOKEN:
-      aud: https://gitlab.com
-  rules:
-    - if: $CI_COMMIT_BRANCH == "mainnet" && $CI_PIPELINE_SOURCE == "push"
-      when: always
+        STAGE: testnet
+        DOCKER_IMAGE: $DO_REGISTRY/tac-$STAGE/$IMAGE_NAME:$SHORT_SHA
+        DO_PASSWORD: $DO_PASSWORD_TESTNET
+        TELEGRAM_THREAD_ID: 2
+    - if: '$CI_PIPELINE_SOURCE == "push" && ($CI_COMMIT_BRANCH == "main")'
       variables:
-        ROLE_ARN: $MAINNET_ROLE_ARN
-        ECR_REGISTRY: $MAINNET_ECR_REGISTRY
+        STAGE: mainnet
+        DOCKER_IMAGE: $DO_REGISTRY/tac-$STAGE/$IMAGE_NAME:$SHORT_SHA
+        DO_PASSWORD: $DO_PASSWORD_MAINNET
+        TELEGRAM_THREAD_ID: 3
     - when: never
-  tags:
-    - eks
-    - linux
-    - cicd
-    - mainnet
-  variables:
-    AWS_PROFILE: oidc
-  before_script:
-    - apk add --no-cache python3 py3-pip
-    - pip3 install awscli --break-system-packages
-    - mkdir -p ~/.aws
-    - echo "${OIDC_TOKEN}" > /tmp/web_identity_token
-    - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" > ~/.aws/config
-    - >
-      aws ecr get-login-password --region "$AWS_DEFAULT_REGION" \
-        | docker login --username AWS --password-stdin "$ECR_REGISTRY"
-  script:
-    - echo "Building a docker image..."
-    - docker build -t $ECR_REPOSITORY:latest .
-    - docker tag $ECR_REPOSITORY:latest $ECR_REPOSITORY:"${CI_COMMIT_SHA}"
-    - echo "Preparing an image to push to AWS ECR..."
-    - docker tag $ECR_REPOSITORY:latest "$ECR_REGISTRY/$ECR_REPOSITORY:latest"
-    - docker tag $ECR_REPOSITORY:"$CI_COMMIT_SHA" "$ECR_REGISTRY/$ECR_REPOSITORY:${CI_COMMIT_SHA}"
-    - echo "Pushing the image to ECR..."
-    - docker push "$ECR_REGISTRY/$ECR_REPOSITORY:latest"
-    - docker push "$ECR_REGISTRY/$ECR_REPOSITORY:${CI_COMMIT_SHA}"
-# ---------------------
-# 3) DEPLOY JOB
-# ---------------------
+  after_script:
+    - |
+      if [ "$CI_JOB_STATUS" != "success" ]; then
+        exit 0
+      fi
+      apk add --no-cache curl
+      MESSAGE=$(cat <<EOF
+      🦊 *GitLab CI*
 
-deploy_to_k8s_testnet:
+      🚀 *${IMAGE_NAME}* image built successfully!
+      🛠️ Stage: ${STAGE}
+      🐳 Image: \`${DOCKER_IMAGE}\`
+      🔗 View Pipeline [#${CI_PIPELINE_ID}](${CI_PIPELINE_URL})
+      EOF
+      )
+      curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+      -d chat_id="${TELEGRAM_CHAT_ID}" \
+      -d message_thread_id="${TELEGRAM_THREAD_ID}" \
+      -d parse_mode="Markdown" \
+      --data-urlencode "text=${MESSAGE}" > /dev/null
+
+
+deploy:
   stage: deploy
-  id_tokens:
-    OIDC_TOKEN:
-      aud: https://gitlab.com
-  needs:
-    - job: push_to_ecr_testnet
-      optional: true
-  rules:
-    - if: $CI_COMMIT_BRANCH == "v3" && $CI_PIPELINE_SOURCE == "push"
-      when: always
-    - when: never
-  tags:
-    - eks
-    - linux
-    - cicd
-  image: alpine:3.21
+  image: alpine:latest
   variables:
-    AWS_PROFILE: oidc
-    ROLE_ARN: $TESTNET_ROLE_ARN
-    EKS_CLUSTER: tac-testnet-use1-eks
-    ENVIRONMENT: testnet
+    CI_COMMIT_USER_NAME: "markus24de"
+    CI_COMMIT_USER_EMAIL: "markus24de@gmail.com"
+    PROJECT_NAME: "ton-app-chain/tac/infrastructure"
+    ARGOCD_REPO_NAME: "devops2.0-argo-cd-apps"
+    ARGOCD_DEV_APP_PATH: testnet/app/curve.yaml
+    ARGOCD_PROD_APP_PATH: mainnet/app/curve.yaml
   before_script:
-    - apk add --update --no-cache bash curl python3 py3-pip openssl
-    - pip3 install awscli --break-system-packages
-    - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-    - install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-    - curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
-    - mkdir -p ~/.aws
-    - echo "${OIDC_TOKEN}" > /tmp/web_identity_token
-    - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" > ~/.aws/config
-    - aws eks update-kubeconfig --name $EKS_CLUSTER --region $AWS_DEFAULT_REGION
+    - apk add --no-cache git openssh yq
+    - mkdir -p ~/.ssh
+    - echo "$CI_SSH_PRIVATE_KEY_B64" | base64 -d > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan gitlab.com >> ~/.ssh/known_hosts
+    - git config --global user.email "$CI_COMMIT_USER_EMAIL"
+    - git config --global user.name "$CI_COMMIT_USER_NAME"
   script:
-    - echo "Deploying to Kubernetes..."
-    - cd .ci/chart
-    - >
-      helm upgrade --install --wait --debug \
-        -n $NAMESPACE \
-        -f $ENVIRONMENT.yaml \
-        -f $ENVIRONMENT-$APP.yaml \
-        --set-string nameOverride=$APP \
-        --set-string image.tag="${CI_COMMIT_SHA}" \
-        $APP .
-    - echo "Deploy finished"
+    - git clone --depth=1 "git@gitlab.com:${PROJECT_NAME}/${ARGOCD_REPO_NAME}.git"
+    - cd "$ARGOCD_REPO_NAME"
 
-deploy_to_k8s_mainnet:
-  stage: deploy
-  id_tokens:
-    OIDC_TOKEN:
-      aud: https://gitlab.com
-  needs:
-    - job: push_to_ecr_mainnet
-      optional: true
+    - yq -i '(.spec.source.helm.parameters[] | select(.name == "image.tag") ).value = env(IMAGE_TAG)' "$ARGOCD_APP_PATH"
+
+    - git add "$ARGOCD_APP_PATH"
+    - git commit -m "Update image tag to $IMAGE_TAG by automation"
+    - git push origin main
   rules:
-    - if: $CI_COMMIT_BRANCH == "mainnet" && $CI_PIPELINE_SOURCE == "push"
-      when: always
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "development"'
+      variables:
+        ARGOCD_APP_PATH: $ARGOCD_DEV_APP_PATH
+        IMAGE_TAG: $SHORT_SHA
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "main"'
+      variables:
+        ARGOCD_APP_PATH: $ARGOCD_PROD_APP_PATH
+        IMAGE_TAG: $SHORT_SHA
     - when: never
-  tags:
-    - eks
-    - linux
-    - cicd
-    - mainnet
-  image: alpine:3.21
-  variables:
-    AWS_PROFILE: oidc
-    ROLE_ARN: $MAINNET_ROLE_ARN
-    EKS_CLUSTER: tac-mainnet-use1-eks
-    ENVIRONMENT: mainnet
-  before_script:
-    - apk add --update --no-cache bash curl python3 py3-pip openssl
-    - pip3 install awscli --break-system-packages
-    - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-    - install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-    - curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
-    - mkdir -p ~/.aws
-    - echo "${OIDC_TOKEN}" > /tmp/web_identity_token
-    - echo -e "[profile oidc]\nrole_arn=${ROLE_ARN}\nweb_identity_token_file=/tmp/web_identity_token" > ~/.aws/config
-    - aws eks update-kubeconfig --name $EKS_CLUSTER --region $AWS_DEFAULT_REGION
-  script:
-    - echo "Deploying to Kubernetes..."
-    - cd .ci/chart
-    - >
-      helm upgrade --install --wait --debug \
-        -n $NAMESPACE \
-        -f $ENVIRONMENT.yaml \
-        -f $ENVIRONMENT-$APP.yaml \
-        --set-string nameOverride=$APP \
-        --set-string image.tag="${CI_COMMIT_SHA}" \
-        $APP .
-    - echo "Deploy finished"
-
