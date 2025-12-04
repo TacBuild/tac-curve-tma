@@ -1,2 +1,0 @@
-# Universal Helm Chart
-
