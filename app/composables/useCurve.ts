@@ -30,6 +30,7 @@ const init = async () => {
   }
 }
 const updatePools = async () => {
+  console.log('UPDATE POOLS!')
   poolsMap.clear()
   coinsMap.clear()
   // add native tac token
@@ -52,6 +53,7 @@ const updatePools = async () => {
     const pool = {
       ...curvePool,
       totalLiquidity: await curvePool.stats.totalLiquidity(),
+      usdRate: await curve.getUsdRate(curvePool.address),
     } as Pool
     if (pool && +pool.totalLiquidity > 0) { // show non-empty pools only
       // change wtac to tac in name

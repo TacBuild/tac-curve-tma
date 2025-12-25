@@ -37,9 +37,16 @@ const coins = computed(() => [
           {{ formatPercent(aprs[pool.address]! / 100) }} APR
         </p>
 
-        <p v-if="isConnected && balance">
+        <p
+          v-if="isConnected && balance"
+          class="flex gap-8"
+        >
           <span class="weight-700">
-            {{ compactNumber(formatUnits(balance || 0n, 18), 4, 4) }} LP
+            {{ compactNumber(formatUnits(balance || 0n, 18), 4) }} LP
+          </span>
+          ~
+          <span class="weight-500">
+            {{ formatUsd(+formatUnits(balance || 0n, 18) * pool.usdRate) }}
           </span>
         </p>
       </template>

@@ -16,6 +16,7 @@ export interface Pool extends PoolTemplate {
   originalName: string
   totalLiquidity: string
   merklApr: number
+  usdRate: number
 }
 
 export const getProxyAddressByPoolImplementation = (implementation?: string) => {

@@ -328,7 +328,7 @@ load()
           :to="false"
           :error-input="errorInput"
           :disabled="isSwapping || isCoinsBalancesLoading"
-          @update:coin="(value: PoolCoin) => onCoinChange(value!, 0)"
+          @update:coin="(value) => onCoinChange(value!, 0)"
           @update:input="calcRate(0)"
         />
         <button

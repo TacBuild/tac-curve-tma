@@ -83,6 +83,10 @@ load()
           />
           <span v-else>
             {{ formatNumber(formatUnits(balance, decimals), 4, 4) }} LP
+            ~
+            <span>
+              {{ formatUsd(+formatUnits(balance || 0n, 18) * pool.usdRate) }}
+            </span>
           </span>
         </p>
       </div>

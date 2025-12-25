@@ -279,9 +279,14 @@ watch(isReady, (val) => {
         <p :class="$style.info">
           <span class=" weight-600">Minimum LP Tokens</span>
           <span
-            class="c-secondary-text right"
+            class="right"
             :class="{ 'c-red': errorRate }"
-          >~{{ formatNumber(formatUnits(rate || 0n), 4, 4) || '-' }} {{ pool?.symbol }}</span>
+          >
+            {{ formatNumber(formatUnits(rate || 0n), 4, 4) || '-' }} {{ pool?.symbol }}
+            <span class="weight-500 c-secondary-text">
+              ~ {{ formatUsd(+formatUnits(rate || 0n) * pool.usdRate) }}
+            </span>
+          </span>
         </p>
 
         <p

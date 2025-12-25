@@ -308,7 +308,7 @@ watch(type, () => {
         <template v-if="type === 'balanced'">
           <div
             :class="$style.token"
-            class="flex-between flex-center"
+            class="flex-between flex-center flex-wrap gap-8"
           >
             <div
               v-if="pair[0].coin"
@@ -321,16 +321,17 @@ watch(type, () => {
               />
               {{ pair[0].coin.symbol }}
             </div>
-            <span
-              class="weight-600 p1"
+            <div
+              class="weight-600 p1 right"
+              style="flex: 1"
               :style="{ opacity: isRatesLoading ? '0.5' : '1' }"
             >
               {{ pair[0].inputValue }}
-            </span>
+            </div>
           </div>
           <div
             :class="$style.token"
-            class="flex-between flex-center"
+            class="flex-between flex-center flex-wrap gap-8"
           >
             <div
               v-if="pair[1].coin"
@@ -343,12 +344,13 @@ watch(type, () => {
               />
               {{ pair[1].coin.symbol }}
             </div>
-            <span
-              class="weight-600 p1"
+            <div
+              class="weight-600 p1 right"
+              style="flex: 1"
               :style="{ opacity: isRatesLoading ? '0.5' : '1' }"
             >
               {{ pair[1].inputValue }}
-            </span>
+            </div>
           </div>
         </template>
         <template v-else>
