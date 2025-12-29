@@ -5,12 +5,14 @@ import { until } from '@vueuse/core'
 
 const { getTacSdk, isLoaded: isSdkReady } = useTac()
 const { address, isConnected, balance: tonBalance } = useTonConnect()
-const { coins, pools, isLoaded } = useCurve()
+const { coins, pools, isLoaded, getUsdRate } = useCurve()
 
+const isRatesLoaded = ref(false)
 const isCoinsBalancesLoading = ref(false)
 const isPoolsBalancesLoading = ref(false)
 
 const jettonBalances: Ref<Record<string, bigint>> = ref({})
+const jettonRates: Ref<Record<string, number>> = ref({})
 const poolsBalances: Ref<Record<string, bigint>> = ref({})
 
 const coinsBalances: ComputedRef<Record<string, bigint>> = computed(() => (
@@ -93,6 +95,12 @@ const updatePoolsBalances = async () => {
     isPoolsBalancesLoading.value = false
   }
 }
+const updateCoinsRates = async () => {
+  coins.value.map(async (c) => {
+    jettonRates.value[c.symbol] = await getUsdRate(c.address)
+  })
+  isRatesLoaded.value = true
+}
 
 watch([isConnected, isLoaded], () => {
   if (!isConnected.value || !isLoaded.value) {
@@ -108,7 +116,10 @@ export const useBalances = () => {
     isPoolsBalancesLoading,
     coinsBalances,
     poolsBalances,
+    jettonRates,
+    isRatesLoaded,
     updateCoinsBalances,
     updatePoolsBalances,
+    updateCoinsRates,
   }
 }

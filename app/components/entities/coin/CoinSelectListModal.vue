@@ -6,7 +6,7 @@ const emits = defineEmits(['close', 'select'])
 const { title = 'Select token', onSelect }
   = defineProps<{ title?: string, onSelect: (e: PoolCoin) => void }>()
 const { coins } = useCurve()
-const { coinsBalances } = useBalances()
+const { coinsBalances, updateCoinsRates, jettonRates, isRatesLoaded } = useBalances()
 
 const priority = ['TAC', 'TON', 'USD₮', 'WETH']
 const coinsWithBalances = computed(() => (
@@ -25,6 +25,10 @@ const handleSelect = (coin: PoolCoin) => {
     onSelect(coin)
   }
   emits('close')
+}
+
+if (!isRatesLoaded.value) {
+  updateCoinsRates()
 }
 </script>
 
@@ -57,12 +61,15 @@ const handleSelect = (coin: PoolCoin) => {
           <p class="weight-700 p1">
             {{ coin?.symbol || 'Unknown' }}
           </p>
-          <p
-            v-if="balance > 0n"
-            class="weight-600"
-          >
-            {{ formatNumber(formatUnits(balance || '0', +coin.decimals), 4, 4) }}
-          </p>
+          <div v-if="balance > 0n">
+            <span class="weight-600">
+              {{ compactNumber(formatUnits(balance || '0', +coin.decimals), 4) }}
+            </span>
+
+            <span class="c-secondary-text p3">
+              ~ {{ formatUsd((jettonRates?.[coin.symbol] || 0)! * +formatUnits(balance || '0', +coin.decimals)) }}
+            </span>
+          </div>
         </div>
       </li>
     </ul>
