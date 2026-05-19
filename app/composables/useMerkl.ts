@@ -106,14 +106,11 @@ const claimReward = async (reward: Reward) => {
     sender,
   )
 
-  const tsResult = res?.sendTransactionResult as {
-    success: boolean
-    error: Record<string, unknown>
-  }
+  const tsResult = res?.sendTransactionResult
   getTacSdk().closeConnections()
 
   if (!tsResult?.success) {
-    throw tsResult?.error?.info || 'Unknown error'
+    throw tsResult?.error?.message || 'Unknown error'
   }
 
   return res

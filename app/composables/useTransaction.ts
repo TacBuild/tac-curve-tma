@@ -43,13 +43,10 @@ export const useTransaction = () => {
     const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets, {
       waitOperationId: false,
     })
-    const tsResult = tx.sendTransactionResult as {
-      success: boolean
-      error: Record<string, unknown>
-    }
+    const tsResult = tx.sendTransactionResult
     sdk.closeConnections()
     if (!tsResult?.success) {
-      throw tsResult?.error?.info || 'Unknown error'
+      throw tsResult?.error?.message || 'Unknown error'
     }
     return tx
   }
@@ -91,13 +88,10 @@ export const useTransaction = () => {
     const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets, {
       waitOperationId: false,
     })
-    const tsResult = tx.sendTransactionResult as {
-      success: boolean
-      error: Record<string, unknown>
-    }
+    const tsResult = tx.sendTransactionResult
     sdk.closeConnections()
     if (!tsResult?.success) {
-      throw tsResult?.error?.info || 'Unknown error'
+      throw tsResult?.error?.message || 'Unknown error'
     }
     return tx
   }
@@ -134,13 +128,10 @@ export const useTransaction = () => {
     const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets, {
       waitOperationId: false,
     })
-    const tsResult = tx.sendTransactionResult as {
-      success: boolean
-      error: Record<string, unknown>
-    }
+    const tsResult = tx.sendTransactionResult
     sdk.closeConnections()
     if (!tsResult?.success) {
-      throw tsResult?.error?.info || 'Unknown error'
+      throw tsResult?.error?.message || 'Unknown error'
     }
     return tx
   }
@@ -167,13 +158,10 @@ export const useTransaction = () => {
     const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets, {
       waitOperationId: false,
     })
-    const tsResult = tx.sendTransactionResult as {
-      success: boolean
-      error: Record<string, unknown>
-    }
+    const tsResult = tx.sendTransactionResult
     sdk.closeConnections()
     if (!tsResult?.success) {
-      throw tsResult?.error?.info || 'Unknown error'
+      throw tsResult?.error?.message || 'Unknown error'
     }
     return tx
   }
@@ -200,13 +188,10 @@ export const useTransaction = () => {
     const tx = await sdk.sendCrossChainTransaction(evmProxyMsg, sender, assets, {
       waitOperationId: false,
     })
-    const tsResult = tx.sendTransactionResult as {
-      success: boolean
-      error: Record<string, unknown>
-    }
+    const tsResult = tx.sendTransactionResult
     sdk.closeConnections()
     if (!tsResult?.success) {
-      throw tsResult?.error?.info || 'Unknown error'
+      throw tsResult?.error?.message || 'Unknown error'
     }
     return tx
   }

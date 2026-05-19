@@ -4,7 +4,7 @@ import type { Token } from '~~/entities/token'
 
 defineEmits(['close'])
 const { title = 'Swap details', transactionLinker } = defineProps<{
-  title: string
+  title?: string
   fromToken: Token
   toToken: Token
   fromValue: number | string

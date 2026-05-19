@@ -5,8 +5,8 @@ const emits = defineEmits(['close'])
 
 const { slippagePercent } = useTransaction()
 
-const customValue = ref([0.1, 0.5].includes(slippagePercent.value) ? 0.8 : slippagePercent.value)
-const selectedOption: Ref<number | undefined> = ref(slippagePercent.value || DEFAULT_SLIPPAGE_PERCENT_VALUE)
+const customValue = ref([0.1, 0.5].includes(slippagePercent) ? 0.8 : slippagePercent)
+const selectedOption: Ref<number | undefined> = ref(slippagePercent || DEFAULT_SLIPPAGE_PERCENT_VALUE)
 
 const options = computed(() => [
   { id: 'st-1', label: '0.1 %', value: 0.1 },
@@ -26,7 +26,7 @@ const error = computed(() => {
 })
 
 const onSubmit = () => {
-  slippagePercent.value = selectedOption.value
+  // slippagePercent.value = selectedOption.value
   nextTick(() => {
     emits('close')
   })
