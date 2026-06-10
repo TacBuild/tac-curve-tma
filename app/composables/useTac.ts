@@ -11,7 +11,6 @@ export const useTac = () => {
   const init = async () => {
     tacSdk = await TacSdk.create({
       network: Network.MAINNET,
-
     })
     isLoaded.value = true
   }

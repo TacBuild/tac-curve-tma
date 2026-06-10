@@ -68,7 +68,7 @@ const isSubmitDisabled = computed(() => {
   return isNotEnoughForFee.value
     || isSubmitting.value
     || isLoadingBalance.value
-    || parseUnits(amount.value, decimals.value) > balance.value
+    || parseUnits(amount.value || '0', decimals.value) > balance.value
     || Number(amount.value) <= 0
 })
 const isReady = computed(() => isConnected.value && isTacLoaded.value)
@@ -160,7 +160,7 @@ const calcRatesByOneCoin = async () => {
   try {
     isRatesLoading.value = true
     pair[oneCoinKey.value].inputValue = formatUnits(
-      await getOneCoinWithdrawRate(pool.address, parseUnits(amount.value, decimals.value), oneCoinKey.value),
+      await getOneCoinWithdrawRate(pool.address, parseUnits(amount.value || '0', decimals.value), oneCoinKey.value),
       decimals.value,
     )
   }
@@ -202,9 +202,9 @@ const handleRemoveLiquidity = async () => {
     isSubmitting.value = true
     const txLinker = await removeLiquidity(
       pool.address,
-      parseUnits(amount.value, decimals.value),
-      parseUnits(pair[0].inputValue, +pair[0].coin!.decimals),
-      parseUnits(pair[1].inputValue, +pair[1].coin!.decimals),
+      parseUnits(amount.value || '0', decimals.value),
+      parseUnits(pair[0].inputValue || '0', +pair[0].coin!.decimals),
+      parseUnits(pair[1].inputValue || '0', +pair[1].coin!.decimals),
       pool.isPlain && pool.isNg && !pool.isCrypto ? 'plainstableng' : '',
     )
 

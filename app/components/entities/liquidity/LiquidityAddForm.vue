@@ -41,7 +41,7 @@ const errorRate = ref('')
 const isSubmitting = ref(false)
 
 const getErrorForToken = (item: typeof pair[number]) => {
-  if (item.balance < parseUnits(item.inputValue, +(item.coin?.decimals || 18))) {
+  if (item.balance < parseUnits(item.inputValue || '0', +(item.coin?.decimals || 18))) {
     return `Insufficient ${item.coin?.symbol} balance`
   }
 
@@ -80,8 +80,8 @@ const isSubmitDisabled = computed(() => {
 
   return isNotEnoughForFee.value || Boolean(errorRate.value) || isSubmitting.value
     || isCoinsBalancesLoading.value || !pair[0].inputValue
-    || parseUnits(pair[0].inputValue, +pair[0].coin!.decimals) > pair[0].balance
-    || parseUnits(pair[1].inputValue, +pair[1].coin!.decimals) > pair[1].balance
+    || parseUnits(pair[0].inputValue || '0', +pair[0].coin!.decimals) > pair[0].balance
+    || parseUnits(pair[1].inputValue || '0', +pair[1].coin!.decimals) > pair[1].balance
     || Number(pair[0].inputValue) <= 0 || Number(pair[1].inputValue) <= 0
 })
 const isReady = computed(() => isConnected.value && isTacLoaded.value)
@@ -124,8 +124,8 @@ const handleAddLiquidity = async () => {
     const txLinker = await addLiquidity(
       pool.address,
       pair[0].coin!.address, pair[1].coin!.address,
-      parseUnits(pair[0].inputValue, +pair[0].coin!.decimals),
-      parseUnits(pair[1].inputValue, +pair[1].coin!.decimals),
+      parseUnits(pair[0].inputValue || '0', +pair[0].coin!.decimals),
+      parseUnits(pair[1].inputValue || '0', +pair[1].coin!.decimals),
       rate.value,
       pool.isPlain && pool.isNg && !pool.isCrypto ? 'plainstableng' : '',
     )

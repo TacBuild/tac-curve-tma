@@ -1,6 +1,5 @@
 import {
-  Network,
-  OperationTracker, StageName,
+  StageName,
   type TransactionLinker,
 } from '@tonappchain/sdk'
 
@@ -8,7 +7,8 @@ const POOL_MS = 5000
 const MAX_RETRIES = 40
 export const useOperationTracker = (transactionLinker: TransactionLinker | undefined) => {
   let interval: ReturnType<typeof setInterval>
-  const tracker = new OperationTracker(Network.MAINNET)
+  const { getTacSdk } = useTac()
+  const tracker = getTacSdk().getOperationTracker()
   const operationId = ref('')
   const status = ref('')
   const error = ref('')
