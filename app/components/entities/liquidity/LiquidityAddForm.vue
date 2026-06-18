@@ -9,6 +9,7 @@ import { TransactionDetailsModal, SwapStatusModal } from '#components'
 import { useTransaction } from '~/composables/useTransaction'
 import { formatNumber } from '~/utils/string-utils'
 import type { Pool, PoolCoin } from '~~/entities/pool'
+import { TVM_GRAM_FEE_ROUGH_ESTIMATE } from '~~/entities/config'
 
 type PairItem = {
   id: number
@@ -78,15 +79,26 @@ const isSubmitDisabled = computed(() => {
     return !isTonLoaded.value
   }
 
-  return isNotEnoughForFee.value || Boolean(errorRate.value) || isSubmitting.value
+  return Boolean(errorRate.value) || isSubmitting.value
     || isCoinsBalancesLoading.value || !pair[0].inputValue
     || parseUnits(pair[0].inputValue || '0', +pair[0].coin!.decimals) > pair[0].balance
     || parseUnits(pair[1].inputValue || '0', +pair[1].coin!.decimals) > pair[1].balance
     || Number(pair[0].inputValue) <= 0 || Number(pair[1].inputValue) <= 0
 })
 const isReady = computed(() => isConnected.value && isTacLoaded.value)
-const isNotEnoughForFee = computed(() => (balance.value < 1.5) && isConnected.value)
+const isNotEnoughForFee = computed(() => {
+  if (!isConnected.value) {
+    return false
+  }
 
+  const gramInput = pair.find(item => item.coin?.symbol === 'GRAM' || item.coin?.symbol === 'TON')
+  if (!gramInput) {
+    return (balance.value < TVM_GRAM_FEE_ROUGH_ESTIMATE)
+  }
+  return ((gramInput.balance || 0n)
+    - parseUnits(gramInput.inputValue || '0', +(gramInput.coin?.decimals || 18))
+    - parseUnits(TVM_GRAM_FEE_ROUGH_ESTIMATE.toString() || '0', +(gramInput.coin?.decimals || 18))) <= 0n
+})
 const calcRates = useDebounceFn(async () => {
   const amounts = [
     parseUnits(pair[0].inputValue || '0', +pair[0].coin!.decimals),
@@ -322,8 +334,8 @@ watch(isReady, (val) => {
           :class="$style.info"
         >
           <span class="weight-600 c-red">
-            Not enough TON for fee. <br>
-            You have {{ formatNumber(balance, 2) }} TON
+            Make sure that you have enough GRAM to pay for fee. <br>
+            You have {{ formatNumber(balance, 2) }} GRAM
           </span>
         </p>
       </div>

@@ -1,5 +1,6 @@
 export const IS_TESTNET = false
 
+export const TVM_GRAM_FEE_ROUGH_ESTIMATE = 0.7
 export const EVM_CHAIN_ID = IS_TESTNET ? 2390 : 239
 export const EVM_PROVIDER_URL = IS_TESTNET
   ? 'https://rpc.ankr.com/tac_spb'

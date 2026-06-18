@@ -60,9 +60,14 @@ load()
           :coins="coins"
         />
 
-        <p class="weight-600 p2">
-          {{ pool.name }}
-        </p>
+        <div>
+          <p class="weight-600 p2">
+            {{ pool.name }}
+          </p>
+          <p class="p4 c-secondary-text">
+            {{ pool.symbol }}
+          </p>
+        </div>
       </div>
 
       <div

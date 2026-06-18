@@ -8,6 +8,7 @@ import { TransactionDetailsModal, SwapStatusModal } from '#components'
 import { useTransaction } from '~/composables/useTransaction'
 import { formatNumber } from '~/utils/string-utils'
 import type { Pool, PoolCoin } from '~~/entities/pool'
+import { TVM_GRAM_FEE_ROUGH_ESTIMATE } from '~~/entities/config'
 
 type PairItem = { id: number, coin: PoolCoin | undefined, inputValue: string }
 
@@ -59,14 +60,13 @@ const errorInput = computed(() => {
 
   return ''
 })
-const isNotEnoughForFee = computed(() => (tonBalance.value < 1.5) && isConnected.value)
+const isNotEnoughForFee = computed(() => (tonBalance.value < TVM_GRAM_FEE_ROUGH_ESTIMATE) && isConnected.value)
 const isSubmitDisabled = computed(() => {
   if (!isConnected.value) {
     return !isLoaded.value
   }
 
-  return isNotEnoughForFee.value
-    || isSubmitting.value
+  return isSubmitting.value
     || isLoadingBalance.value
     || parseUnits(amount.value || '0', decimals.value) > balance.value
     || Number(amount.value) <= 0
@@ -404,8 +404,8 @@ watch(type, () => {
           :class="$style.info"
         >
           <span class="weight-600 c-red">
-            Not enough TON for fee. <br>
-            You have {{ formatNumber(tonBalance, 2) }} TON
+            Make sure that you have enough GRAM to pay for fee. <br>
+            You have {{ formatNumber(tonBalance, 2) }} GRAM
           </span>
         </p>
       </div>

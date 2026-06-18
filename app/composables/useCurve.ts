@@ -54,19 +54,20 @@ const updatePools = async () => {
       totalLiquidity: await curvePool.stats.totalLiquidity(),
       usdRate: await curve.getUsdRate(curvePool.address),
     } as Pool
-    console.log(pool)
 
     if (pool && +pool.totalLiquidity > 0) { // show non-empty pools only
-      // change wtac to tac in name
-      pool.originalName = pool.name
-      pool.name = pool.name.toUpperCase().replace('WTAC', 'TAC')
+      pool.originalName = pool.name.replace('TON', 'GRAM')
+      pool.name = pool.name.toUpperCase().replace('WTAC', 'TAC').replace('TON', 'GRAM')
       poolsMap.set(poolId, pool)
 
       pool.underlyingCoinAddresses.forEach((address, index) => {
         if (!coinsMap.has(address)) {
+          const symbol = pool.underlyingCoins[index] === 'TON'
+            ? 'GRAM'
+            : pool.underlyingCoins[index] || 'UKWN'
           coinsMap.set(address, {
             address,
-            symbol: pool.underlyingCoins[index] || 'UKWN',
+            symbol,
             decimals: String(pool.underlyingDecimals[index]),
             usdPrice: 0,
             poolBalance: '',

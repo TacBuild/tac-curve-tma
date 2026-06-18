@@ -8,7 +8,11 @@ import { useModal } from '~/components/ui/composables/useModal'
 import { SwapStatusModal, TransactionConfirmModal, TransactionDetailsModal } from '#components'
 import { useTransaction } from '~/composables/useTransaction'
 import type { PoolCoin } from '~~/entities/pool'
-import { CURVE_HIGH_PRICE_IMPACT_PERCENT, EVM_TAC_ADDRESS } from '~~/entities/config'
+import {
+  CURVE_HIGH_PRICE_IMPACT_PERCENT,
+  EVM_TAC_ADDRESS,
+  TVM_GRAM_FEE_ROUGH_ESTIMATE,
+} from '~~/entities/config'
 import SwapFormInput from '~/components/entities/swap/SwapFormInput.vue'
 import { formatNumber } from '~/utils/string-utils'
 
@@ -55,7 +59,17 @@ const pair: [PairItem, PairItem] = reactive([{
 const route: Ref<IRoute> = ref([])
 const priceImpact: Ref<number> = ref(0)
 
-const isNotEnoughForFee = computed(() => (balance.value < 1.5) && isConnected.value)
+const isNotEnoughForFee = computed(() => {
+  if (!pair[0]?.inputValue || !isConnected.value) {
+    return false
+  }
+  if (pair[0].coin?.symbol === 'GRAM' || pair[0].coin?.symbol === 'TON') {
+    return ((pair[0].balance || 0n)
+      - parseUnits(pair[0].inputValue || '0', +pair[0].coin?.decimals || 18)
+      - parseUnits(TVM_GRAM_FEE_ROUGH_ESTIMATE.toString() || '0', +pair[0].coin?.decimals || 18)) <= 0n
+  }
+  return (balance.value < TVM_GRAM_FEE_ROUGH_ESTIMATE)
+})
 const errorInput = computed(() => {
   if (isCoinsBalancesLoading.value || !isConnected.value) {
     return ''
@@ -74,7 +88,6 @@ const isSubmitDisabled = computed(() => {
   }
 
   return isPreparing.value || isSwapping.value
-    || isNotEnoughForFee.value
     || isCoinsBalancesLoading.value || !pair[0].inputValue
     || parseUnits(pair[0].inputValue || '0', +(pair[0].coin?.decimals || 18)) > pair[0].balance
     || Number(pair[0].inputValue) <= 0
@@ -399,8 +412,8 @@ load()
         class="mb-24"
       >
         <span class="weight-600 c-red">
-          Not enough TON for fee. <br>
-          You have {{ formatNumber(balance, 2) }} TON
+          Make sure that you have enough GRAM to pay for fee. <br>
+          You have {{ formatNumber(balance, 2) }} GRAM
         </span>
       </p>
 
