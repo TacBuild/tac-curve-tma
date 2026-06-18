@@ -1,4 +1,4 @@
-FROM node:20.12.2 AS base
+FROM node:24.14.0-alpine AS base
 ENV MODE production
 ENV NUXT_HOST 0.0.0.0
 ENV NUXT_PORT 5000
